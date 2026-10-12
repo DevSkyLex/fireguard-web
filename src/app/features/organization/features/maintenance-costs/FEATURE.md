@@ -22,6 +22,13 @@ destruction, navigation and same-account reload retain exact retry; recovery mus
 a new declaration. Only the original organization/dossier can recover its facts, and session
 replacement purges the private journal without persisting credentials. A failed recovery keeps
 new writes unavailable. Definite refusal or confirmation acknowledges the original intention.
+Each retained expense or rate includes its HTTP `Idempotency-Key` committed before transmission;
+legacy entries acquire one key atomically across tabs. Retry, navigation and reload preserve the
+business UUID, exact payload and HTTP key. Unavailable receipts, uncertain execution, conflicts and
+revoked access keep the journal and block replacement intentions. Only explicit validation/precondition
+refusals release a rejected intent. An authenticated expired replay with `operationCompleted: true`
+acknowledges a completed write and refreshes the authoritative financial projection. A confirmed new
+planning revision or changed payload creates a fresh HTTP key for the same dossier.
 The financial page's deactivation guard keeps an active write alive until its response settles;
 an uncertain durable expense/rate may leave and recover when the original dossier is reopened.
 

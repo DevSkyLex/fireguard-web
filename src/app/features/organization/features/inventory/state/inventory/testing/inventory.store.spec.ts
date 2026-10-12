@@ -1,6 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
+import type { WriteOperation } from '@core/request-state';
 import {
   InventoryService,
   InventoryCommandRepository,
@@ -78,6 +80,7 @@ describe('InventoryStore', () => {
     replayed: false,
   };
   const physical: InventoryPhysicalCommand = {
+    idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
     kind: 'correction',
     organizationId: 'org',
     userId: 'user',
@@ -111,7 +114,7 @@ describe('InventoryStore', () => {
       sessionRevision: () => revision,
       isCurrent: vi.fn((_user: string, _org: string, expected = revision) => revision === expected),
       readPending: vi.fn().mockResolvedValue([]),
-      retain: vi.fn().mockResolvedValue(undefined),
+      retain: vi.fn().mockResolvedValue({ idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' }),
       acknowledge: vi.fn().mockResolvedValue(undefined),
     };
     const dispatcher = { dispatch: vi.fn() };
@@ -235,8 +238,8 @@ describe('InventoryStore', () => {
     activate();
     let commit!: () => void;
     journal.retain.mockReturnValue(
-      new Promise<void>((resolve) => {
-        commit = resolve;
+      new Promise<WriteOperation>((resolve) => {
+        commit = () => resolve({ idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' });
       }),
     );
     const response = new Subject<InventoryMovementOutput>();
@@ -275,7 +278,12 @@ describe('InventoryStore', () => {
     expect(journal.acknowledge).not.toHaveBeenCalled();
     store.save(physical);
     await flush();
-    expect(service.correctStock.mock.calls[1]?.[1]).toBe(service.correctStock.mock.calls[0]?.[1]);
+    expect(service.correctStock.mock.calls[1]?.[1]).toEqual(
+      service.correctStock.mock.calls[0]?.[1],
+    );
+    expect(service.correctStock.mock.calls[1]?.[2]).toEqual(
+      service.correctStock.mock.calls[0]?.[2],
+    );
     expect(store.pendingCommandEntities()).toEqual([]);
   });
   it('does not send an old durable acceptance after the same account starts a different session', async () => {
@@ -283,8 +291,8 @@ describe('InventoryStore', () => {
     activate();
     let commit!: () => void;
     journal.retain.mockReturnValue(
-      new Promise<void>((resolve) => {
-        commit = resolve;
+      new Promise<WriteOperation>((resolve) => {
+        commit = () => resolve({ idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' });
       }),
     );
     store.save(physical);
@@ -293,6 +301,55 @@ describe('InventoryStore', () => {
     await flush();
     expect(service.correctStock).not.toHaveBeenCalled();
     expect(journal.acknowledge).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    'idempotency_outcome_unknown',
+    'idempotency_result_unavailable',
+    'idempotency_owner_lost',
+    'idempotency_conflict',
+    'idempotency_replay_expired',
+    'access_denied',
+  ])('retains the physical HTTP key after an unconfirmed %s response', async (code) => {
+    const { store, service, journal, activate } = setup();
+    service.correctStock.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: code === 'access_denied' ? 403 : 409,
+            error: { code, operationCompleted: false },
+          }),
+      ),
+    );
+    activate();
+    store.save(physical);
+    await flush();
+    expect(journal.acknowledge).not.toHaveBeenCalled();
+    expect(store.pendingCommandEntities()).toEqual([physical]);
+    store.save(physical);
+    await flush();
+    expect(service.correctStock.mock.calls[1]).toEqual(service.correctStock.mock.calls[0]);
+  });
+
+  it('acknowledges an authenticated completed expired correction without inventing a movement result', async () => {
+    const { store, service, journal, dispatcher, activate } = setup();
+    service.correctStock.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { code: 'idempotency_replay_expired', operationCompleted: true },
+          }),
+      ),
+    );
+    activate();
+    store.save(physical);
+    await flush();
+    expect(journal.acknowledge).toHaveBeenCalledWith(physical, 1);
+    expect(store.pendingCommandEntities()).toEqual([]);
+    expect(store.writeCallState().status).toBe('idle');
+    expect(store.writeCallState().data).toBeNull();
+    expect(dispatcher.dispatch).toHaveBeenCalledOnce();
   });
   it('suppresses old network acknowledgment and events after organization or session changes', async () => {
     const { store, service, journal, dispatcher, activate, replaceSession } = setup();

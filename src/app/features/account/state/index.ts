@@ -19,3 +19,5 @@ export {
   AccountNotificationPreferencesStore,
   accountNotificationPreferencesStoreEvents,
 } from './notification-preferences';
+
+export { RecoveryCodesStore } from './recovery-codes';

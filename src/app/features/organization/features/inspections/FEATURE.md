@@ -133,6 +133,11 @@ the UI.
 
 ## State and Data Access
 
+Inspection and non-conformity CSV/PDF exports capture an execution identity per service
+invocation. Retries and cold resubscriptions retain that key; optional trailing
+`ApiRequestOptions` supports an unchanged manual retry. A changed selection or filter
+starts a new export intent. Ordinary projections and attachment downloads remain reads.
+
 Primary stores:
 
 - `InspectionStore`

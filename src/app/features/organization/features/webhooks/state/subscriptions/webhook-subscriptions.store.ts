@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, DestroyRef, effect, inject, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import { withEntities, setAllEntities, removeAllEntities } from '@ngrx/signals/entities';
@@ -12,7 +12,9 @@ import {
   errorCallState,
   isCallPending,
   toStoreError,
+  WriteOperationService,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { WebhookService } from '@features/organization/features/webhooks/data-access';
 import type {
@@ -68,8 +70,29 @@ export const WebhookSubscriptionsStore = signalStore(
       api = inject(WebhookService),
       permissions = inject(OrganizationPermissionService),
       dispatcher = inject(Dispatcher),
+      session = inject(AUTH_SESSION_PORT),
+      intentions = inject(WriteOperationService).createTracker(),
+      destroyRef = inject(DestroyRef),
     ) => {
       let scopeRevision = 0;
+      let observedSessionRevision = session.sessionRevision();
+      const synchronizeSession = (): boolean => {
+        const revision = session.sessionRevision();
+        if (revision === observedSessionRevision) return false;
+        observedSessionRevision = revision;
+        ++scopeRevision;
+        intentions.clear();
+        patchState(store, { mutationCallState: idleCallState() });
+        return true;
+      };
+      const isCurrent = (revision: number, sessionRevision: number): boolean =>
+        revision === scopeRevision &&
+        sessionRevision === session.sessionRevision() &&
+        session.isAuthenticated();
+      destroyRef.onDestroy(() => {
+        ++scopeRevision;
+        intentions.clear();
+      });
       const deliveries = rxMethod<{
         id: string | null;
         page: number;
@@ -85,10 +108,13 @@ export const WebhookSubscriptionsStore = signalStore(
               deliveryCallState: id ? pendingCallState() : idleCallState(),
             });
             const organizationId = store.organizationId();
-            if (!organizationId || !id) return EMPTY;
+            if (!organizationId || !id || !session.isAuthenticated()) return EMPTY;
+            const revision = scopeRevision;
+            const sessionRevision = session.sessionRevision();
             return api.deliveries(organizationId, id, page, status).pipe(
               tapResponse({
-                next: (result) =>
+                next: (result) => {
+                  if (!isCurrent(revision, sessionRevision)) return;
                   patchState(
                     store,
                     setAllEntities([...result.member], { collection: 'delivery' }),
@@ -96,9 +122,12 @@ export const WebhookSubscriptionsStore = signalStore(
                       deliveryTotal: result.totalItems ?? 0,
                       deliveryCallState: successCallState(null),
                     },
-                  ),
-                error: (error: unknown) =>
-                  patchState(store, { deliveryCallState: errorCallState(toStoreError(error)) }),
+                  );
+                },
+                error: (error: unknown) => {
+                  if (!isCurrent(revision, sessionRevision)) return;
+                  patchState(store, { deliveryCallState: errorCallState(toStoreError(error)) });
+                },
               }),
             );
           }),
@@ -110,16 +139,22 @@ export const WebhookSubscriptionsStore = signalStore(
             patchState(store, {
               catalogCallState: organizationId ? pendingCallState() : idleCallState(),
             });
-            if (!organizationId) return EMPTY;
+            if (!organizationId || !session.isAuthenticated()) return EMPTY;
+            const revision = scopeRevision;
+            const sessionRevision = session.sessionRevision();
             return api.events().pipe(
               tapResponse({
-                next: (result) =>
+                next: (result) => {
+                  if (!isCurrent(revision, sessionRevision)) return;
                   patchState(store, {
                     events: [...result.member],
                     catalogCallState: successCallState(null),
-                  }),
-                error: (error: unknown) =>
-                  patchState(store, { catalogCallState: errorCallState(toStoreError(error)) }),
+                  });
+                },
+                error: (error: unknown) => {
+                  if (!isCurrent(revision, sessionRevision)) return;
+                  patchState(store, { catalogCallState: errorCallState(toStoreError(error)) });
+                },
               }),
             );
           }),
@@ -128,11 +163,14 @@ export const WebhookSubscriptionsStore = signalStore(
       const load = rxMethod<{ organizationId: string | null; page: number; selectedId?: string }>(
         pipe(
           switchMap(({ organizationId, page, selectedId }) => {
+            synchronizeSession();
+            if (!session.isAuthenticated()) organizationId = null;
             const changed = organizationId !== store.organizationId();
             const previousSelection =
               selectedId ?? (page === store.page() ? store.selectedId() : null);
             if (changed) {
               ++scopeRevision;
+              intentions.clear();
               catalog(null);
             }
             deliveries({ id: null, page: 1, status: '' });
@@ -144,9 +182,12 @@ export const WebhookSubscriptionsStore = signalStore(
               ...(changed ? { events: [], mutationCallState: idleCallState() } : {}),
             });
             if (!organizationId) return EMPTY;
+            const revision = scopeRevision;
+            const sessionRevision = session.sessionRevision();
             return api.list(organizationId, page).pipe(
               tapResponse({
                 next: (result) => {
+                  if (!isCurrent(revision, sessionRevision)) return;
                   patchState(
                     store,
                     setAllEntities([...result.member], { collection: 'subscription' }),
@@ -157,13 +198,22 @@ export const WebhookSubscriptionsStore = signalStore(
                     : (result.member[0]?.id ?? null);
                   deliveries({ id, page: 1, status: '' });
                 },
-                error: (error: unknown) =>
-                  patchState(store, { listCallState: errorCallState(toStoreError(error)) }),
+                error: (error: unknown) => {
+                  if (!isCurrent(revision, sessionRevision)) return;
+                  patchState(store, { listCallState: errorCallState(toStoreError(error)) });
+                },
               }),
             );
           }),
         ),
       );
+      effect(() => {
+        session.sessionRevision();
+        const authenticated = session.isAuthenticated();
+        untracked(() => {
+          if (synchronizeSession() || !authenticated) load({ organizationId: null, page: 1 });
+        });
+      });
       return {
         load,
 
@@ -242,9 +292,14 @@ export const WebhookSubscriptionsStore = signalStore(
         mutate: rxMethod<WebhookMutation>(
           pipe(
             mergeMap((action) => {
+              if (synchronizeSession()) {
+                load({ organizationId: null, page: 1 });
+                return EMPTY;
+              }
               const organizationId = store.organizationId();
               if (
                 !organizationId ||
+                !session.isAuthenticated() ||
                 store.isLoading() ||
                 store.isMutating() ||
                 !permissions.hasPermission(ORGANIZATION_PERMISSION.WEBHOOKS_MANAGE)
@@ -253,11 +308,26 @@ export const WebhookSubscriptionsStore = signalStore(
               if (action.kind !== 'create' && !store.subscriptionEntityMap()[action.id])
                 return EMPTY;
               const revision = scopeRevision;
+              const sessionRevision = session.sessionRevision();
+              const intention = `${action.kind}:${action.kind === 'create' ? '' : action.id}`;
+              const payload =
+                action.kind === 'create'
+                  ? {
+                      kind: action.kind,
+                      input: {
+                        url: action.input.url,
+                        description: action.input.description,
+                        eventTypes: action.input.eventTypes,
+                      },
+                    }
+                  : action;
+              const options = intentions.options(intention, payload, revision);
               patchState(store, { mutationCallState: pendingCallState() });
-              return api.mutate(organizationId, action).pipe(
+              return api.mutate(organizationId, action, options).pipe(
                 tapResponse({
                   next: (result) => {
-                    if (revision !== scopeRevision) return;
+                    if (!isCurrent(revision, sessionRevision)) return;
+                    intentions.complete(intention);
                     patchState(store, { mutationCallState: successCallState(null) });
                     let subscriptionId: string | null = null;
                     if (result && 'id' in result) subscriptionId = result.id;
@@ -281,7 +351,7 @@ export const WebhookSubscriptionsStore = signalStore(
                       });
                   },
                   error: (error: unknown) => {
-                    if (revision !== scopeRevision) return;
+                    if (!isCurrent(revision, sessionRevision)) return;
                     patchState(store, { mutationCallState: errorCallState(toStoreError(error)) });
                   },
                 }),

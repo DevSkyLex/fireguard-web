@@ -8,7 +8,15 @@ import {
   type OutputEmitterRef,
   type WritableSignal,
 } from '@angular/core';
-import { email, form, FormField, required, type FieldTree } from '@angular/forms/signals';
+import {
+  email,
+  form,
+  FormField,
+  required,
+  validate,
+  type FieldTree,
+  type ValidationError,
+} from '@angular/forms/signals';
 import { RouterLink } from '@angular/router';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
@@ -33,12 +41,12 @@ import type { LoginFormValues } from './models';
  *
  * @version 1.0.0
  *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
  * @example
  * ```html
  * <app-login-form [pending]="isLoggingIn()" (submitted)="login($event)" />
  * ```
- *
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
   selector: 'app-login-form',
@@ -57,7 +65,18 @@ import type { LoginFormValues } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginForm {
-  /** @description Safe destination supplied by the page for password recovery. */
+  /**
+   * Property returnUrl
+   * @readonly
+   *
+   * @description
+   * Safe destination supplied by the page for password recovery.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<string>}
+   */
   public readonly returnUrl: InputSignal<string> = input<string>('');
 
   //#region Inputs
@@ -66,8 +85,9 @@ export class LoginForm {
    * @readonly
    *
    * @description
-   * Whether a sign-in attempt is in flight. It marks the submit control
-   * `aria-disabled` and `aria-busy` — never natively `disabled` — while the request runs. Server failures use the app feedback system.
+   * Whether a sign-in attempt is in flight. It marks the submit control `aria-disabled` and
+   * `aria-busy` — never natively `disabled` — while the request runs. Server failures use the app
+   * feedback system.
    *
    * @access public
    * @since 1.0.0
@@ -131,6 +151,14 @@ export class LoginForm {
   protected readonly loginForm: FieldTree<LoginFormValues> = form(this.model, (path): void => {
     required(path.email, { message: $localize`:@@auth.email.required:Enter your email address` });
     email(path.email, { message: $localize`:@@auth.email.invalid:Enter a valid email address` });
+    validate(path.password, ({ value }): ValidationError | null =>
+      Array.from(value()).length > 4096
+        ? {
+            kind: 'maxLength',
+            message: $localize`:@@auth.login.passwordTooLong:Use at most 4096 characters`,
+          }
+        : null,
+    );
     required(path.password, {
       message: $localize`:@@auth.login.passwordRequired:Enter your password`,
     });
@@ -145,7 +173,6 @@ export class LoginForm {
    * @description
    * Marks the form touched so every failing rule becomes visible, then emits
    * only if it is valid.
-   *
    * Guards the in-flight case itself rather than letting the template set the
    * native `disabled` attribute: disabling the focused submit button blurs it
    * to `<body>` with no announcement, which strands a keyboard or screen-reader
@@ -155,6 +182,8 @@ export class LoginForm {
    *
    * @access protected
    * @since 1.2.0
+   *
+   * @param {Event} event - Form submission event.
    *
    * @returns {void}
    */

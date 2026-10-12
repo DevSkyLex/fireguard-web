@@ -22,10 +22,15 @@ import {
   pipe,
   switchMap,
   tap,
+  throwError,
   toArray,
   type Observable,
 } from 'rxjs';
-import type { RequestOptions } from '@core/api';
+import {
+  isIdempotencyOperationCompleted,
+  type ApiRequestOptions,
+  type RequestOptions,
+} from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import {
   errorCallState,
@@ -338,7 +343,8 @@ export const InventoryStore = signalStore(
        */
       save: rxMethod<InventoryCommand>(
         pipe(
-          exhaustMap((command) => {
+          exhaustMap((incoming) => {
+            const command = structuredClone(incoming);
             const scope = store.query();
             if (scope?.organizationId !== command.organizationId || scope.userId !== command.userId)
               return EMPTY;
@@ -351,9 +357,9 @@ export const InventoryStore = signalStore(
               journal.isCurrent(command.userId, command.organizationId, sessionRevision);
             if (!current()) return EMPTY;
             patchState(store, { writeCallState: pendingCallState() });
-            const physical =
+            let physical =
               command.kind === 'correction' || command.kind === 'return' ? command : null;
-            const request = (): Observable<InventoryRecord> => {
+            const request = (options?: ApiRequestOptions): Observable<InventoryRecord> => {
               switch (command.kind) {
                 case 'createPart':
                   return service.createPart(command.organizationId, command.input);
@@ -366,21 +372,45 @@ export const InventoryStore = signalStore(
                 case 'reconcile':
                   return service.reconcileConsumption(command.organizationId, command.id);
                 case 'return':
-                  return service.returnConsumption(command.organizationId, command.input);
+                  return service.returnConsumption(command.organizationId, command.input, options);
                 case 'correction':
-                  return service.correctStock(command.organizationId, command.input);
+                  return service.correctStock(command.organizationId, command.input, options);
               }
             };
             return defer(() => (physical ? from(journal.retain(physical)) : of(undefined))).pipe(
-              tap(() => {
-                if (physical && current()) patchState(store, upsertEntity(physical, PENDING));
+              tap((operation) => {
+                if (physical && operation && current()) {
+                  physical = { ...physical, ...operation };
+                  patchState(store, upsertEntity(physical, PENDING));
+                }
               }),
-              switchMap(() => (current() ? request() : EMPTY)),
+              switchMap((operation) => (current() ? request(operation) : EMPTY)),
               switchMap((result) =>
                 physical && current()
                   ? from(journal.acknowledge(physical, sessionRevision)).pipe(map(() => result))
                   : of(result),
               ),
+              catchError((error: unknown) => {
+                if (!physical || !current() || !isIdempotencyOperationCompleted(error))
+                  return throwError(() => error);
+                const confirmed = physical;
+                return from(journal.acknowledge(confirmed, sessionRevision)).pipe(
+                  tap(() => {
+                    if (!current()) return;
+                    patchState(store, removeEntity(confirmed.input.clientOperationId, PENDING), {
+                      writeCallState: idleCallState(),
+                    });
+                    dispatcher.dispatch(
+                      inventoryEvents.saved({
+                        organizationId: command.organizationId,
+                        userId: command.userId,
+                        kind: command.kind,
+                      }),
+                    );
+                  }),
+                  switchMap(() => EMPTY),
+                );
+              }),
               tapResponse({
                 next: (result) => {
                   if (!current()) return;

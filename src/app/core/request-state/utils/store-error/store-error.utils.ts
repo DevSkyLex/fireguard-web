@@ -1,11 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { isApiError } from '@core/api/utils';
+import { getIdempotencyErrorCode, isApiError } from '@core/api/utils';
 import type { FeedbackEventPayload, StoreError } from '../../models';
 import { errorFeedback } from '../feedback-payload/feedback-payload.utils';
 
 /**
  * Function toStoreError
- * @function toStoreError
  *
  * @description
  * Normalizes any unknown thrown value into a `StoreError`.
@@ -14,15 +13,20 @@ import { errorFeedback } from '../feedback-payload/feedback-payload.utils';
  *
  * @param error The raw thrown value caught in a `tapResponse.error` callback.
  *
- * @return A normalized `StoreError` ready to store in call state.
+ * @returns A normalized `StoreError` ready to store in call state.
+ *
+ * @function toStoreError
  */
 export function toStoreError(error: unknown): StoreError {
+  const idempotencyCode = getIdempotencyErrorCode(error);
   if (isApiError(error)) {
     return {
       error,
       message: error.detail,
-      code: error.status,
-      retryable: error.status === 0 || error.status >= 500,
+      code: idempotencyCode ?? error.status,
+      retryable: idempotencyCode
+        ? idempotencyCode === 'idempotency_in_progress'
+        : error.status === 0 || error.status >= 500,
       timestamp: Date.now(),
     };
   }
@@ -43,8 +47,10 @@ export function toStoreError(error: unknown): StoreError {
         (error.status === 0
           ? $localize`:@@requestState.connectionUnavailable:The connection is unavailable. Check your network and try again.`
           : $localize`:@@requestState.requestFailed:The request could not be completed. Please try again.`),
-      code: error.status,
-      retryable: error.status === 0 || error.status >= 500,
+      code: idempotencyCode ?? error.status,
+      retryable: idempotencyCode
+        ? idempotencyCode === 'idempotency_in_progress'
+        : error.status === 0 || error.status >= 500,
       timestamp: Date.now(),
     };
   }
@@ -60,7 +66,6 @@ export function toStoreError(error: unknown): StoreError {
 
 /**
  * Function toStoreFailureEventPayload
- * @function toStoreFailureEventPayload
  *
  * @description
  * Maps a `StoreError` to a serializable, error-severity `FeedbackEventPayload`
@@ -70,7 +75,9 @@ export function toStoreError(error: unknown): StoreError {
  * @param error The normalized `StoreError` to convert.
  * @param fallbackMessage Human-readable message to use when `error.message` is `null`.
  *
- * @return A `FeedbackEventPayload` (severity `error`) ready to dispatch.
+ * @returns A `FeedbackEventPayload` (severity `error`) ready to dispatch.
+ *
+ * @function toStoreFailureEventPayload
  */
 export function toStoreFailureEventPayload(
   error: StoreError,

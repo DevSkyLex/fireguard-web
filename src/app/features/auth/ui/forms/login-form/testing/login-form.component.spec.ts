@@ -96,6 +96,68 @@ describe('LoginForm', () => {
     } satisfies LoginFormValues);
   });
 
+  it.each([2050, 4096])(
+    'should accept %s astral password characters without a UTF-16 input bound',
+    async (length) => {
+      const submitted = vi.fn();
+      fixture.componentInstance.submitted.subscribe(submitted);
+      const password = '😀'.repeat(length);
+      await type(fixture, '#login-email', 'ada@example.com');
+      await type(fixture, '#login-password', password);
+
+      (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
+        new Event('submit'),
+      );
+      await fixture.whenStable();
+
+      expect(submitted).toHaveBeenCalledExactlyOnceWith({
+        email: 'ada@example.com',
+        password,
+        rememberMe: false,
+      });
+      expect(
+        (fixture.nativeElement.querySelector('#login-password') as HTMLInputElement).hasAttribute(
+          'maxlength',
+        ),
+      ).toBe(false);
+    },
+  );
+
+  it.each(['a'.repeat(4097), '😀'.repeat(4097)])(
+    'should reject passwords beyond the Unicode transport bound',
+    async (password) => {
+      const submitted = vi.fn();
+      fixture.componentInstance.submitted.subscribe(submitted);
+      await type(fixture, '#login-email', 'ada@example.com');
+      await type(fixture, '#login-password', password);
+      (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
+        new Event('submit'),
+      );
+      await fixture.whenStable();
+
+      expect(submitted).not.toHaveBeenCalled();
+      expect(fixture.nativeElement.textContent).toContain('Use at most 4096 characters');
+    },
+  );
+
+  it('should preserve the existing password without trimming or applying creation complexity', async () => {
+    const submitted = vi.fn();
+    fixture.componentInstance.submitted.subscribe(submitted);
+    const password = ' simple existing password ';
+    await type(fixture, '#login-email', 'ada@example.com');
+    await type(fixture, '#login-password', password);
+    (fixture.nativeElement.querySelector('form') as HTMLFormElement).dispatchEvent(
+      new Event('submit'),
+    );
+    await fixture.whenStable();
+
+    expect(submitted).toHaveBeenCalledExactlyOnceWith({
+      email: 'ada@example.com',
+      password,
+      rememberMe: false,
+    });
+  });
+
   it('should block submission while a sign-in attempt is in flight, without losing focus', async () => {
     const submitted = vi.fn();
     fixture.componentInstance.submitted.subscribe(submitted);

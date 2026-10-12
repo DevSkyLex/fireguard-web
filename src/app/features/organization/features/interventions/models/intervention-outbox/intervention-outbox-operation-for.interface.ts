@@ -16,6 +16,18 @@ import type { InterventionOutboxType } from './intervention-outbox-type.type';
  */
 export interface InterventionOutboxOperationFor<Type extends InterventionOutboxType> {
   /**
+   * Property idempotencyKey
+   * @readonly
+   *
+   * @description
+   * Persisted HTTP receipt identity, independent of the row and client resource identifiers.
+   * Legacy rows acquire it atomically before their first replay.
+   *
+   * @type {string}
+   */
+  readonly idempotencyKey?: string;
+
+  /**
    * Property workloadAssessment
    * @readonly
    *

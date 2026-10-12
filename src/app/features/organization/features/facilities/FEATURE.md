@@ -55,6 +55,20 @@ model, not the field, so the form does not start dirty.
 
 ## Entry Points
 
+Facility CSV export captures one execution identity per service invocation, retaining it
+through retries and cold resubscriptions. The optional trailing `ApiRequestOptions`
+accepts a retained key for an unchanged manual retry; editing the export scope starts
+a new intent. Attachment downloads remain ordinary reads.
+
+Attachment and GLB uploads accept trailing `ApiRequestOptions`. Their owning stores retain one
+in-memory identity for the same immutable Blob/File and significant multipart fields after a lost
+response or refresh. A distinct binary object, including identical filename/size/date metadata,
+starts another intent; successful writes and definite validation refusals release the old identity.
+Plans retain the same JSON write identity for unchanged outlines and equipment pins and renew it
+for edited coordinates. Auth's public session revision fences responses and clears all file/intent
+references on session replacement, organization changes or teardown. Binary inputs and keys never
+enter browser storage or TransferState; uploads and parsing start only in the browser.
+
 - Routes: `facilities.routes.ts`
 - Public API: the concern barrels `models`, `state`, `data-access` and
   `ui/components`. `ui/components` exports only `FacilityOptionPicker` for

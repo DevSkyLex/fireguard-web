@@ -1,5 +1,6 @@
 import { provideZonelessChangeDetection } from '@angular/core';
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
+import { DEFAULT_PASSWORD_POLICY } from '@features/auth/state/password-policy/testing/password-policy.fixture';
 import { NewPasswordForm } from '../new-password-form.component';
 
 /**
@@ -33,6 +34,7 @@ describe('NewPasswordForm', () => {
     TestBed.configureTestingModule({ providers: [provideZonelessChangeDetection()] });
 
     fixture = TestBed.createComponent(NewPasswordForm);
+    fixture.componentRef.setInput('passwordPolicy', DEFAULT_PASSWORD_POLICY);
     await fixture.whenStable();
   });
 

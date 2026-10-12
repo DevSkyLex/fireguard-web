@@ -94,14 +94,14 @@ test.describe('Create an account', () => {
       /register-password-requirements-description/,
     );
     const announcement = page.getByTestId('register-password-requirements-announcement');
-    await auth.registerPassword.fill('abcdefgh');
+    await auth.registerPassword.fill('axbyczdv');
     await expect(auth.registerPassword).toBeFocused();
     await expect(announcement).toContainText('Met');
     await expect(announcement).toContainText('Not met');
     const criteriaState = await announcement.textContent();
-    await auth.registerPassword.press('i');
+    await auth.registerPassword.press('w');
     await expect(announcement).toHaveText(criteriaState ?? '');
-    await expect(announcement).not.toContainText('abcdefghi');
+    await expect(announcement).not.toContainText('axbyczdvw');
     await expect(auth.registerPassword).toBeFocused();
 
     await auth.registerRoot.locator('h1').click();

@@ -1,9 +1,10 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -18,17 +19,18 @@ import {
 } from '@core/request-state';
 import { TotpService } from '@features/account/data-access';
 import type {
+  DisableTotpInput,
   ConfirmTotpOutput,
   DisableTotpOutput,
   SetupTotpOutput,
 } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { UserStore } from '../user';
 import { accountTotpEnrollmentStoreEvents } from './events';
 import type { AccountTotpEnrollmentState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial state of the TOTP enrollment workflow.
@@ -36,6 +38,8 @@ import type { AccountTotpEnrollmentState } from './models';
  * @since 1.0.0
  *
  * @type {AccountTotpEnrollmentState}
+ *
+ * @const INITIAL_STATE
  */
 const INITIAL_STATE: AccountTotpEnrollmentState = {
   setupCallState: idleCallState(),
@@ -44,8 +48,7 @@ const INITIAL_STATE: AccountTotpEnrollmentState = {
 } as const;
 
 /**
- * Store AccountTotpEnrollmentStore
- * @const AccountTotpEnrollmentStore
+ * Constant AccountTotpEnrollmentStore
  *
  * @description
  * Component-scoped workflow store driving the full authenticator app (TOTP)
@@ -59,6 +62,8 @@ const INITIAL_STATE: AccountTotpEnrollmentState = {
  * @version 2.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const AccountTotpEnrollmentStore
  */
 export const AccountTotpEnrollmentStore = signalStore(
   //#region State
@@ -68,9 +73,8 @@ export const AccountTotpEnrollmentStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isSettingUp
-     *
      * @description
+     * Computed isSettingUp
      * Whether the setup call is in flight.
      *
      * @since 1.0.0
@@ -80,9 +84,8 @@ export const AccountTotpEnrollmentStore = signalStore(
     isSettingUp: computed<boolean>(() => isCallPending(store.setupCallState())),
 
     /**
-     * Computed isConfirming
-     *
      * @description
+     * Computed isConfirming
      * Whether the confirm call is in flight.
      *
      * @since 2.0.0
@@ -92,9 +95,8 @@ export const AccountTotpEnrollmentStore = signalStore(
     isConfirming: computed<boolean>(() => isCallPending(store.confirmCallState())),
 
     /**
-     * Computed isDisabling
-     *
      * @description
+     * Computed isDisabling
      * Whether the disable call is in flight.
      *
      * @since 2.0.0
@@ -104,9 +106,8 @@ export const AccountTotpEnrollmentStore = signalStore(
     isDisabling: computed<boolean>(() => isCallPending(store.disableCallState())),
 
     /**
-     * Computed setupResult
-     *
      * @description
+     * Computed setupResult
      * Latest generated secret and provisioning URI, if any.
      *
      * @since 1.0.0
@@ -119,9 +120,8 @@ export const AccountTotpEnrollmentStore = signalStore(
     }),
 
     /**
-     * Computed setupError
-     *
      * @description
+     * Computed setupError
      * Error of the latest setup call, if any.
      *
      * @since 1.0.0
@@ -131,9 +131,8 @@ export const AccountTotpEnrollmentStore = signalStore(
     setupError: computed<StoreError | null>(() => store.setupCallState().error),
 
     /**
-     * Computed confirmError
-     *
      * @description
+     * Computed confirmError
      * Error of the latest confirm call, if any.
      *
      * @since 2.0.0
@@ -143,9 +142,8 @@ export const AccountTotpEnrollmentStore = signalStore(
     confirmError: computed<StoreError | null>(() => store.confirmCallState().error),
 
     /**
-     * Computed disableError
-     *
      * @description
+     * Computed disableError
      * Error of the latest disable call, if any.
      *
      * @since 2.0.0
@@ -163,6 +161,21 @@ export const AccountTotpEnrollmentStore = signalStore(
       totpService = inject<TotpService>(TotpService),
       userStore = inject<UserStore>(UserStore),
       dispatcher = inject<Dispatcher>(Dispatcher),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => ({
       /**
        * Method setup
@@ -178,24 +191,39 @@ export const AccountTotpEnrollmentStore = signalStore(
         pipe(
           tap((): void => patchState(store, { setupCallState: pendingCallState() })),
           switchMap(() =>
-            totpService.setup().pipe(
-              tapResponse({
-                next: (result: SetupTotpOutput) =>
-                  patchState(store, { setupCallState: successCallState(result) }),
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { setupCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    accountTotpEnrollmentStoreEvents.setupFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@account.mfa.setupError:A new authenticator key could not be generated.`,
+            totpService
+              .setup(writeTracker.options('totpService.setup', [], intentSession.sessionRevision()))
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('totpService.setup');
+                  },
+                }),
+                tapResponse({
+                  next: (result: SetupTotpOutput) =>
+                    patchState(store, { setupCallState: successCallState(result) }),
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { setupCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      accountTotpEnrollmentStoreEvents.setupFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.mfa.setupError:A new authenticator key could not be generated.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),
@@ -216,33 +244,55 @@ export const AccountTotpEnrollmentStore = signalStore(
         pipe(
           tap((): void => patchState(store, { confirmCallState: pendingCallState() })),
           switchMap((code: string) =>
-            totpService.confirm(code).pipe(
-              tapResponse({
-                next: (result: ConfirmTotpOutput) => {
-                  patchState(store, { confirmCallState: successCallState(result) });
-                  userStore.reload();
-                  dispatcher.dispatch(
-                    accountTotpEnrollmentStoreEvents.confirmSucceeded(
-                      successFeedback(
-                        $localize`:@@account.mfa.enabled:Two-factor authentication is now on.`,
+            totpService
+              .confirm(
+                code,
+                writeTracker.options(
+                  'totpService.confirm',
+                  [code],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('totpService.confirm');
+                  },
+                }),
+                tapResponse({
+                  next: (result: ConfirmTotpOutput) => {
+                    patchState(store, { confirmCallState: successCallState(result) });
+                    userStore.reload();
+                    dispatcher.dispatch(
+                      accountTotpEnrollmentStoreEvents.confirmSucceeded(
+                        successFeedback(
+                          $localize`:@@account.mfa.enabled:Two-factor authentication is now on.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { confirmCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    accountTotpEnrollmentStoreEvents.confirmFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@account.mfa.confirmError:That code did not match. Check your authenticator app and try again.`,
+                    );
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { confirmCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      accountTotpEnrollmentStoreEvents.confirmFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.mfa.confirmError:That code did not match. Check your authenticator app and try again.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),
@@ -259,13 +309,33 @@ export const AccountTotpEnrollmentStore = signalStore(
        *
        * @param {string} code - Current 6-digit code from the authenticator app.
        */
-      disable: rxMethod<string>(
+      disable: rxMethod<string | DisableTotpInput>(
         pipe(
           tap((): void => patchState(store, { disableCallState: pendingCallState() })),
-          switchMap((code: string) =>
-            totpService.disable(code).pipe(
+          switchMap((proof: string | DisableTotpInput) =>
+            (typeof proof === 'string'
+              ? totpService.disable(
+                  proof,
+                  'totp',
+                  writeTracker.options(
+                    'totpService.disable',
+                    [proof],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+              : totpService.disable(
+                  proof.code,
+                  proof.proofType,
+                  writeTracker.options(
+                    'totpService.disable',
+                    [proof.code, proof.proofType],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+            ).pipe(
               tapResponse({
                 next: (result: DisableTotpOutput) => {
+                  if (result.success) writeTracker.complete('totpService.disable');
                   patchState(store, { disableCallState: successCallState(result) });
                   userStore.reload();
                   dispatcher.dispatch(
@@ -316,11 +386,12 @@ export const AccountTotpEnrollmentStore = signalStore(
 
 /**
  * Type AccountTotpEnrollmentStore
- * @type AccountTotpEnrollmentStore
  *
  * @description
  * Injectable instance type exposed by {@link AccountTotpEnrollmentStore}.
  *
  * @since 1.0.0
+ *
+ * @type AccountTotpEnrollmentStore
  */
 export type AccountTotpEnrollmentStore = InstanceType<typeof AccountTotpEnrollmentStore>;

@@ -2,9 +2,12 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
+import { successCallState } from '@core/request-state';
 import { idleCallState, type CallState } from '@core/request-state';
-import type { FederatedProviderOutput } from '@features/auth/models';
+import type { FederatedProviderOutput, RegisterOutput } from '@features/auth/models';
+import { PasswordPolicyStore } from '@features/auth/state';
 import { FederatedAuthStore, RegisterStore } from '@features/auth/state';
+import { DEFAULT_PASSWORD_POLICY } from '@features/auth/state/password-policy/testing/password-policy.fixture';
 import { RegisterPage } from '../register-page.component';
 
 describe('RegisterPage', () => {
@@ -16,8 +19,10 @@ describe('RegisterPage', () => {
     registerError: WritableSignal<null>;
     hasChallenge: WritableSignal<boolean>;
     challengeToken: WritableSignal<string | null>;
+    requestCallState: WritableSignal<CallState<RegisterOutput>>;
   };
   let mockFederatedStore: {
+    providers: WritableSignal<readonly import('@features/auth/models').FederatedProviderOutput[]>;
     loadProviders: ReturnType<typeof vi.fn>;
     startLogin: ReturnType<typeof vi.fn>;
     resetStart: ReturnType<typeof vi.fn>;
@@ -40,8 +45,10 @@ describe('RegisterPage', () => {
       registerError: signal(null),
       hasChallenge,
       challengeToken: signal<string | null>(null),
+      requestCallState: signal<CallState<RegisterOutput>>(idleCallState()),
     };
     mockFederatedStore = {
+      providers: signal([]),
       loadProviders: vi.fn(),
       startLogin: vi.fn(),
       resetStart: vi.fn(),
@@ -63,6 +70,20 @@ describe('RegisterPage', () => {
       ],
     });
 
+    TestBed.overrideComponent(RegisterPage, {
+      set: {
+        providers: [
+          {
+            provide: PasswordPolicyStore,
+            useValue: {
+              policy: signal(DEFAULT_PASSWORD_POLICY),
+              policyCallState: signal(successCallState(DEFAULT_PASSWORD_POLICY)),
+              load: vi.fn(),
+            },
+          },
+        ],
+      },
+    });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     fixture = TestBed.createComponent(RegisterPage);
@@ -116,6 +137,22 @@ describe('RegisterPage', () => {
 
     expect(navigate).toHaveBeenCalledWith(['/auth/register/verify'], {
       queryParams: { token: 'challenge-token' },
+    });
+  });
+
+  it('sends an accepted response without a challenge to sign-in', async () => {
+    mockRegisterStore.requestCallState.set(
+      successCallState({
+        '@id': '/api/auth/register',
+        '@type': 'RegisterOutput',
+        success: true,
+        message: 'Account created',
+      }),
+    );
+    await fixture.whenStable();
+
+    expect(navigate).toHaveBeenCalledWith(['/auth/login'], {
+      queryParams: { registered: '1', returnUrl: undefined },
     });
   });
 });

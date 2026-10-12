@@ -1,8 +1,9 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -13,11 +14,11 @@ import {
 } from '@core/request-state';
 import { EmailChangeService } from '@features/auth/data-access';
 import type { ConfirmEmailChangeOutput } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import type { EmailChangeConfirmState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial state of the email change confirmation.
@@ -25,14 +26,15 @@ import type { EmailChangeConfirmState } from './models';
  * @since 1.0.0
  *
  * @type {EmailChangeConfirmState}
+ *
+ * @const INITIAL_STATE
  */
 const INITIAL_STATE: EmailChangeConfirmState = {
   confirmCallState: idleCallState(),
 } as const;
 
 /**
- * Store EmailChangeConfirmStore
- * @const EmailChangeConfirmStore
+ * Constant EmailChangeConfirmStore
  *
  * @description
  * Component-scoped store for the public email change confirmation
@@ -49,6 +51,8 @@ const INITIAL_STATE: EmailChangeConfirmState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const EmailChangeConfirmStore
  */
 export const EmailChangeConfirmStore = signalStore(
   //#region State
@@ -58,9 +62,8 @@ export const EmailChangeConfirmStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isConfirming
-     *
      * @description
+     * Computed isConfirming
      * Whether the confirmation is in flight.
      *
      * @since 1.0.0
@@ -70,9 +73,8 @@ export const EmailChangeConfirmStore = signalStore(
     isConfirming: computed<boolean>(() => store.confirmCallState().status === 'pending'),
 
     /**
-     * Computed isConfirmed
-     *
      * @description
+     * Computed isConfirmed
      * Whether the change was applied — every session is now revoked and the
      * user signs in again with the new address.
      *
@@ -83,9 +85,8 @@ export const EmailChangeConfirmStore = signalStore(
     isConfirmed: computed<boolean>(() => store.confirmCallState().status === 'success'),
 
     /**
-     * Computed confirmError
-     *
      * @description
+     * Computed confirmError
      * Error of the latest confirmation attempt, if any.
      *
      * @since 1.0.0
@@ -97,47 +98,90 @@ export const EmailChangeConfirmStore = signalStore(
   //#endregion
 
   //#region Methods
-  withMethods((store, emailChangeService = inject<EmailChangeService>(EmailChangeService)) => ({
-    /**
-     * Method confirm
-     *
-     * @description
-     * Confirms the email change with the emailed token. `exhaustMap` gates a
-     * double click while a call is in flight.
-     *
-     * @since 1.0.0
-     *
-     * @param {string} token - The emailed confirmation token.
-     */
-    confirm: rxMethod<string>(
-      pipe(
-        tap((): void => patchState(store, { confirmCallState: pendingCallState() })),
-        exhaustMap((token: string) =>
-          emailChangeService.confirm({ token }).pipe(
-            tapResponse({
-              next: (result: ConfirmEmailChangeOutput) => {
-                patchState(store, { confirmCallState: successCallState(result) });
-              },
-              error: (error: unknown) => {
-                const storeError: StoreError = toStoreError(error);
-                patchState(store, { confirmCallState: errorCallState(storeError) });
-              },
-            }),
+  withMethods(
+    (
+      store,
+      emailChangeService = inject<EmailChangeService>(EmailChangeService),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
+    ) => ({
+      /**
+       * Method confirm
+       *
+       * @description
+       * Confirms the email change with the emailed token. `exhaustMap` gates a
+       * double click while a call is in flight.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} token - The emailed confirmation token.
+       */
+      confirm: rxMethod<string>(
+        pipe(
+          tap((): void => patchState(store, { confirmCallState: pendingCallState() })),
+          exhaustMap((token: string) =>
+            emailChangeService
+              .confirm(
+                { token },
+                writeTracker.options(
+                  'emailChangeService.confirm',
+                  [{ token }],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('emailChangeService.confirm');
+                  },
+                }),
+                tapResponse({
+                  next: (result: ConfirmEmailChangeOutput) => {
+                    patchState(store, { confirmCallState: successCallState(result) });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { confirmCallState: errorCallState(storeError) });
+                  },
+                }),
+              ),
           ),
         ),
       ),
-    ),
-  })),
+    }),
+  ),
   //#endregion
 );
 
 /**
  * Type EmailChangeConfirmStore
- * @type EmailChangeConfirmStore
  *
  * @description
  * Injectable instance type exposed by {@link EmailChangeConfirmStore}.
  *
  * @since 1.0.0
+ *
+ * @type EmailChangeConfirmStore
  */
 export type EmailChangeConfirmStore = InstanceType<typeof EmailChangeConfirmStore>;

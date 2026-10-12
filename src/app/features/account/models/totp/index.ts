@@ -3,3 +3,8 @@ export type { ConfirmTotpInput } from './confirm-totp-input.interface';
 export type { ConfirmTotpOutput } from './confirm-totp-output.interface';
 export type { DisableTotpInput } from './disable-totp-input.interface';
 export type { DisableTotpOutput } from './disable-totp-output.interface';
+
+export type {
+  RecoveryCodesStatusOutput,
+  GenerateRecoveryCodesOutput,
+} from './recovery-codes-status-output.interface';

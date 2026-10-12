@@ -1,6 +1,7 @@
 import { provideHttpClient } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { retry } from 'rxjs';
 
 import type { HydraCollection, HydraItem, ApiError } from '@core/api/models';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
@@ -497,10 +498,59 @@ describe('OrganizationService', () => {
       expect(req.request.body).toBeInstanceOf(FormData);
       expect((req.request.body as FormData).has('logo')).toBe(true);
       expect(req.request.withCredentials).toBe(true);
+      expect(req.request.headers.get('Idempotency-Key')).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(req.request.headers.has('Content-Type')).toBe(false);
       req.flush({
         ...mockOrg,
         logoUrl: 'https://api.test.com/api/organizations/org-uuid-1/logo.webp',
       });
+    });
+
+    it('retains one multipart key across retry and cold resubscription, then creates a fresh invocation key', () => {
+      const file = new File(['image'], 'logo.png', { type: 'image/png' });
+      const upload = service.uploadLogo('org-uuid-1', file, file.name);
+      upload.pipe(retry(1)).subscribe();
+      const first = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+      const originalKey = first.request.headers.get('Idempotency-Key');
+      expect(originalKey).toMatch(/^[0-9a-f-]{36}$/i);
+      first.error(new ProgressEvent('error'));
+      const replay = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+      expect(replay.request.headers.get('Idempotency-Key')).toBe(originalKey);
+      expect(replay.request.body).toBe(first.request.body);
+      replay.flush(mockOrg);
+
+      upload.subscribe();
+      const resubscribed = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+      expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(originalKey);
+      resubscribed.flush(mockOrg);
+      service.uploadLogo('org-uuid-1', file, file.name).subscribe();
+      const newIntent = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+      expect(newIntent.request.headers.get('Idempotency-Key')).not.toBe(originalKey);
+      newIntent.flush(mockOrg);
+    });
+
+    it('uses an explicit caller intention on manual retries and preserves multipart headers and file data', () => {
+      const file = new File(['image bytes'], 'local.png', { type: 'image/png' });
+      const options = {
+        idempotencyKey: 'logo-retained-intent',
+        headers: { 'X-Upload-Trace': 'branding', 'Content-Type': 'application/json' },
+      };
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        service
+          .uploadLogo('org-uuid-1', file, 'wire.png', options)
+          .subscribe({ error: () => undefined });
+        const request = httpMock.expectOne(`${baseUrl}/org-uuid-1/logo`);
+        expect(request.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+        expect(request.request.headers.get('X-Upload-Trace')).toBe('branding');
+        expect(request.request.headers.has('Content-Type')).toBe(false);
+        expect(request.request.withCredentials).toBe(true);
+        const sentFile = (request.request.body as FormData).get('logo') as File;
+        expect(sentFile.name).toBe('wire.png');
+        expect(sentFile.type).toBe(file.type);
+        expect(sentFile.size).toBe(file.size);
+        expect(request.request.params.has('idempotencyKey')).toBe(false);
+        request.error(new ProgressEvent('error'));
+      }
     });
   });
 

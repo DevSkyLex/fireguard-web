@@ -1,7 +1,7 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
-import type { HydraCollection } from '@core/api/models';
+import type { ApiRequestOptions, HydraCollection } from '@core/api/models';
 import type {
   WebhookSubscriptionOutput,
   WebhookSecretOutput,
@@ -15,7 +15,10 @@ import type {
 /**
  * Service WebhookService
  * @class WebhookService
- * @description Organization-owned webhook transport. Plaintext secrets are returned only by create and rotation.
+ *
+ * @description
+ * Organization-owned webhook transport. Plaintext secrets are returned only by create and rotation.
+ *
  * @since 1.0.0
  */
 @Service()
@@ -23,11 +26,16 @@ export class WebhookService extends HydraApiService {
   /**
    * Method list
    * @method list
-   * @description Lists a server page of subscriptions.
+   *
+   * @description
+   * Lists a server page of subscriptions.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization scope.
    * @param {number} page - One-based page.
+   *
    * @returns {Observable<HydraCollection<WebhookSubscriptionOutput>>} API response.
    */
   public list(
@@ -42,9 +50,13 @@ export class WebhookService extends HydraApiService {
   /**
    * Method events
    * @method events
-   * @description Reads the public event catalog.
+   *
+   * @description
+   * Reads the public event catalog.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {Observable<HydraCollection<WebhookEventOutput>>} API response.
    */
   public events(): Observable<HydraCollection<WebhookEventOutput>> {
@@ -53,13 +65,18 @@ export class WebhookService extends HydraApiService {
   /**
    * Method deliveries
    * @method deliveries
-   * @description Lists durable delivery outcomes using server pagination.
+   *
+   * @description
+   * Lists durable delivery outcomes using server pagination.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization scope.
    * @param {string} id - Subscription identity.
    * @param {number} page - One-based page.
    * @param {WebhookDeliveryOutput['status'] | ''} status - Optional status filter.
+   *
    * @returns {Observable<HydraCollection<WebhookDeliveryOutput>>} API response.
    */
   public deliveries(
@@ -76,25 +93,35 @@ export class WebhookService extends HydraApiService {
   /**
    * Method mutate
    * @method mutate
-   * @description Sends one explicit management action without automatic retries.
+   *
+   * @description
+   * Sends one explicit management action without automatic retries.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {string} organizationId - Organization scope.
    * @param {WebhookMutation} action - Requested mutation.
-   * @returns {Observable<WebhookSubscriptionOutput | WebhookSecretOutput | WebhookPingOutput | void>} API response.
+   * @param {ApiRequestOptions} [options] - Caller-owned write intention retained for retries.
+   *
+   * @returns {Observable<
+   *   WebhookSubscriptionOutput | WebhookSecretOutput | WebhookPingOutput | void
+   * >}
+   *   API response.
    */
   public mutate(
     organizationId: string,
     action: WebhookMutation,
+    options?: ApiRequestOptions,
   ): Observable<WebhookSubscriptionOutput | WebhookSecretOutput | WebhookPingOutput | void> {
     const root = `/api/organizations/${organizationId}/webhooks`;
     if (action.kind === 'create') {
       const { url, description, eventTypes } = action.input;
-      return this.post<WebhookSubscriptionInput, WebhookSecretOutput>(root, {
-        url,
-        description,
-        eventTypes,
-      });
+      return this.post<WebhookSubscriptionInput, WebhookSecretOutput>(
+        root,
+        { url, description, eventTypes },
+        options,
+      );
     }
     const endpoint = `${root}/${action.id}`;
     switch (action.kind) {
@@ -102,16 +129,18 @@ export class WebhookService extends HydraApiService {
         return this.patch<Partial<WebhookSubscriptionInput>, WebhookSubscriptionOutput>(
           endpoint,
           action.input,
+          options,
         );
       case 'delete':
-        return this.delete(endpoint);
+        return this.delete(endpoint, options);
       case 'rotate':
-        return this.postAction<WebhookSecretOutput>(`${endpoint}/rotate-secret`);
+        return this.postAction<WebhookSecretOutput>(`${endpoint}/rotate-secret`, options);
       case 'ping':
-        return this.postAction<WebhookPingOutput>(`${endpoint}/ping`);
+        return this.postAction<WebhookPingOutput>(`${endpoint}/ping`, options);
       case 'redeliver':
         return this.postAction<WebhookPingOutput>(
           `${endpoint}/deliveries/${action.deliveryId}/redeliver`,
+          options,
         );
     }
   }

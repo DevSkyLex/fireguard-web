@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { HydraApiService, type ApiRequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   FacilityModelInput,
@@ -73,6 +73,7 @@ export class FacilityModelService extends HydraApiService {
    * @param {string} buildingId - Owning building.
    * @param {Blob} file - Autonomous GLB bytes.
    * @param {string} fileName - Original filename.
+   * @param {ApiRequestOptions | undefined} options - Retained identity for an unchanged upload.
    *
    * @returns {Observable<FacilityModelOutput>} Created draft, without inherited associations.
    */
@@ -81,13 +82,14 @@ export class FacilityModelService extends HydraApiService {
     buildingId: string,
     file: Blob,
     fileName: string,
+    options?: ApiRequestOptions,
   ): Observable<FacilityModelOutput> {
     const body: FormData = new FormData();
     body.set('file', file, fileName);
     return this.http.post<FacilityModelOutput>(
       this.buildUrl(`/api/organizations/${organizationId}/facilities/${buildingId}/models`),
       body,
-      { withCredentials: true, headers: this.buildHeaders().delete('Content-Type') },
+      { withCredentials: true, headers: this.buildWriteHeaders(options, true) },
     );
   }
 

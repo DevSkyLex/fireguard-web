@@ -233,6 +233,45 @@ describe('OnboardingWizardPage', () => {
     await fixture.whenStable();
   });
 
+  it('renders an unfamiliar current step before setup loading without creating resources or assuming actions', async () => {
+    storeMock.nextStep.set('additional_review');
+    storeMock.steps.set([
+      { ...stepOf('additional_review', 'pending'), label: 'Additional review' },
+      { ...stepOf('constructor', 'blocked'), label: 'Historical review' },
+    ]);
+    setupMock.ready.set(false);
+    await fixture.whenStable();
+
+    const root = fixture.nativeElement as HTMLElement;
+    expect(root.textContent).toContain('Additional review');
+    expect(root.textContent).toContain('Next: Historical review');
+    expect(root.querySelector('[data-testid="onboarding-unsupported-step"]')).not.toBeNull();
+    expect(root.querySelector('[data-testid="onboarding-setup-loading"]')).toBeNull();
+    expect(root.querySelector('[data-testid="onboarding-wizard-skip"]')).toBeNull();
+    expect(storeMock.executeStep).not.toHaveBeenCalled();
+    expect(setupMock.run).not.toHaveBeenCalled();
+    expect(organizationSetupServiceMock.createOrganization).not.toHaveBeenCalled();
+  });
+
+  it('offers the generic skip for an unfamiliar step only when the server grants it', async () => {
+    const contributed = {
+      ...stepOf('additional_review', 'pending'),
+      label: 'Additional review',
+      skippable: true,
+      skipAvailable: true,
+    };
+    storeMock.nextStep.set(contributed.key);
+    storeMock.steps.set([contributed]);
+    await fixture.whenStable();
+
+    (fixture.nativeElement as HTMLElement)
+      .querySelector<HTMLButtonElement>('[data-testid="onboarding-wizard-skip"]')
+      ?.click();
+
+    expect(storeMock.skipStep).toHaveBeenCalledWith('additional_review');
+    expect(storeMock.executeStep).not.toHaveBeenCalled();
+  });
+
   it('loads equipment choices only when that step is visible and cancels an obsolete organization read', async () => {
     expect(organizationSetupServiceMock.listEquipmentTypes).not.toHaveBeenCalled();
     const oldRead = new Subject<

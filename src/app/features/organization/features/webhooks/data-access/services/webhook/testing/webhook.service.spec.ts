@@ -61,4 +61,50 @@ describe('WebhookService', () => {
     expect(retry.request.body).toBeNull();
     retry.flush({ status: 'queued' });
   });
+  it('retains caller-owned keys across cold subscriptions for secret creation and rotation', () => {
+    const options = { idempotencyKey: '6392c2db-e0c2-46c9-89d9-c5b272b53f31' };
+    const creation = service.mutate(
+      'org',
+      {
+        kind: 'create',
+        input: {
+          url: 'https://example.com',
+          description: '',
+          eventTypes: ['inspection.submitted'],
+        },
+      },
+      options,
+    );
+    for (let retry = 0; retry < 2; ++retry) {
+      creation.subscribe();
+      const request = http.expectOne('https://api.test/api/organizations/org/webhooks');
+      expect(request.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+      request.flush({ secret: 'original-secret' });
+    }
+    service.mutate('org', { kind: 'rotate', id: 'hook' }, options).subscribe();
+    const rotation = http.expectOne(
+      'https://api.test/api/organizations/org/webhooks/hook/rotate-secret',
+    );
+    expect(rotation.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+    expect(rotation.request.body).toBeNull();
+    rotation.flush({ secret: 'rotated-secret' });
+  });
+  it.each([
+    {
+      action: { kind: 'update' as const, id: 'hook', input: { description: 'Changed' } },
+      suffix: '',
+    },
+    { action: { kind: 'delete' as const, id: 'hook' }, suffix: '' },
+    { action: { kind: 'ping' as const, id: 'hook' }, suffix: '/ping' },
+    {
+      action: { kind: 'redeliver' as const, id: 'hook', deliveryId: 'delivery' },
+      suffix: '/deliveries/delivery/redeliver',
+    },
+  ])('passes the caller-owned key for $action.kind', ({ action, suffix }) => {
+    const options = { idempotencyKey: '6392c2db-e0c2-46c9-89d9-c5b272b53f31' };
+    service.mutate('org', action, options).subscribe();
+    const request = http.expectOne(`https://api.test/api/organizations/org/webhooks/hook${suffix}`);
+    expect(request.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+    request.flush({});
+  });
 });

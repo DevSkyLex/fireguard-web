@@ -2,15 +2,17 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
+  signal,
   type EffectRef,
   effect,
   inject,
   untracked,
   type Signal,
+  type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ActiveTrustedDeviceStore, AuthStore } from '@features/auth/state';
-import { OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
+import { RecoveryCodeForm, OtpForm, type OtpFormValues } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
 import { HlmButton } from '@shared/ui/button';
@@ -23,13 +25,11 @@ import { HlmButton } from '@shared/ui/button';
  * Route entry for the second factor. The challenge lives in `AuthStore`, put
  * there by the sign-in response, and `mfaGuard` guarantees one exists before
  * this page renders.
- *
  * A TOTP challenge hides the resend control: an authenticator code is generated
  * on the device, so there is no delivery to repeat, and the backend rejects the
  * resend outright (`FEATURE.md`, auth). The same absent destination also has no
  * "sent to" to name, so the template's projected lead falls back to a generic
  * sentence instead of an empty one.
- *
  * The "trust this device" checkbox lives here and nowhere else: the page hands
  * the flag to `ActiveTrustedDeviceStore` before verifying, and `AuthStore`
  * issues `POST /api/trusted-devices` only once the second factor succeeded —
@@ -41,11 +41,61 @@ import { HlmButton } from '@shared/ui/button';
  */
 @Component({
   selector: 'app-mfa-verify-page',
-  imports: [HlmButton, OtpForm, PageHeading],
+  imports: [HlmButton, OtpForm, RecoveryCodeForm, PageHeading],
   templateUrl: './mfa-verify-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class MfaVerifyPage {
+  /**
+   * Property usingRecovery
+   * @readonly
+   *
+   * @description
+   * Whether the alternate recovery proof form is selected.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly usingRecovery: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Method toggleRecovery
+   *
+   * @description
+   * Handles toggle recovery for the current authentication flow.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void} Completes the local action.
+   */
+  protected toggleRecovery(): void {
+    if (this.authStore.isVerifyingMfa() || this.authStore.isResendingMfa()) return;
+    this.authStore.resetMfaVerifyOperation();
+    this.usingRecovery.update((current) => !current);
+  }
+
+  /**
+   * Method verifyRecovery
+   *
+   * @description
+   * Handles verify recovery for the current authentication flow.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @param {string} code - Current code.
+   *
+   * @returns {void} Completes the local action.
+   */
+  protected verifyRecovery(code: string): void {
+    const preAuthToken = this.authStore.mfaToken();
+    if (!preAuthToken || this.authStore.isVerifyingMfa()) return;
+    this.activeTrustedDeviceStore.setPendingTrustDevice(false);
+    this.authStore.mfaVerify({ preAuthToken, code, method: 'recovery_code' });
+  }
   //#region Properties
   /**
    * Property authStore
@@ -139,7 +189,18 @@ export class MfaVerifyPage {
   );
   //#endregion
 
-  /** @description The validated destination retained when restarting sign-in. */
+  /**
+   * Property returnUrl
+   * @readonly
+   *
+   * @description
+   * The validated destination retained when restarting sign-in.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
   protected readonly returnUrl: string = resolveReturnUrl(
     this.route.snapshot.queryParamMap.get('returnUrl'),
     '',
@@ -168,7 +229,17 @@ export class MfaVerifyPage {
   //#endregion
 
   //#region Methods
-  /** @description Clears the pending challenge before returning to sign-in, retaining the validated destination. */
+  /**
+   * Method restartSignIn
+   *
+   * @description
+   * Clears the pending challenge before returning to sign-in, retaining the validated destination.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void} Completes the local action.
+   */
   protected restartSignIn(): void {
     if (this.authStore.isVerifyingMfa() || this.authStore.isResendingMfa()) return;
 

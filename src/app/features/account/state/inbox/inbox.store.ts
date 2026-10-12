@@ -1,5 +1,5 @@
 import { isPlatformBrowser } from '@angular/common';
-import { computed, effect, inject, PLATFORM_ID, untracked } from '@angular/core';
+import { computed, effect, inject, PLATFORM_ID, untracked, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
@@ -20,7 +20,7 @@ import {
 } from '@ngrx/signals/entities';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, exhaustMap, pipe, Subject, switchMap, takeUntil } from 'rxjs';
+import { EMPTY, exhaustMap, pipe, Subject, switchMap, takeUntil, tap } from 'rxjs';
 import {
   errorCallState,
   idleCallState,
@@ -28,11 +28,13 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
+  WriteOperationService,
 } from '@core/request-state';
 import { InboxService, NotificationService } from '@features/account/data-access';
 import type { InboxItemOutput } from '@features/account/models';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
 import { notificationStoreEvents } from '@features/account/state/notifications/events';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { messageThreadStoreEvents } from '@features/organization/features/collaboration/state/message-thread/events';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import type { InboxState } from './inbox-state.interface';
@@ -147,249 +149,280 @@ export const InboxStore = signalStore(
      */
     hasMore: computed(() => store.complete() && store.nextPageCursor() !== null),
   })),
-  withMethods(
-    (
-      store,
-      service = inject(InboxService),
-      notifications = inject(NotificationService),
-      dispatcher = inject(Dispatcher),
-      platformId = inject(PLATFORM_ID),
-    ) => {
-      const scopeReset = new Subject<void>();
-      const pageReset = new Subject<void>();
-      const entityConfig = { collection: 'entry', selectId } as const;
+  withMethods((store) => {
+    const service = inject(InboxService);
+    const notifications = inject(NotificationService);
+    const dispatcher = inject(Dispatcher);
+    const platformId = inject(PLATFORM_ID);
+    const writeTracker = inject(WriteOperationService).createTracker();
+    const intentSession = inject(AUTH_SESSION_PORT);
+    const reference = inject(DestroyRef);
+    reference.onDestroy(() => writeTracker.clear());
+    let observedRevision = intentSession.sessionRevision();
+    effect(() => {
+      const revision = intentSession.sessionRevision();
+      if (revision !== observedRevision) {
+        observedRevision = revision;
+        untracked(() => writeTracker.clear());
+      }
+    });
+    const scopeReset = new Subject<void>();
+    const pageReset = new Subject<void>();
+    const entityConfig = { collection: 'entry', selectId } as const;
+
+    /**
+     * Method loadCount
+     *
+     * @description
+     * Refreshes the server total independently of loaded entries.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @returns {void}
+     */
+    const loadCount = rxMethod<void>(
+      pipe(
+        switchMap(() => {
+          if (!isPlatformBrowser(platformId) || !store.accountId()) return EMPTY;
+          const revision = store.revision();
+          patchState(store, { countCallState: pendingCallState() });
+          return service.unreadCount(store.organizationId()).pipe(
+            takeUntil(scopeReset),
+            tapResponse({
+              next: (unreadCount) => {
+                if (revision === store.revision())
+                  patchState(store, {
+                    unreadCount,
+                    countCallState: successCallState(unreadCount),
+                  });
+              },
+              error: (error: unknown) => {
+                if (revision === store.revision())
+                  patchState(store, { countCallState: errorCallState(toStoreError(error)) });
+              },
+            }),
+          );
+        }),
+      ),
+    );
+
+    /**
+     * Method load
+     *
+     * @description
+     * Activates the feed and restarts pagination while preserving acquired entries on failures or
+     * partial responses.
+     *
+     * @access public
+     * @since 1.0.0
+     *
+     * @returns {void}
+     */
+    const load = rxMethod<void>(
+      pipe(
+        switchMap(() => {
+          if (!isPlatformBrowser(platformId)) return EMPTY;
+          patchState(store, { activated: true });
+          if (!store.accountId()) return EMPTY;
+          pageReset.next();
+          const revision = store.revision();
+          patchState(store, {
+            listCallState: pendingCallState(),
+            moreCallState: idleCallState(),
+            nextPageCursor: null,
+          });
+          return service.list(store.organizationId(), null).pipe(
+            takeUntil(scopeReset),
+            tapResponse({
+              next: (page) => {
+                if (revision !== store.revision()) return;
+                patchState(
+                  store,
+                  page.complete
+                    ? setAllEntities([...page.items], entityConfig)
+                    : upsertEntities([...page.items], entityConfig),
+                  {
+                    nextPageCursor: page.complete ? page.nextPageCursor : null,
+                    complete: page.complete,
+                    listCallState: successCallState(page),
+                  },
+                );
+              },
+              error: (error: unknown) => {
+                if (revision === store.revision())
+                  patchState(store, { listCallState: errorCallState(toStoreError(error)) });
+              },
+            }),
+          );
+        }),
+      ),
+    );
+
+    return {
+      load,
+      loadCount,
 
       /**
-       * Method loadCount
+       * Method ensureLoaded
        *
        * @description
-       * Refreshes the server total independently of loaded entries.
+       * Loads the first page when a visible surface first opens; explicit retries handle
+       * failures.
        *
        * @access public
        * @since 1.0.0
        *
        * @returns {void}
        */
-      const loadCount = rxMethod<void>(
-        pipe(
-          switchMap(() => {
-            if (!isPlatformBrowser(platformId) || !store.accountId()) return EMPTY;
-            const revision = store.revision();
-            patchState(store, { countCallState: pendingCallState() });
-            return service.unreadCount(store.organizationId()).pipe(
-              takeUntil(scopeReset),
-              tapResponse({
-                next: (unreadCount) => {
-                  if (revision === store.revision())
-                    patchState(store, {
-                      unreadCount,
-                      countCallState: successCallState(unreadCount),
-                    });
-                },
-                error: (error: unknown) => {
-                  if (revision === store.revision())
-                    patchState(store, { countCallState: errorCallState(toStoreError(error)) });
-                },
-              }),
-            );
-          }),
-        ),
-      );
+      ensureLoaded(): void {
+        if (!store.activated()) load();
+      },
 
       /**
-       * Method load
+       * Method refresh
        *
        * @description
-       * Activates the feed and restarts pagination while preserving acquired entries on failures or
-       * partial responses.
+       * Invalidates after a source-owned mutation or realtime delivery.
        *
        * @access public
        * @since 1.0.0
        *
        * @returns {void}
        */
-      const load = rxMethod<void>(
+      refresh(): void {
+        loadCount();
+        if (store.activated()) load();
+      },
+
+      /**
+       * Method setScope
+       *
+       * @description
+       * Cancels previous-scope requests and removes their entries before querying a new account
+       * or workspace.
+       *
+       * @access public
+       * @since 1.0.0
+       *
+       * @param {string | null} accountId - Current authenticated account.
+       * @param {string | null} organizationId - Selected workspace.
+       *
+       * @returns {void}
+       */
+      setScope(accountId: string | null, organizationId: string | null): void {
+        if (accountId === store.accountId() && organizationId === store.organizationId()) return;
+        scopeReset.next();
+        pageReset.next();
+        const activated = accountId !== null && store.activated();
+        patchState(store, removeAllEntities({ collection: 'entry' }), {
+          ...INITIAL_STATE,
+          accountId,
+          organizationId,
+          activated,
+          revision: store.revision() + 1,
+        });
+        if (accountId) {
+          loadCount();
+          if (activated) load();
+        }
+      },
+
+      /**
+       * Method loadMore
+       *
+       * @description
+       * Appends the next complete cursor page, deduplicating repeated clicks and identities.
+       *
+       * @access public
+       * @since 1.0.0
+       *
+       * @returns {void}
+       */
+      loadMore: rxMethod<void>(
         pipe(
-          switchMap(() => {
-            if (!isPlatformBrowser(platformId)) return EMPTY;
-            patchState(store, { activated: true });
-            if (!store.accountId()) return EMPTY;
-            pageReset.next();
+          exhaustMap(() => {
+            if (
+              !isPlatformBrowser(platformId) ||
+              !store.accountId() ||
+              !store.hasMore() ||
+              store.isLoading()
+            )
+              return EMPTY;
             const revision = store.revision();
-            patchState(store, {
-              listCallState: pendingCallState(),
-              moreCallState: idleCallState(),
-              nextPageCursor: null,
-            });
-            return service.list(store.organizationId(), null).pipe(
+            patchState(store, { moreCallState: pendingCallState() });
+            return service.list(store.organizationId(), store.nextPageCursor()).pipe(
               takeUntil(scopeReset),
+              takeUntil(pageReset),
               tapResponse({
                 next: (page) => {
                   if (revision !== store.revision()) return;
-                  patchState(
-                    store,
-                    page.complete
-                      ? setAllEntities([...page.items], entityConfig)
-                      : upsertEntities([...page.items], entityConfig),
-                    {
-                      nextPageCursor: page.complete ? page.nextPageCursor : null,
-                      complete: page.complete,
-                      listCallState: successCallState(page),
-                    },
-                  );
+                  patchState(store, upsertEntities([...page.items], entityConfig), {
+                    complete: page.complete,
+                    nextPageCursor: page.complete ? page.nextPageCursor : null,
+                    moreCallState: successCallState(page),
+                  });
                 },
                 error: (error: unknown) => {
                   if (revision === store.revision())
-                    patchState(store, { listCallState: errorCallState(toStoreError(error)) });
+                    patchState(store, { moreCallState: errorCallState(toStoreError(error)) });
                 },
               }),
             );
           }),
         ),
-      );
+      ),
 
-      return {
-        load,
-        loadCount,
-
-        /**
-         * Method ensureLoaded
-         *
-         * @description
-         * Loads the first page when a visible surface first opens; explicit retries handle
-         * failures.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @returns {void}
-         */
-        ensureLoaded(): void {
-          if (!store.activated()) load();
-        },
-
-        /**
-         * Method refresh
-         *
-         * @description
-         * Invalidates after a source-owned mutation or realtime delivery.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @returns {void}
-         */
-        refresh(): void {
-          loadCount();
-          if (store.activated()) load();
-        },
-
-        /**
-         * Method setScope
-         *
-         * @description
-         * Cancels previous-scope requests and removes their entries before querying a new account
-         * or workspace.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @param {string | null} accountId - Current authenticated account.
-         * @param {string | null} organizationId - Selected workspace.
-         *
-         * @returns {void}
-         */
-        setScope(accountId: string | null, organizationId: string | null): void {
-          if (accountId === store.accountId() && organizationId === store.organizationId()) return;
-          scopeReset.next();
-          pageReset.next();
-          const activated = accountId !== null && store.activated();
-          patchState(store, removeAllEntities({ collection: 'entry' }), {
-            ...INITIAL_STATE,
-            accountId,
-            organizationId,
-            activated,
-            revision: store.revision() + 1,
-          });
-          if (accountId) {
-            loadCount();
-            if (activated) load();
-          }
-        },
-
-        /**
-         * Method loadMore
-         *
-         * @description
-         * Appends the next complete cursor page, deduplicating repeated clicks and identities.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @returns {void}
-         */
-        loadMore: rxMethod<void>(
-          pipe(
-            exhaustMap(() => {
-              if (
-                !isPlatformBrowser(platformId) ||
-                !store.accountId() ||
-                !store.hasMore() ||
-                store.isLoading()
+      /**
+       * Method markAsRead
+       *
+       * @description
+       * Acknowledges notification-source entries only. Conversation read markers belong to
+       * Messaging.
+       *
+       * @access public
+       * @since 1.0.0
+       *
+       * @param {InboxItemOutput} item - Selected contributor item.
+       *
+       * @returns {void}
+       */
+      markAsRead: rxMethod<InboxItemOutput>(
+        pipe(
+          exhaustMap((item) => {
+            if (
+              !isPlatformBrowser(platformId) ||
+              !store.accountId() ||
+              item.sourceKey !== 'notification' ||
+              item.isRead ||
+              !store.entryEntityMap()[selectId(item)]
+            )
+              return EMPTY;
+            const revision = store.revision();
+            patchState(store, { readCallState: pendingCallState() });
+            return notifications
+              .markAsRead(
+                item.id,
+                writeTracker.options(
+                  'notifications.markAsRead',
+                  [item.id],
+                  intentSession.sessionRevision(),
+                ),
               )
-                return EMPTY;
-              const revision = store.revision();
-              patchState(store, { moreCallState: pendingCallState() });
-              return service.list(store.organizationId(), store.nextPageCursor()).pipe(
-                takeUntil(scopeReset),
-                takeUntil(pageReset),
-                tapResponse({
-                  next: (page) => {
-                    if (revision !== store.revision()) return;
-                    patchState(store, upsertEntities([...page.items], entityConfig), {
-                      complete: page.complete,
-                      nextPageCursor: page.complete ? page.nextPageCursor : null,
-                      moreCallState: successCallState(page),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    if (revision === store.revision())
-                      patchState(store, { moreCallState: errorCallState(toStoreError(error)) });
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('notifications.markAsRead');
                   },
                 }),
-              );
-            }),
-          ),
-        ),
-
-        /**
-         * Method markAsRead
-         *
-         * @description
-         * Acknowledges notification-source entries only. Conversation read markers belong to
-         * Messaging.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @param {InboxItemOutput} item - Selected contributor item.
-         *
-         * @returns {void}
-         */
-        markAsRead: rxMethod<InboxItemOutput>(
-          pipe(
-            exhaustMap((item) => {
-              if (
-                !isPlatformBrowser(platformId) ||
-                !store.accountId() ||
-                item.sourceKey !== 'notification' ||
-                item.isRead ||
-                !store.entryEntityMap()[selectId(item)]
-              )
-                return EMPTY;
-              const revision = store.revision();
-              patchState(store, { readCallState: pendingCallState() });
-              return notifications.markAsRead(item.id).pipe(
                 takeUntil(scopeReset),
                 tapResponse({
                   next: () => {
@@ -417,12 +450,11 @@ export const InboxStore = signalStore(
                   },
                 }),
               );
-            }),
-          ),
+          }),
         ),
-      };
-    },
-  ),
+      ),
+    };
+  }),
   withHooks(
     (
       store,

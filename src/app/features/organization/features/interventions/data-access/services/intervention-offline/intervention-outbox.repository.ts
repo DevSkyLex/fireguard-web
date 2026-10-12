@@ -1,6 +1,7 @@
 import { effect, inject, Service, signal, type Signal, type WritableSignal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Events } from '@ngrx/signals/events';
+import { WriteOperationService } from '@core/request-state';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { authStoreEvents } from '@features/auth/state';
@@ -32,6 +33,19 @@ import { InterventionDatabaseService } from './intervention-database.service';
 @Service()
 export class InterventionOutboxRepository {
   //#region Properties
+  /**
+   * Property writeOperations
+   * @readonly
+   *
+   * @description
+   * Creates receipt identities for durable immutable intentions.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WriteOperationService}
+   */
+  private readonly writeOperations: WriteOperationService = inject(WriteOperationService);
   /**
    * Property session
    * @readonly
@@ -285,6 +299,7 @@ export class InterventionOutboxRepository {
     this.lastQueuedAt = queuedAt;
     const operation: InterventionOutboxOperationFor<Type> = {
       id: crypto.randomUUID(),
+      idempotencyKey: this.writeOperations.create().idempotencyKey,
       interventionId,
       type,
       payload: { ...payload, clientId },
@@ -369,6 +384,7 @@ export class InterventionOutboxRepository {
         const queuedAt = Math.max(Date.now(), this.lastQueuedAt + 1);
         this.lastQueuedAt = queuedAt;
         const operation: InterventionOutboxOperationFor<'inventory-consumption.declare'> = {
+          idempotencyKey: this.writeOperations.create().idempotencyKey,
           id: key,
           interventionId: input.interventionId,
           type: 'inventory-consumption.declare',
@@ -449,6 +465,7 @@ export class InterventionOutboxRepository {
       this.lastQueuedAt = queuedAt;
       return {
         id: crypto.randomUUID(),
+        idempotencyKey: this.writeOperations.create().idempotencyKey,
         interventionId,
         type: entry.type,
         payload: { ...entry.payload, clientId },
@@ -471,6 +488,42 @@ export class InterventionOutboxRepository {
       this.pendingOps.update((count: number) => count + operations.length);
     }
     return operations.map((operation) => operation.id);
+  }
+
+  /**
+   * Method ensureIdempotencyKey
+   * @method ensureIdempotencyKey
+   *
+   * @description
+   * Backfills a legacy receipt identity in one IndexedDB transaction before network I/O.
+   * Concurrent tabs retain the first committed key; missing or obsolete rows cannot be sent.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} id - Durable operation row id.
+   *
+   * @returns {Promise<string | null>} The persisted key, or null when the row no longer exists.
+   */
+  public async ensureIdempotencyKey(id: string): Promise<string | null> {
+    const isCurrent = this.captureMutationContext();
+    await this.database.ensureOwnerBound();
+    this.assertCurrent(isCurrent);
+    let key: string | null = null;
+    await this.database.updateTransaction(
+      { ['outbox']: [id] },
+      (values) => {
+        const operation = values['outbox']?.[id] as InterventionOutboxOperation | null | undefined;
+        if (!operation) return { outbox: [] };
+        key = operation.idempotencyKey ?? this.writeOperations.create().idempotencyKey;
+        return operation.idempotencyKey
+          ? { outbox: [] }
+          : { ['outbox']: [{ key: id, value: { ...operation, idempotencyKey: key } }] };
+      },
+      isCurrent,
+    );
+    this.assertCurrent(isCurrent);
+    return key;
   }
 
   /**
@@ -726,6 +779,7 @@ export class InterventionOutboxRepository {
       id,
       {
         ...operation,
+        idempotencyKey: this.writeOperations.create().idempotencyKey,
         payload: { ...operation.payload, revision },
         baseRevision:
           operation.baseRevision ??
@@ -807,6 +861,7 @@ export class InterventionOutboxRepository {
       id,
       {
         ...operation,
+        idempotencyKey: this.writeOperations.create().idempotencyKey,
         payload: { ...operation.payload, workloadConfirmationToken: token },
         workloadAssessment: null,
         status: 'pending',
@@ -853,6 +908,7 @@ export class InterventionOutboxRepository {
       id,
       {
         ...operation,
+        idempotencyKey: this.writeOperations.create().idempotencyKey,
         payload: { ...operation.payload, revision },
         serverValues: null,
         status: 'pending',

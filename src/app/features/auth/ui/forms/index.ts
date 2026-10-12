@@ -8,3 +8,5 @@ export { OtpForm } from './otp-form';
 export type { OtpFormValues } from './otp-form';
 export { RegisterForm } from './register-form';
 export type { RegisterFormValues } from './register-form';
+
+export { RecoveryCodeForm } from './recovery-code-form';

@@ -124,6 +124,19 @@ describe('InventoryService', () => {
     consumptions.flush({ member: [], totalItems: 0 });
   });
 
+  it('correlates one ordinary consumption receipt with the original operation UUID', () => {
+    service
+      .listConsumptions('org', { clientOperationId: 'original-operation', itemsPerPage: 1 })
+      .subscribe();
+    const request = http.expectOne(
+      (candidate) => candidate.url === base + '/inventory-consumptions',
+    );
+    expect(request.request.method).toBe('GET');
+    expect(request.request.params.get('clientOperationId')).toBe('original-operation');
+    expect(request.request.params.get('itemsPerPage')).toBe('1');
+    request.flush({ member: [], totalItems: 0 });
+  });
+
   it('preserves the complete exact declaration and immutable UUID across response-loss retry', () => {
     let failure: unknown;
     service.declareConsumption('org', declaration).subscribe({
@@ -165,10 +178,12 @@ describe('InventoryService', () => {
       quantity: '0.000001',
       reason: 'Unused seal',
     };
-    service.returnConsumption('org', returned).subscribe();
+    const operation = { idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' };
+    service.returnConsumption('org', returned, operation).subscribe();
     const returnRequest = http.expectOne(base + '/inventory-returns');
     expect(returnRequest.request.method).toBe('POST');
     expect(returnRequest.request.body).toEqual(returned);
+    expect(returnRequest.request.headers.get('Idempotency-Key')).toBe(operation.idempotencyKey);
     returnRequest.flush({ '@id': '/movement', '@type': 'InventoryMovement' });
     const corrected = {
       clientOperationId: 'correction-id',
@@ -178,9 +193,10 @@ describe('InventoryService', () => {
       reason: 'Count correction',
       unitCost: '99999999999999.123456',
     };
-    service.correctStock('org', corrected).subscribe();
+    service.correctStock('org', corrected, operation).subscribe();
     const correction = http.expectOne(base + '/inventory-corrections');
     expect(correction.request.body).toEqual(corrected);
+    expect(correction.request.headers.get('Idempotency-Key')).toBe(operation.idempotencyKey);
     expect(correction.request.body.unitCost).toBe('99999999999999.123456');
     correction.flush({ '@id': '/movement', '@type': 'InventoryMovement' });
   });

@@ -15,6 +15,7 @@ import type {
   SetupTotpOutput,
   UserProfileOutput,
 } from '@features/account/models';
+import { RecoveryCodesStore } from '@features/account/state';
 import {
   AccountDeactivationStore,
   AccountEmailChangeStore,
@@ -31,7 +32,9 @@ import type {
   SessionOutput,
   TrustedDeviceOutput,
 } from '@features/auth/models';
+import { PasswordPolicyStore } from '@features/auth/state';
 import { FederatedAuthStore, SessionStore, TrustedDeviceStore } from '@features/auth/state';
+import { DEFAULT_PASSWORD_POLICY } from '@features/auth/state/password-policy/testing/password-policy.fixture';
 import { AccountSecurityPage } from '../account-security-page.component';
 
 const SETUP: SetupTotpOutput = {
@@ -110,6 +113,7 @@ describe('AccountSecurityPage', () => {
     requestError: WritableSignal<StoreError | null>;
   };
   let federatedStore: {
+    providers: WritableSignal<readonly import('@features/auth/models').FederatedProviderOutput[]>;
     loadProviders: ReturnType<typeof vi.fn>;
     loadConnections: ReturnType<typeof vi.fn>;
     startLink: ReturnType<typeof vi.fn>;
@@ -206,6 +210,7 @@ describe('AccountSecurityPage', () => {
       requestError: signal<StoreError | null>(null),
     };
     federatedStore = {
+      providers: signal([]),
       loadProviders: vi.fn(),
       loadConnections: vi.fn(),
       startLink: vi.fn(),
@@ -254,6 +259,26 @@ describe('AccountSecurityPage', () => {
       .overrideComponent(AccountSecurityPage, {
         set: {
           providers: [
+            {
+              provide: PasswordPolicyStore,
+              useValue: {
+                policy: signal(DEFAULT_PASSWORD_POLICY),
+                policyCallState: signal(successCallState(DEFAULT_PASSWORD_POLICY)),
+                load: vi.fn(),
+              },
+            },
+            {
+              provide: RecoveryCodesStore,
+              useValue: {
+                load: vi.fn(),
+                clear: vi.fn(),
+                generate: vi.fn(),
+                codes: signal([]),
+                statusCallState: signal(idleCallState()),
+                generateCallState: signal(idleCallState()),
+                pending: signal(false),
+              },
+            },
             { provide: AccountTotpEnrollmentStore, useValue: totpStore },
             { provide: AccountPasswordChangeStore, useValue: passwordStore },
             { provide: SessionStore, useValue: sessionStore },

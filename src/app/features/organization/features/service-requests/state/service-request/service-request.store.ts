@@ -13,6 +13,7 @@ import { removeAllEntities, setAllEntities, withEntities } from '@ngrx/signals/e
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, exhaustMap, from, pipe, shareReplay, switchMap, type Observable } from 'rxjs';
+import { getIdempotencyErrorCode } from '@core/api';
 import {
   idleCallState,
   pendingCallState,
@@ -710,7 +711,10 @@ export const ServiceRequestStore = signalStore(
                     }
                     const failure = toStoreError(error);
                     const code: number = Number(failure.code);
-                    const rejected = code >= 400 && code < 500 && !failure.retryable;
+                    const rejected =
+                      [400, 412, 422].includes(code) &&
+                      !failure.retryable &&
+                      getIdempotencyErrorCode(error) === null;
                     patchState(store, {
                       writeCallState: errorCallState(failure),
                       ...(command.kind === 'convert' &&

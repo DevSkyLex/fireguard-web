@@ -1,8 +1,10 @@
 import { HttpErrorResponse } from '@angular/common/http';
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import { MaintenancePlanService } from '@features/organization/features/maintenance-schedules/data-access';
@@ -33,6 +35,7 @@ describe('MaintenancePlansStore', () => {
   };
   let equipmentService: { list: ReturnType<typeof vi.fn> };
   let dispatch: ReturnType<typeof vi.fn>;
+  const revision = signal(0);
   const organizationId = 'c40bc4a3-c8c6-4177-aaef-fc406b78ee64';
   const otherOrganizationId = 'eaf9bc58-a98c-4552-8122-277689746b0f';
   const planId = '94b24e9b-9ebf-4462-8a2f-12b369c79481';
@@ -87,6 +90,7 @@ describe('MaintenancePlansStore', () => {
   };
 
   beforeEach(() => {
+    revision.set(0);
     service = {
       list: vi.fn().mockReturnValue(of(collection)),
       engine: vi.fn().mockReturnValue(of({ mode: 'legacy', preparedCount: 0 })),
@@ -102,6 +106,7 @@ describe('MaintenancePlansStore', () => {
     TestBed.configureTestingModule({
       providers: [
         MaintenancePlansStore,
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: revision } },
         { provide: MaintenancePlanService, useValue: service },
         {
           provide: EquipmentService,
@@ -395,9 +400,19 @@ describe('MaintenancePlansStore', () => {
     store.setScope(organizationId);
     store.preview(preparedPlan({ active: true }));
     store.generate({ organizationId, planId, retry: false });
-    expect(service.generate).toHaveBeenLastCalledWith(organizationId, planId, false);
+    expect(service.generate).toHaveBeenLastCalledWith(
+      organizationId,
+      planId,
+      false,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     store.generate({ organizationId, planId, retry: true });
-    expect(service.generate).toHaveBeenLastCalledWith(organizationId, planId, true);
+    expect(service.generate).toHaveBeenLastCalledWith(
+      organizationId,
+      planId,
+      true,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.selectedPlan()?.lastCompletedAt).toBeNull();
     expect(dispatch).toHaveBeenCalledWith(
       maintenancePlansStoreEvents.planChanged({ organizationId }),
@@ -442,7 +457,10 @@ describe('MaintenancePlansStore', () => {
     expect(store.migrationCallState().status).toBe('pending');
     expect(store.commandPending()).toBe(true);
     expect(store.engineCallState().data?.mode).toBe('legacy');
-    expect(service.activateEngine).toHaveBeenCalledExactlyOnceWith(organizationId);
+    expect(service.activateEngine).toHaveBeenCalledExactlyOnceWith(
+      organizationId,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(service.prepareLegacy).not.toHaveBeenCalled();
     accepted.next({ mode: 'plans', preparedCount: 3, conflicts: [] });
     accepted.complete();
@@ -597,6 +615,90 @@ describe('MaintenancePlansStore', () => {
     expect(store.listCallState().status).toBe('idle');
     expect(store.planEntities()).toEqual([preparedPlan()]);
     expect(store.totalPlans()).toBe(72);
+  });
+
+  it('retains generation identity after a lost response and renews it for a different attempt or plan', () => {
+    service.generate.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    const original = service.generate.mock.calls[0][3];
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    expect(service.generate.mock.calls[1][3]).toEqual(original);
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: true });
+    expect(service.generate.mock.calls[2][3].idempotencyKey).not.toBe(original.idempotencyKey);
+    store.generate({ organizationId: 'org-1', planId: 'plan-2', retry: true });
+    expect(service.generate.mock.calls[3][3].idempotencyKey).not.toBe(
+      service.generate.mock.calls[2][3].idempotencyKey,
+    );
+  });
+
+  it('releases generation identity after success for the next confirmed intention', () => {
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    expect(service.generate.mock.calls[1][3].idempotencyKey).not.toBe(
+      service.generate.mock.calls[0][3].idempotencyKey,
+    );
+  });
+
+  it.each([false, true])(
+    'retains migration identity across a lost response (activate=%s)',
+    (activate) => {
+      const command = activate ? service.activateEngine : service.prepareLegacy;
+      command.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+      store.migrate({ organizationId: 'org-1', activate });
+      store.migrate({ organizationId: 'org-1', activate });
+      expect(command.mock.calls[1][1]).toEqual(command.mock.calls[0][1]);
+      command.mockReturnValue(of({ mode: activate ? 'plans' : 'legacy', preparedCount: 3 }));
+      store.migrate({ organizationId: 'org-1', activate });
+      expect(command.mock.calls[2][1]).toEqual(command.mock.calls[0][1]);
+      store.migrate({ organizationId: 'org-1', activate });
+      expect(command.mock.calls[3][1].idempotencyKey).not.toBe(
+        command.mock.calls[0][1].idempotencyKey,
+      );
+    },
+  );
+
+  it('starts a new migration intention when the requested authority changes', () => {
+    service.prepareLegacy.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    service.activateEngine.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    store.migrate({ organizationId: 'org-1', activate: false });
+    store.migrate({ organizationId: 'org-1', activate: true });
+    expect(service.activateEngine.mock.calls[0][1].idempotencyKey).not.toBe(
+      service.prepareLegacy.mock.calls[0][1].idempotencyKey,
+    );
+  });
+
+  it('fences a previous session result and settlement while admitting the new owner generation', () => {
+    const previous = new Subject<MaintenancePlanGenerationOutput>();
+    const current = new Subject<MaintenancePlanGenerationOutput>();
+    service.generate.mockReturnValueOnce(previous).mockReturnValue(current);
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    revision.set(1);
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    expect(service.generate.mock.calls[1][3].idempotencyKey).not.toBe(
+      service.generate.mock.calls[0][3].idempotencyKey,
+    );
+    previous.next(work);
+    previous.complete();
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(store.generationCallState().status).toBe('pending');
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    expect(service.generate).toHaveBeenCalledTimes(2);
+    current.next(work);
+    current.complete();
+    expect(store.generationCallState().status).toBe('success');
+    expect(dispatch).toHaveBeenCalledOnce();
+  });
+
+  it('clears retained retry identities on session replacement even without another command', () => {
+    service.generate.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    revision.set(1);
+    TestBed.tick();
+    expect(store.generationCallState().status).toBe('idle');
+    store.generate({ organizationId: 'org-1', planId: 'plan-1', retry: false });
+    expect(service.generate.mock.calls[1][3].idempotencyKey).not.toBe(
+      service.generate.mock.calls[0][3].idempotencyKey,
+    );
   });
 
   it('does not send a preview request for an operation owned by another organization', () => {

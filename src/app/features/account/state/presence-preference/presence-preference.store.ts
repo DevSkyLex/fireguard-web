@@ -1,10 +1,11 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
-import { EMPTY, finalize, mergeMap, pipe, switchMap } from 'rxjs';
+import { EMPTY, finalize, mergeMap, pipe, switchMap, tap } from 'rxjs';
 import {
+  WriteOperationService,
   errorCallState,
   idleCallState,
   pendingCallState,
@@ -23,10 +24,15 @@ import type { PresencePreferenceState } from './models/state.interface';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
- * @description No preference is inferred until the server confirms it.
+ *
+ * @description
+ * No preference is inferred until the server confirms it.
+ *
  * @since 1.0.0
+ *
  * @type {PresencePreferenceState}
+ *
+ * @const INITIAL_STATE
  */
 const INITIAL_STATE: PresencePreferenceState = {
   preference: null,
@@ -37,11 +43,15 @@ const INITIAL_STATE: PresencePreferenceState = {
 };
 
 /**
- * Store PresencePreferenceStore
- * @const PresencePreferenceStore
- * @description Session-scoped global NPD preference. Writes finish in their original session,
+ * Constant PresencePreferenceStore
+ *
+ * @description
+ * Session-scoped global NPD preference. Writes finish in their original session,
  * never optimistically change presence, and cannot overwrite a newer server revision.
+ *
  * @since 1.0.0
+ *
+ * @const PresencePreferenceStore
  */
 export const PresencePreferenceStore = signalStore(
   { providedIn: 'root' },
@@ -58,6 +68,21 @@ export const PresencePreferenceStore = signalStore(
       api = inject(PresencePreferenceService),
       session = inject(AUTH_SESSION_PORT),
       dispatcher = inject(Dispatcher),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => {
       let owner = session.sessionRevision();
       let generation = 0;
@@ -67,9 +92,15 @@ export const PresencePreferenceStore = signalStore(
 
       /**
        * Function accept
-       * @description Applies only forward-moving canonical revisions for this account.
+       *
+       * @description
+       * Applies only forward-moving canonical revisions for this account.
+       *
        * @since 1.0.0
-       * @param {Pick<PresencePreferenceOutput, 'doNotDisturb' | 'revision' | 'invisible'>} value - Validated server preference.
+       *
+       * @param {Pick<PresencePreferenceOutput, 'doNotDisturb' | 'revision' | 'invisible'>} value -
+       *   Validated server preference.
+       *
        * @returns {void}
        */
       function accept(
@@ -167,29 +198,51 @@ export const PresencePreferenceStore = signalStore(
             if (revision !== owner || !store.available() || saving.has(revision)) return EMPTY;
             saving.add(revision);
             patchState(store, { saveCallState: pendingCallState() });
-            return api.updatePreference(input).pipe(
-              tapResponse({
-                next: (value) => {
-                  if (revision !== session.sessionRevision()) return;
-                  accept(value);
-                  patchState(store, { saveCallState: successCallState(value) });
-                },
-                error: (error: unknown) => {
-                  if (revision !== session.sessionRevision()) return;
-                  const normalized = toStoreError(error);
-                  patchState(store, { saveCallState: errorCallState(normalized) });
-                  dispatcher.dispatch(
-                    presencePreferenceStoreEvents.saveFailed(
-                      toStoreFailureEventPayload(
-                        normalized,
-                        $localize`:@@account.presence.saveError:Your presence preference could not be saved.`,
+            return api
+              .updatePreference(
+                input,
+                writeTracker.options(
+                  'api.updatePreference',
+                  [input],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('api.updatePreference');
+                  },
+                }),
+                tapResponse({
+                  next: (value) => {
+                    if (revision !== session.sessionRevision()) return;
+                    accept(value);
+                    patchState(store, { saveCallState: successCallState(value) });
+                  },
+                  error: (error: unknown) => {
+                    if (revision !== session.sessionRevision()) return;
+                    const normalized = toStoreError(error);
+                    patchState(store, { saveCallState: errorCallState(normalized) });
+                    dispatcher.dispatch(
+                      presencePreferenceStoreEvents.saveFailed(
+                        toStoreFailureEventPayload(
+                          normalized,
+                          $localize`:@@account.presence.saveError:Your presence preference could not be saved.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-              finalize(() => saving.delete(revision)),
-            );
+                    );
+                  },
+                }),
+                finalize(() => saving.delete(revision)),
+              );
           }),
         ),
       );
@@ -197,18 +250,26 @@ export const PresencePreferenceStore = signalStore(
       return {
         load,
         subscribe,
-        /** @description Clears both special modes in one confirmed write. */
+        /**
+         * @description
+         * Clears both special modes in one confirmed write.
+         */
         setActive(): void {
           save({ doNotDisturb: false, invisible: false });
         },
         /**
          * Method setContext
          * @method setContext
-         * @description Cancels obsolete reads and forgets all private state on session replacement.
+         *
+         * @description
+         * Cancels obsolete reads and forgets all private state on session replacement.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {number} revision - Local authenticated session revision.
          * @param {boolean} active - Browser is hydrated, authenticated, visible and online.
+         *
          * @returns {void}
          */
         setContext(revision: number, active: boolean): void {
@@ -236,11 +297,16 @@ export const PresencePreferenceStore = signalStore(
         /**
          * Method applyRealtime
          * @method applyRealtime
-         * @description Accepts a validated private preference frame only for its live session.
+         *
+         * @description
+         * Accepts a validated private preference frame only for its live session.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {unknown} frame - Parsed Mercure frame.
          * @param {number} revision - Session that subscribed.
+         *
          * @returns {void}
          */
         applyRealtime(frame: unknown, revision: number): void {
@@ -270,10 +336,15 @@ export const PresencePreferenceStore = signalStore(
         /**
          * Method setDoNotDisturb
          * @method setDoNotDisturb
-         * @description Saves one confirmed boolean, with an independent in-flight gate per session.
+         *
+         * @description
+         * Saves one confirmed boolean, with an independent in-flight gate per session.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {boolean} doNotDisturb - Desired global preference.
+         *
          * @returns {void}
          */
         setDoNotDisturb(doNotDisturb: boolean): void {
@@ -282,10 +353,15 @@ export const PresencePreferenceStore = signalStore(
         /**
          * Method setInvisible
          * @method setInvisible
-         * @description Activating visibility mode disables NPD in the same confirmed write.
+         *
+         * @description
+         * Activating visibility mode disables NPD in the same confirmed write.
+         *
          * @access public
          * @since 1.0.0
+         *
          * @param {boolean} invisible - Whether to appear offline.
+         *
          * @returns {void}
          */
         setInvisible(invisible: boolean): void {
@@ -298,8 +374,12 @@ export const PresencePreferenceStore = signalStore(
 
 /**
  * Type PresencePreferenceStore
- * @type PresencePreferenceStore
- * @description Injectable account preference store instance.
+ *
+ * @description
+ * Injectable account preference store instance.
+ *
  * @since 1.0.0
+ *
+ * @type PresencePreferenceStore
  */
 export type PresencePreferenceStore = InstanceType<typeof PresencePreferenceStore>;

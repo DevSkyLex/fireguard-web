@@ -128,7 +128,12 @@ describe('OrganizationSettingsStore', () => {
     store.uploadLogo({ organizationId: 'org-1', file, fileName: 'logo.png' });
     await flushEffects();
 
-    expect(mockOrganizationService.uploadLogo).toHaveBeenCalledWith('org-1', file, 'logo.png');
+    expect(mockOrganizationService.uploadLogo).toHaveBeenCalledWith(
+      'org-1',
+      file,
+      'logo.png',
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.uploadLogoSucceeded()).toBe(true);
     expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith(updatedOrg);
     expect(dispatcher.dispatch).toHaveBeenCalledWith(
@@ -377,6 +382,181 @@ describe('OrganizationSettingsStore', () => {
     await flushEffects();
     expect(store.uploadLogoSucceeded()).toBe(true);
     expect(mockActiveOrganizationStore.setOrganization).toHaveBeenCalledWith(updatedOrg);
+  });
+
+  describe('logo upload intention', () => {
+    const keyAt = (callIndex: number): string =>
+      (mockOrganizationService.uploadLogo.mock.calls[callIndex][3] as { idempotencyKey: string })
+        .idempotencyKey;
+    const failUpload = (): void => {
+      mockOrganizationService.uploadLogo.mockReturnValue(throwError(() => new Error('Offline')));
+    };
+
+    it('retains an unchanged failed file intention and starts a fresh intention after success', () => {
+      const file = new File(['image'], 'logo.png', { type: 'image/png' });
+      mockOrganizationService.uploadLogo.mockReturnValueOnce(
+        throwError(() => new Error('Offline')),
+      );
+
+      store.uploadLogo({ organizationId: 'org-1', file, fileName: file.name });
+      expect(store.uploadLogoError()).not.toBeNull();
+      const originalKey = keyAt(0);
+      expect(originalKey).toMatch(/^[0-9a-f-]{36}$/i);
+      store.uploadLogo({ organizationId: 'org-1', file, fileName: file.name });
+      expect(keyAt(1)).toBe(originalKey);
+      expect(store.uploadLogoSucceeded()).toBe(true);
+
+      store.uploadLogo({ organizationId: 'org-1', file, fileName: file.name });
+      expect(keyAt(2)).not.toBe(originalKey);
+    });
+
+    it('rotates identity for different file bytes even when filename, size and modification time match', () => {
+      failUpload();
+      const first = new File(['first'], 'logo.png', { type: 'image/png', lastModified: 100 });
+      const second = new File(['other'], 'logo.png', { type: 'image/png', lastModified: 100 });
+      expect([first.name, first.size, first.lastModified]).toEqual([
+        second.name,
+        second.size,
+        second.lastModified,
+      ]);
+
+      store.uploadLogo({ organizationId: 'org-1', file: first, fileName: first.name });
+      store.uploadLogo({ organizationId: 'org-1', file: second, fileName: second.name });
+      expect(keyAt(1)).not.toBe(keyAt(0));
+      store.uploadLogo({ organizationId: 'org-1', file: second, fileName: second.name });
+      expect(keyAt(2)).toBe(keyAt(1));
+    });
+
+    it('treats an edited multipart filename as a new intention and normalizes the default filename', () => {
+      failUpload();
+      const file = new Blob(['image'], { type: 'image/png' });
+      store.uploadLogo({ organizationId: 'org-1', file });
+      store.uploadLogo({ organizationId: 'org-1', file, fileName: 'logo' });
+      expect(keyAt(1)).toBe(keyAt(0));
+      store.uploadLogo({ organizationId: 'org-1', file, fileName: 'renamed.png' });
+      expect(keyAt(2)).not.toBe(keyAt(0));
+    });
+
+    it('rejects a duplicate pending upload without changing its accepted intention', () => {
+      const response = new Subject<OrganizationOutput>();
+      mockOrganizationService.uploadLogo.mockReturnValueOnce(response);
+      const first = new File(['first'], 'logo.png');
+      store.uploadLogo({ organizationId: 'org-1', file: first, fileName: first.name });
+      store.uploadLogo({ organizationId: 'org-1', file: new File(['other'], 'logo.png') });
+      expect(mockOrganizationService.uploadLogo).toHaveBeenCalledOnce();
+      response.error(new Error('Response lost'));
+      failUpload();
+      store.uploadLogo({ organizationId: 'org-1', file: first, fileName: first.name });
+      expect(keyAt(1)).toBe(keyAt(0));
+    });
+
+    it('ends the intention when the logo is removed', () => {
+      failUpload();
+      const file = new File(['image'], 'logo.png');
+      store.uploadLogo({ organizationId: 'org-1', file });
+      store.removeLogo({ organizationId: 'org-1' });
+      store.uploadLogo({ organizationId: 'org-1', file });
+      expect(keyAt(1)).not.toBe(keyAt(0));
+    });
+
+    it('starts a new intention on each organization visit including A to B to A', () => {
+      failUpload();
+      const file = new File(['image'], 'logo.png');
+      store.uploadLogo({ organizationId: 'org-1', file });
+      selectedOrganization.set({ ...updatedOrg, id: 'org-2' });
+      store.uploadLogo({ organizationId: 'org-2', file });
+      selectedOrganization.set(updatedOrg);
+      store.uploadLogo({ organizationId: 'org-1', file });
+      expect(new Set([keyAt(0), keyAt(1), keyAt(2)]).size).toBe(3);
+    });
+
+    it('clears failed file intentions at session change and logout', () => {
+      failUpload();
+      const file = new File(['image'], 'logo.png');
+      store.uploadLogo({ organizationId: 'org-1', file });
+      sessionRevision.update((revision) => revision + 1);
+      store.uploadLogo({ organizationId: 'org-1', file });
+      expect(keyAt(1)).not.toBe(keyAt(0));
+      isAuthenticated.set(false);
+      TestBed.tick();
+      store.uploadLogo({ organizationId: 'org-1', file });
+      expect(mockOrganizationService.uploadLogo).toHaveBeenCalledTimes(2);
+      isAuthenticated.set(true);
+      store.uploadLogo({ organizationId: 'org-1', file });
+      expect(keyAt(2)).not.toBe(keyAt(1));
+    });
+
+    it('does not let a stale success clear a newer organization failed intention', () => {
+      const oldResponse = new Subject<OrganizationOutput>();
+      mockOrganizationService.uploadLogo
+        .mockReturnValueOnce(oldResponse)
+        .mockReturnValue(throwError(() => new Error('Response lost')));
+      const file = new File(['image'], 'logo.png');
+      store.uploadLogo({ organizationId: 'org-1', file });
+      selectedOrganization.set({ ...updatedOrg, id: 'org-2' });
+      store.uploadLogo({ organizationId: 'org-2', file });
+      const currentKey = keyAt(1);
+      oldResponse.next(updatedOrg);
+      expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+      expect(store.uploadLogoError()).not.toBeNull();
+      expect(store.uploadLogoSucceeded()).toBe(false);
+      store.uploadLogo({ organizationId: 'org-2', file });
+      expect(keyAt(2)).toBe(currentKey);
+    });
+
+    it('suppresses old-session success and preserves a newer failed session intention', () => {
+      const oldResponse = new Subject<OrganizationOutput>();
+      mockOrganizationService.uploadLogo
+        .mockReturnValueOnce(oldResponse)
+        .mockReturnValue(throwError(() => new Error('Response lost')));
+      const file = new File(['image'], 'logo.png');
+      store.uploadLogo({ organizationId: 'org-1', file });
+      sessionRevision.update((revision) => revision + 1);
+      store.uploadLogo({ organizationId: 'org-1', file });
+      const currentKey = keyAt(1);
+      vi.mocked(dispatcher.dispatch).mockClear();
+      oldResponse.next(updatedOrg);
+      expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
+      expect(store.uploadLogoError()).not.toBeNull();
+      store.uploadLogo({ organizationId: 'org-1', file });
+      expect(keyAt(2)).toBe(currentKey);
+    });
+
+    it('does not publish a logo response after logout even without a revision update', () => {
+      const response = new Subject<OrganizationOutput>();
+      mockOrganizationService.uploadLogo.mockReturnValueOnce(response);
+      store.uploadLogo({ organizationId: 'org-1', file: new File(['image'], 'logo.png') });
+      isAuthenticated.set(false);
+      response.next(updatedOrg);
+      expect(mockActiveOrganizationStore.setOrganization).not.toHaveBeenCalled();
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
+      expect(store.uploadLogoCallState().status).toBe('idle');
+    });
+
+    it('disposes in-flight file references and creates a fresh intention for a new store instance', () => {
+      const oldResponse = new Subject<OrganizationOutput>();
+      mockOrganizationService.uploadLogo.mockReturnValueOnce(oldResponse);
+      const file = new File(['image'], 'logo.png');
+      store.uploadLogo({ organizationId: 'org-1', file });
+      const originalKey = keyAt(0);
+      expect(oldResponse.observed).toBe(true);
+      TestBed.resetTestingModule();
+      expect(oldResponse.observed).toBe(false);
+      TestBed.configureTestingModule({
+        providers: [
+          { provide: AUTH_SESSION_PORT, useValue: { isAuthenticated, sessionRevision } },
+          OrganizationSettingsStore,
+          { provide: OrganizationService, useValue: mockOrganizationService },
+          { provide: OrganizationMemberService, useValue: mockMemberService },
+          { provide: ActiveOrganizationStore, useValue: mockActiveOrganizationStore },
+        ],
+      });
+      const nextStore = TestBed.inject(OrganizationSettingsStore);
+      failUpload();
+      nextStore.uploadLogo({ organizationId: 'org-1', file });
+      expect(keyAt(1)).not.toBe(originalKey);
+    });
   });
 
   it('keeps the current logo when removal fails and succeeds on retry', async () => {

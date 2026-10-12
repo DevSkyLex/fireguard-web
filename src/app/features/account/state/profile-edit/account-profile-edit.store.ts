@@ -20,6 +20,8 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
+  WriteOperationService,
+  type WriteOperation,
 } from '@core/request-state';
 import { UserProfileService } from '@features/account/data-access';
 import type {
@@ -126,8 +128,11 @@ export const AccountProfileEditStore = signalStore(
       userStore = inject<UserStore>(UserStore),
       dispatcher = inject<Dispatcher>(Dispatcher),
       session = inject(AUTH_SESSION_PORT),
+      operations = inject(WriteOperationService),
     ) => {
       let visibleRevision = session.sessionRevision();
+      const writeTracker = operations.createTracker();
+      let avatarAttempt: { file: File; revision: number; operation: WriteOperation } | null = null;
       const saving = new Set<number>();
       const uploading = new Set<number>();
 
@@ -145,6 +150,8 @@ export const AccountProfileEditStore = signalStore(
         const current = session.sessionRevision();
         if (current !== visibleRevision) {
           visibleRevision = current;
+          writeTracker.clear();
+          avatarAttempt = null;
           patchState(store, INITIAL_STATE);
         }
         return current;
@@ -171,36 +178,39 @@ export const AccountProfileEditStore = signalStore(
               if (saving.has(revision)) return EMPTY;
               saving.add(revision);
               patchState(store, { saveCallState: pendingCallState() });
-              return userProfileService.updateCurrentProfile(input).pipe(
-                tapResponse({
-                  next: (profile: UserProfileOutput) => {
-                    if (revision !== session.sessionRevision()) return;
-                    patchState(store, { saveCallState: successCallState(profile) });
-                    userStore.setProfile(profile);
-                    dispatcher.dispatch(
-                      accountProfileEditStoreEvents.saveSucceeded(
-                        successFeedback(
-                          $localize`:@@account.profile.saved:Your profile has been updated.`,
+              return userProfileService
+                .updateCurrentProfile(input, writeTracker.options('save', input, revision))
+                .pipe(
+                  tapResponse({
+                    next: (profile: UserProfileOutput) => {
+                      writeTracker.complete('save');
+                      if (revision !== session.sessionRevision()) return;
+                      patchState(store, { saveCallState: successCallState(profile) });
+                      userStore.setProfile(profile);
+                      dispatcher.dispatch(
+                        accountProfileEditStoreEvents.saveSucceeded(
+                          successFeedback(
+                            $localize`:@@account.profile.saved:Your profile has been updated.`,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  error: (error: unknown) => {
-                    if (revision !== session.sessionRevision()) return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { saveCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      accountProfileEditStoreEvents.saveFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          $localize`:@@account.profile.saveError:Your profile could not be updated.`,
+                      );
+                    },
+                    error: (error: unknown) => {
+                      if (revision !== session.sessionRevision()) return;
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { saveCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        accountProfileEditStoreEvents.saveFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            $localize`:@@account.profile.saveError:Your profile could not be updated.`,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                }),
-                finalize(() => saving.delete(revision)),
-              );
+                      );
+                    },
+                  }),
+                  finalize(() => saving.delete(revision)),
+                );
             }),
           ),
         ),
@@ -224,47 +234,52 @@ export const AccountProfileEditStore = signalStore(
               if (uploading.has(revision)) return EMPTY;
               uploading.add(revision);
               patchState(store, { avatarCallState: pendingCallState() });
-              return userProfileService.uploadCurrentAvatar(file, file.name).pipe(
-                tapResponse({
-                  next: (user: UserOutput) => {
-                    if (revision !== session.sessionRevision()) return;
-                    patchState(store, { avatarCallState: successCallState(user) });
+              if (avatarAttempt?.file !== file || avatarAttempt.revision !== revision)
+                avatarAttempt = { file, revision, operation: operations.create() };
+              return userProfileService
+                .uploadCurrentAvatar(file, file.name, avatarAttempt.operation)
+                .pipe(
+                  tapResponse({
+                    next: (user: UserOutput) => {
+                      avatarAttempt = null;
+                      if (revision !== session.sessionRevision()) return;
+                      patchState(store, { avatarCallState: successCallState(user) });
 
-                    const profile: UserProfileOutput | null = userStore.profile();
-                    if (profile) {
-                      userStore.setProfile({
-                        ...profile,
-                        avatarUrl: user.avatarUrl ?? null,
-                        avatarUrls: user.avatarUrls ?? null,
-                      });
-                    } else {
-                      userStore.reload();
-                    }
+                      const profile: UserProfileOutput | null = userStore.profile();
+                      if (profile) {
+                        userStore.setProfile({
+                          ...profile,
+                          avatarUrl: user.avatarUrl ?? null,
+                          avatarUrls: user.avatarUrls ?? null,
+                        });
+                      } else {
+                        userStore.reload();
+                      }
 
-                    dispatcher.dispatch(
-                      accountProfileEditStoreEvents.avatarUploadSucceeded(
-                        successFeedback(
-                          $localize`:@@account.avatar.uploaded:Your picture has been updated.`,
+                      dispatcher.dispatch(
+                        accountProfileEditStoreEvents.avatarUploadSucceeded(
+                          successFeedback(
+                            $localize`:@@account.avatar.uploaded:Your picture has been updated.`,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                  error: (error: unknown) => {
-                    if (revision !== session.sessionRevision()) return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { avatarCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      accountProfileEditStoreEvents.avatarUploadFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          $localize`:@@account.avatar.uploadError:Your picture could not be uploaded.`,
+                      );
+                    },
+                    error: (error: unknown) => {
+                      if (revision !== session.sessionRevision()) return;
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { avatarCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        accountProfileEditStoreEvents.avatarUploadFailed(
+                          toStoreFailureEventPayload(
+                            storeError,
+                            $localize`:@@account.avatar.uploadError:Your picture could not be uploaded.`,
+                          ),
                         ),
-                      ),
-                    );
-                  },
-                }),
-                finalize(() => uploading.delete(revision)),
-              );
+                      );
+                    },
+                  }),
+                  finalize(() => uploading.delete(revision)),
+                );
             }),
           ),
         ),

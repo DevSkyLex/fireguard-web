@@ -59,7 +59,9 @@ describe('MaintenanceCostsPage', () => {
           useValue: {
             captureOwner: vi.fn().mockImplementation(() => actor()),
             readPending: vi.fn().mockResolvedValue(null),
-            retain: vi.fn().mockResolvedValue(undefined),
+            retain: vi
+              .fn()
+              .mockResolvedValue({ idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' }),
             acknowledge: vi.fn().mockResolvedValue(undefined),
           },
         },
@@ -189,6 +191,7 @@ describe('MaintenanceCostsPage', () => {
       cost.interventionId,
       input,
       0,
+      { idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' },
     );
   });
   it('does not read currency/rates until their tab is opened and does not read members without their grant', async () => {

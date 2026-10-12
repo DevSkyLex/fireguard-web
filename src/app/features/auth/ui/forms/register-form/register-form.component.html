@@ -152,7 +152,7 @@
               aria-label="Password requirements"
               i18n-aria-label="@@auth.password.requirements.ariaLabel"
             >
-              @for (criterion of passwordCriteria; track criterion.id) {
+              @for (criterion of passwordCriteria(); track criterion.id) {
                 <li
                   class="flex min-h-8 items-center gap-2 rounded-md px-2 py-1 text-sm transition-colors"
                   [class.text-muted-foreground]="!criterion.matches(passwordValue())"
@@ -166,7 +166,7 @@
                       aria-hidden="true"
                     />
                   }
-                  <span class="min-w-0 flex-1">{{ criterion.label }}</span>
+                  <span class="min-w-0 flex-1 break-words">{{ criterion.label }}</span>
                   <span class="shrink-0 text-xs">{{
                     criterion.matches(passwordValue())
                       ? requirementMetLabel
@@ -179,7 +179,7 @@
         </hlm-popover>
       </div>
       <hlm-field-description id="register-password-requirements-description" class="sr-only">
-        {{ passwordRequirementsDescription }}
+        {{ passwordRequirementsDescription() }}
       </hlm-field-description>
       <span
         class="sr-only"

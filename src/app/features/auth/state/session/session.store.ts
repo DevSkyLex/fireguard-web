@@ -1,4 +1,4 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, type, withComputed, withMethods, withState } from '@ngrx/signals';
 import {
@@ -12,6 +12,7 @@ import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
 import type { PaginationOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
+import { WriteOperationService } from '@core/request-state';
 import {
   idleCallState,
   pendingCallState,
@@ -23,13 +24,13 @@ import {
 } from '@core/request-state';
 import { SessionService } from '@features/auth/data-access';
 import type { SessionOutput } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { sessionStoreEvents } from './events';
 import type { SessionState } from './models';
 
 //#region Initial State
 /**
  * Constant INITIAL_SESSION_STATE
- * @const INITIAL_SESSION_STATE
  *
  * @description
  * Initial state for the SessionStore. Entity state (`sessionEntities`,
@@ -39,6 +40,8 @@ import type { SessionState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const INITIAL_SESSION_STATE
  */
 const INITIAL_SESSION_STATE: SessionState = {
   totalSessions: 0,
@@ -49,8 +52,7 @@ const INITIAL_SESSION_STATE: SessionState = {
 //#endregion
 
 /**
- * Store SessionStore
- * @const SessionStore
+ * Constant SessionStore
  *
  * @description
  * Component-scoped NgRx SignalStore for user session management.
@@ -62,6 +64,12 @@ const INITIAL_SESSION_STATE: SessionState = {
  * 'session' })`, which provides O(1) lookups via `sessionEntityMap`
  * and keeps insertions/deletions efficient via normalized storage.
  *
+ * @version 2.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const SessionStore
+ *
  * @example
  * ```typescript
  * @Component({ providers: [SessionStore] })
@@ -69,9 +77,6 @@ const INITIAL_SESSION_STATE: SessionState = {
  *   readonly store = inject<SessionStore>(SessionStore);
  * }
  * ```
- *
- * @version 2.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const SessionStore = signalStore(
   //#region State
@@ -80,9 +85,8 @@ export const SessionStore = signalStore(
 
   //#region Entities
   /**
-   * Feature withEntities
-   *
    * @description
+   * Feature withEntities
    * Adds NgRx entity state and entity-adapter updater functions for
    * `SessionOutput` objects keyed by their `id` field. Provides:
    * - `sessionEntities` — ordered array of all cached entities
@@ -96,13 +100,15 @@ export const SessionStore = signalStore(
 
   //#region Computed
   withComputed((store) => ({
-    /** Alias for sessionEntities — backward-compatible accessor. */
+    /**
+     * @description
+     * Alias for sessionEntities — backward-compatible accessor.
+     */
     sessions: computed<ReadonlyArray<SessionOutput>>(() => store.sessionEntities()),
 
     /**
-     * Computed isRevoking
-     *
      * @description
+     * Computed isRevoking
      * Returns true if a single-session revoke operation is in-flight.
      *
      * @since 1.0.0
@@ -112,9 +118,8 @@ export const SessionStore = signalStore(
     isRevoking: computed<boolean>(() => store.revokeCallState().status === 'pending'),
 
     /**
-     * Computed isRevokingAll
-     *
      * @description
+     * Computed isRevokingAll
      * Returns true if the revoke-all operation is in-flight.
      *
      * @since 1.0.0
@@ -124,9 +129,8 @@ export const SessionStore = signalStore(
     isRevokingAll: computed<boolean>(() => store.revokeAllCallState().status === 'pending'),
 
     /**
-     * Computed revokeError
-     *
      * @description
+     * Computed revokeError
      * Returns the revoke operation error, or `null` if idle/loading/success.
      *
      * @since 1.0.0
@@ -136,9 +140,8 @@ export const SessionStore = signalStore(
     revokeError: computed<StoreError | null>(() => store.revokeCallState().error),
 
     /**
-     * Computed currentSession
-     *
      * @description
+     * Computed currentSession
      * Returns the session that owns the current browser request,
      * identified by the `isCurrent` flag set server-side.
      *
@@ -151,9 +154,8 @@ export const SessionStore = signalStore(
     }),
 
     /**
-     * Computed otherSessions
-     *
      * @description
+     * Computed otherSessions
      * Returns all sessions except the current one. Used to populate
      * the "other active sessions" list for selective revocation.
      *
@@ -166,9 +168,8 @@ export const SessionStore = signalStore(
     }),
 
     /**
-     * Computed hasOtherSessions
-     *
      * @description
+     * Computed hasOtherSessions
      * Quick check whether any other active sessions exist across all pages.
      * Drives the visibility of "Revoke all other sessions" controls.
      *
@@ -186,12 +187,26 @@ export const SessionStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       sessionService = inject<SessionService>(SessionService),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => {
       //#region Shared Reactive Pipelines
       /**
-       * Reactive pipeline loadFn
-       *
        * @description
+       * Reactive pipeline loadFn
        * Shared `rxMethod` pipeline for list-loading. Uses `switchMap` so that
        * rapid successive calls (e.g. pagination changes) cancel the previous
        * in-flight request. Exposed publicly as both `load` (generic) and
@@ -235,9 +250,13 @@ export const SessionStore = signalStore(
 
       return {
         //#region Reactive Methods
-        /** @see loadFn — generic alias. */
+        /**
+         * @see loadFn — generic alias.
+         */
         load: loadFn,
-        /** @see loadFn — explicit alias. */
+        /**
+         * @see loadFn — explicit alias.
+         */
         loadSessions: loadFn,
 
         /**
@@ -259,25 +278,47 @@ export const SessionStore = signalStore(
               patchState(store, { revokeCallState: pendingCallState() });
             }),
             exhaustMap((sessionId) =>
-              sessionService.revoke(sessionId).pipe(
-                tapResponse({
-                  next: () => {
-                    patchState(store, removeEntity(sessionId, { collection: 'session' }), {
-                      totalSessions: Math.max(0, store.totalSessions() - 1),
-                      revokeCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { revokeCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      sessionStoreEvents.revokeFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to revoke session'),
-                      ),
-                    );
-                  },
-                }),
-              ),
+              sessionService
+                .revoke(
+                  sessionId,
+                  writeTracker.options(
+                    'sessionService.revoke',
+                    [sessionId],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('sessionService.revoke');
+                    },
+                  }),
+                  tapResponse({
+                    next: () => {
+                      patchState(store, removeEntity(sessionId, { collection: 'session' }), {
+                        totalSessions: Math.max(0, store.totalSessions() - 1),
+                        revokeCallState: successCallState(null),
+                      });
+                    },
+                    error: (error: unknown) => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { revokeCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        sessionStoreEvents.revokeFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to revoke session'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
@@ -301,34 +342,55 @@ export const SessionStore = signalStore(
               patchState(store, { revokeAllCallState: pendingCallState() });
             }),
             exhaustMap(() =>
-              sessionService.revokeOthers().pipe(
-                tapResponse({
-                  next: () => {
-                    const currentSession: SessionOutput | undefined = store
-                      .sessionEntities()
-                      .find((s) => s.isCurrent);
-                    patchState(
-                      store,
-                      setAllEntities(currentSession ? [currentSession] : [], {
-                        collection: 'session',
-                      }),
-                      {
-                        totalSessions: 1,
-                        revokeAllCallState: successCallState(null),
-                      },
-                    );
-                  },
-                  error: (error: unknown) => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { revokeAllCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      sessionStoreEvents.revokeAllFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to revoke all sessions'),
-                      ),
-                    );
-                  },
-                }),
-              ),
+              sessionService
+                .revokeOthers(
+                  writeTracker.options(
+                    'sessionService.revokeOthers',
+                    [],
+                    intentSession.sessionRevision(),
+                  ),
+                )
+                .pipe(
+                  tap({
+                    next: (result): void => {
+                      const outcome: unknown = result;
+                      if (
+                        outcome &&
+                        typeof outcome === 'object' &&
+                        'success' in outcome &&
+                        outcome.success === false
+                      )
+                        return;
+                      writeTracker.complete('sessionService.revokeOthers');
+                    },
+                  }),
+                  tapResponse({
+                    next: () => {
+                      const currentSession: SessionOutput | undefined = store
+                        .sessionEntities()
+                        .find((s) => s.isCurrent);
+                      patchState(
+                        store,
+                        setAllEntities(currentSession ? [currentSession] : [], {
+                          collection: 'session',
+                        }),
+                        {
+                          totalSessions: 1,
+                          revokeAllCallState: successCallState(null),
+                        },
+                      );
+                    },
+                    error: (error: unknown) => {
+                      const storeError: StoreError = toStoreError(error);
+                      patchState(store, { revokeAllCallState: errorCallState(storeError) });
+                      dispatcher.dispatch(
+                        sessionStoreEvents.revokeAllFailed(
+                          toStoreFailureEventPayload(storeError, 'Failed to revoke all sessions'),
+                        ),
+                      );
+                    },
+                  }),
+                ),
             ),
           ),
         ),
@@ -380,12 +442,13 @@ export const SessionStore = signalStore(
 );
 
 /**
- * Type SessionStoreType
- * @type SessionStoreType
+ * Type SessionStore
  *
  * @description
  * Type alias for the SessionStore instance.
  *
  * @since 1.0.0
+ *
+ * @type SessionStoreType
  */
 export type SessionStore = InstanceType<typeof SessionStore>;

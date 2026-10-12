@@ -1,7 +1,7 @@
 import { Service } from '@angular/core';
 import { EMPTY, of, timer, type Observable } from 'rxjs';
 import { expand, switchMap, take, takeWhile } from 'rxjs/operators';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { HydraApiService, type ApiRequestOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   ImportTemplateOutput,
@@ -81,13 +81,15 @@ export class ImportJobService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} simulationId - The completed simulation identifier.
+   * @param {ApiRequestOptions | undefined} options - Retained confirmation identity.
    *
    * @returns {Observable<ImportJobOutput>} The one server-confirmed import.
    */
-  public confirm(simulationId: string): Observable<ImportJobOutput> {
+  public confirm(simulationId: string, options?: ApiRequestOptions): Observable<ImportJobOutput> {
     return this.post<Record<string, never>, ImportJobOutput>(
       `${IMPORTS_PATH}/${simulationId}/confirm`,
       {},
+      options,
     );
   }
 
@@ -129,6 +131,7 @@ export class ImportJobService extends HydraApiService {
    * @param {ImportJobKind} kind - Which resource collection the file targets.
    * @param {File} file - The CSV file to upload.
    * @param {boolean} [dryRun] - Validates and reports without writing any row.
+   * @param {ApiRequestOptions | undefined} options - Retained identity for an unchanged upload.
    *
    * @returns {Observable<ImportJobOutput>} The created job, without report fields.
    */
@@ -137,6 +140,7 @@ export class ImportJobService extends HydraApiService {
     kind: ImportJobKind,
     file: File,
     dryRun?: boolean,
+    options?: ApiRequestOptions,
   ): Observable<ImportJobOutput> {
     const body: FormData = new FormData();
     body.set('organization', `/api/organizations/${organizationId}`);
@@ -146,7 +150,7 @@ export class ImportJobService extends HydraApiService {
 
     return this.http.post<ImportJobOutput>(this.buildUrl(IMPORTS_PATH), body, {
       withCredentials: true,
-      headers: { Accept: 'application/ld+json' },
+      headers: this.buildWriteHeaders(options, true),
     });
   }
 
@@ -215,11 +219,12 @@ export class ImportJobService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} jobId - Existing import identifier.
+   * @param {ApiRequestOptions | undefined} options - Retained resume identity.
    *
    * @returns {Observable<ImportJobOutput>} Accepted import state.
    */
-  public resume(jobId: string): Observable<ImportJobOutput> {
-    return this.postAction<ImportJobOutput>(`${IMPORTS_PATH}/${jobId}/resume`);
+  public resume(jobId: string, options?: ApiRequestOptions): Observable<ImportJobOutput> {
+    return this.postAction<ImportJobOutput>(`${IMPORTS_PATH}/${jobId}/resume`, options);
   }
 
   /**

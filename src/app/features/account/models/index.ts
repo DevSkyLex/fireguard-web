@@ -32,3 +32,5 @@ export type {
   DisableTotpInput,
   DisableTotpOutput,
 } from './totp';
+
+export type { RecoveryCodesStatusOutput, GenerateRecoveryCodesOutput } from './totp';

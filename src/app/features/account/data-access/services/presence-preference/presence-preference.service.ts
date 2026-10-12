@@ -1,6 +1,7 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { HydraApiService } from '@core/api';
+import type { ApiRequestOptions } from '@core/api/models';
 import type {
   PresencePreferenceInput,
   PresencePreferenceOutput,
@@ -10,7 +11,10 @@ import type {
 /**
  * Service PresencePreferenceService
  * @class PresencePreferenceService
- * @description Transports the signed-in account's global presence preference and private subscription.
+ *
+ * @description
+ * Transports the signed-in account's global presence preference and private subscription.
+ *
  * @since 1.0.0
  */
 @Service()
@@ -18,9 +22,13 @@ export class PresencePreferenceService extends HydraApiService {
   /**
    * Method getPreference
    * @method getPreference
-   * @description Reads the canonical preference; the session identifies its owner.
+   *
+   * @description
+   * Reads the canonical preference; the session identifies its owner.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {Observable<PresencePreferenceOutput>} Confirmed preference.
    */
   public getPreference(): Observable<PresencePreferenceOutput> {
@@ -30,27 +38,40 @@ export class PresencePreferenceService extends HydraApiService {
   /**
    * Method updatePreference
    * @method updatePreference
-   * @description Persists one explicit preference and returns its committed revision.
+   *
+   * @description
+   * Persists one explicit preference and returns its committed revision.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @param {PresencePreferenceInput} input - Requested global preference.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write
+   *   intent.
+   *
    * @returns {Observable<PresencePreferenceOutput>} Confirmed preference.
    */
   public updatePreference(
     input: Partial<PresencePreferenceInput>,
+    options?: ApiRequestOptions,
   ): Observable<PresencePreferenceOutput> {
     return this.patch<Partial<PresencePreferenceInput>, PresencePreferenceOutput>(
       '/api/me/presence-preference',
       input,
+      options,
     );
   }
 
   /**
    * Method getSubscription
    * @method getSubscription
-   * @description Obtains subscribe-only authorization for the caller's private topic.
+   *
+   * @description
+   * Obtains subscribe-only authorization for the caller's private topic.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {Observable<PresencePreferenceSubscriptionOutput>} Topic, token and expiry.
    */
   public getSubscription(): Observable<PresencePreferenceSubscriptionOutput> {

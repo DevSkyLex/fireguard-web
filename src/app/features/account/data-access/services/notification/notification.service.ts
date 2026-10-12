@@ -2,7 +2,7 @@ import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { HydraApiService } from '@core/api';
-import type { HydraCollection } from '@core/api/models';
+import type { ApiRequestOptions, HydraCollection } from '@core/api/models';
 import type { MercureSubscriptionOutput } from '@core/mercure';
 import type {
   InboxUnreadCountOutput,
@@ -17,7 +17,6 @@ import type {
 /**
  * Service NotificationService
  * @class NotificationService
- * @extends {HydraApiService}
  *
  * @description
  * API service for notification management.
@@ -25,7 +24,10 @@ import type {
  * marking notifications as read, and managing Mercure subscriptions.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class NotificationService extends HydraApiService {
@@ -40,6 +42,7 @@ export class NotificationService extends HydraApiService {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private static readonly BASE_PATH: string = '/api/notifications';
@@ -54,12 +57,14 @@ export class NotificationService extends HydraApiService {
    *
    * @access private
    * @since 1.0.0
+   *
    * @type {string}
    */
   private static readonly TYPES_PATH: string = '/api/notification-types';
 
   /**
    * Property INBOX_UNREAD_COUNT_PATH
+   * @readonly
    *
    * @description
    * The unified inbox's unread count, summed across every registered source.
@@ -103,6 +108,7 @@ export class NotificationService extends HydraApiService {
    * @param {NotificationListOptions} [options] - Optional filter and pagination parameters. `type` takes precedence over `category` when both are set.
    *
    * @return {Observable<HydraCollection<NotificationOutput>>} An observable emitting the notifications collection.
+   * @returns {Observable<HydraCollection<NotificationOutput>>} Result of the current operation.
    */
   public list(options?: NotificationListOptions): Observable<HydraCollection<NotificationOutput>> {
     const params: Record<string, string | number | boolean> = {};
@@ -132,6 +138,7 @@ export class NotificationService extends HydraApiService {
    * @since 1.0.0
    *
    * @return {Observable<ReadonlyArray<NotificationTypeOutput>>} An observable emitting the array of notification types.
+   * @returns {Observable<ReadonlyArray<NotificationTypeOutput>>} Result of the current operation.
    */
   public listTypes(): Observable<ReadonlyArray<NotificationTypeOutput>> {
     return this.getCollection<NotificationTypeOutput>(NotificationService.TYPES_PATH).pipe(
@@ -155,6 +162,7 @@ export class NotificationService extends HydraApiService {
    * @since 1.1.0
    *
    * @return {Observable<number>} An observable emitting the unread item count.
+   * @returns {Observable<number>} Result of the current operation.
    */
   public unreadCount(): Observable<number> {
     return this.getOne<InboxUnreadCountOutput>(NotificationService.INBOX_UNREAD_COUNT_PATH).pipe(
@@ -175,6 +183,7 @@ export class NotificationService extends HydraApiService {
    * @param {string} id - The ID of the notification to retrieve.
    *
    * @return {Observable<NotificationOutput>} An observable emitting the notification details.
+   * @returns {Observable<NotificationOutput>} Result of the current operation.
    */
   public get(id: string): Observable<NotificationOutput> {
     return this.getOne<NotificationOutput>(`${NotificationService.BASE_PATH}/${id}`);
@@ -192,13 +201,16 @@ export class NotificationService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} id - The ID of the notification to mark as read.
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write intent.
    *
    * @return {Observable<NotificationOutput>} An observable emitting the updated notification details.
+   * @returns {Observable<NotificationOutput>} Result of the current operation.
    */
-  public markAsRead(id: string): Observable<NotificationOutput> {
+  public markAsRead(id: string, options?: ApiRequestOptions): Observable<NotificationOutput> {
     return this.patch<void, NotificationOutput>(
       `${NotificationService.BASE_PATH}/${id}/read`,
       undefined,
+      options,
     );
   }
 
@@ -214,12 +226,16 @@ export class NotificationService extends HydraApiService {
    * @access public
    * @since 1.3.0
    *
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write intent.
+   *
    * @return {Observable<MarkAllNotificationsAsReadOutput>} An observable emitting the number marked.
+   * @returns {Observable<MarkAllNotificationsAsReadOutput>} Result of the current operation.
    */
-  public markAllAsRead(): Observable<MarkAllNotificationsAsReadOutput> {
+  public markAllAsRead(options?: ApiRequestOptions): Observable<MarkAllNotificationsAsReadOutput> {
     return this.patch<void, MarkAllNotificationsAsReadOutput>(
       `${NotificationService.BASE_PATH}/read-all`,
       undefined,
+      options,
     );
   }
 
@@ -235,6 +251,7 @@ export class NotificationService extends HydraApiService {
    * @since 1.0.0
    *
    * @return {Observable<MercureSubscriptionOutput>} An observable emitting the Mercure subscription details.
+   * @returns {Observable<MercureSubscriptionOutput>} Result of the current operation.
    */
   public getSubscription(): Observable<MercureSubscriptionOutput> {
     return this.getOne<MercureSubscriptionOutput>(`${NotificationService.BASE_PATH}/subscription`);
@@ -253,6 +270,7 @@ export class NotificationService extends HydraApiService {
    * @since 1.4.0
    *
    * @return {Observable<NotificationPreferencesOutput>} An observable emitting the customized preference set.
+   * @returns {Observable<NotificationPreferencesOutput>} Result of the current operation.
    */
   public getPreferences(): Observable<NotificationPreferencesOutput> {
     return this.getOne<NotificationPreferencesOutput>(NotificationService.PREFERENCES_PATH);
@@ -272,15 +290,19 @@ export class NotificationService extends HydraApiService {
    * @since 1.4.0
    *
    * @param {UpdateNotificationPreferencesInput} input - The category preference entries to upsert (at least one).
+   * @param {ApiRequestOptions} options - Transport identity retained for the same immutable write intent.
    *
    * @return {Observable<NotificationPreferencesOutput>} An observable emitting the updated customized preference set.
+   * @returns {Observable<NotificationPreferencesOutput>} Result of the current operation.
    */
   public updatePreferences(
     input: UpdateNotificationPreferencesInput,
+    options?: ApiRequestOptions,
   ): Observable<NotificationPreferencesOutput> {
     return this.patch<UpdateNotificationPreferencesInput, NotificationPreferencesOutput>(
       NotificationService.PREFERENCES_PATH,
       input,
+      options,
     );
   }
   //#endregion

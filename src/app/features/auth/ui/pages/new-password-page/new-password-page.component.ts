@@ -1,6 +1,14 @@
-import { ChangeDetectionStrategy, Component, effect, inject, untracked } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  effect,
+  inject,
+  untracked,
+  type EffectRef,
+} from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { PasswordResetStore } from '@features/auth/state';
+import { PasswordPolicyStore, PasswordResetStore } from '@features/auth/state';
+import { PasswordPolicyStatus } from '@features/auth/ui/components/password-policy-status';
 import { NewPasswordForm, type NewPasswordFormValues } from '@features/auth/ui/forms';
 import { resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
@@ -13,7 +21,6 @@ import { PageHeading } from '@shared/page-heading';
  * Final step of the password reset. It sends the recorded code together with
  * the new password — the API validates both in one call — and sends the user to
  * sign in with the credential they just set.
- *
  * `passwordResetNewGuard` guarantees both the challenge token and the code are
  * present before this page renders.
  *
@@ -23,11 +30,25 @@ import { PageHeading } from '@shared/page-heading';
  */
 @Component({
   selector: 'app-new-password-page',
-  imports: [RouterLink, NewPasswordForm, PageHeading],
+  imports: [PasswordPolicyStatus, RouterLink, NewPasswordForm, PageHeading],
+  providers: [PasswordPolicyStore],
   templateUrl: './new-password-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class NewPasswordPage {
+  /**
+   * Property passwordPolicyStore
+   * @readonly
+   *
+   * @description
+   * Route-critical public requirements with an isolated SSR handoff.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {PasswordPolicyStore}
+   */
+  protected readonly passwordPolicyStore: PasswordPolicyStore = inject(PasswordPolicyStore);
   //#region Properties
   /**
    * Property passwordResetStore
@@ -58,11 +79,33 @@ export class NewPasswordPage {
    */
   private readonly router: Router = inject<Router>(Router);
 
-  /** @description Reads the validated destination shared by the authentication steps. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Reads the validated destination shared by the authentication steps.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
   //#endregion
 
-  /** @description The safe destination carried by links and subsequent auth steps. */
+  /**
+   * Property returnUrl
+   * @readonly
+   *
+   * @description
+   * The safe destination carried by links and subsequent auth steps.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
   protected readonly returnUrl: string = resolveReturnUrl(
     this.route.snapshot.queryParamMap.get('returnUrl'),
     '',
@@ -80,8 +123,10 @@ export class NewPasswordPage {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
-  private readonly outcome = effect((): void => {
+  private readonly outcome: EffectRef = effect((): void => {
     const isDone: boolean =
       this.passwordResetStore.challengeToken() === null &&
       this.passwordResetStore.confirmError() === null &&

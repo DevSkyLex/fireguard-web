@@ -29,7 +29,17 @@ describe('FederatedAuthService', () => {
     const response = {
       '@id': '/api/auth/federated/providers',
       '@type': 'Collection',
-      member: [{ '@id': '/google', '@type': 'Provider', provider: 'google', enabled: false }],
+      member: [
+        {
+          '@id': '/google',
+          '@type': 'Provider',
+          provider: 'google',
+          enabled: false,
+          id: 'google',
+          value: 'google',
+          label: 'Google',
+        },
+      ],
       totalItems: 1,
     };
     let result: unknown;

@@ -9,6 +9,7 @@ import type { HydraItem } from './hydra-item.interface';
  * Plain application/problem+json responses do not carry Hydra identifiers.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
@@ -28,20 +29,43 @@ export interface ApiError extends Partial<HydraItem> {
   /**
    * Property retryAfterSeconds
    * @readonly
-   * @description Server delay before retrying a refused request; null means no deadline is known.
+   *
+   * @description
+   * Server delay before retrying a refused request; null means no deadline is known.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {number | null}
    */
   readonly retryAfterSeconds?: number | null;
 
   /**
    * Property code
-   * @description Stable optional application failure code, independent of the localized detail.
+   *
+   * @description
+   * Stable optional application failure code, independent of the localized detail.
+   *
    * @since 1.0.0
+   *
    * @type {string}
    */
   readonly code?: string;
+
+  /**
+   * Property operationCompleted
+   * @readonly
+   *
+   * @description
+   * Explicit server confirmation that a matching operation committed even though its replay result
+   * expired.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {boolean}
+   */
+  readonly operationCompleted?: boolean;
 
   /**
    * Property status

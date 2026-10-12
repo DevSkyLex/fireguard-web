@@ -6,6 +6,7 @@ import { InboxService, NotificationService } from '@features/account/data-access
 import type { InboxItemOutput, InboxOutput } from '@features/account/models';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
 import { notificationStoreEvents } from '@features/account/state/notifications';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { messageThreadStoreEvents } from '@features/organization/features/collaboration/state/message-thread';
 import { ORGANIZATION_CONTEXT_PORT } from '@features/organization/ports';
 import { InboxStore, type InboxStoreType } from '../inbox.store';
@@ -53,6 +54,7 @@ describe('InboxStore', () => {
     notifications = { markAsRead: vi.fn().mockReturnValue(of({ id: 'a', isRead: true })) };
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         { provide: PLATFORM_ID, useValue: platformId },
         { provide: InboxService, useValue: api },
         { provide: NotificationService, useValue: notifications },
@@ -158,7 +160,10 @@ describe('InboxStore', () => {
     expect(notifications.markAsRead).not.toHaveBeenCalled();
     api.unreadCount.mockReturnValue(of(17));
     store.markAsRead(item('a'));
-    expect(notifications.markAsRead).toHaveBeenCalledWith('a');
+    expect(notifications.markAsRead).toHaveBeenCalledWith(
+      'a',
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.entryEntities()[0].isRead).toBe(true);
     expect(store.unreadCount()).toBe(17);
   });

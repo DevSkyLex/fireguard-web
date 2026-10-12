@@ -15,6 +15,7 @@ import { provideServiceWorker } from '@angular/service-worker';
 import { APP_ROUTES } from '@app/app.routes';
 import { provideEnv } from '@core/config/environment/env.provider';
 import { provideFeedback } from '@core/feedback';
+import { idempotencyInterceptor } from '@core/http/interceptors/idempotency';
 import { ssrCookieForwardInterceptor } from '@core/http/interceptors/ssr-cookie-forward';
 import { provideInteractionCapabilities } from '@core/interaction-capabilities';
 import { providePageTitleStrategy } from '@core/routing/strategies/page-title';
@@ -71,6 +72,7 @@ export const appConfig: ApplicationConfig = {
     ),
     provideHttpClient(
       withInterceptors([
+        idempotencyInterceptor,
         ssrCookieForwardInterceptor,
         authInterceptor,
         unauthorizedInterceptor,

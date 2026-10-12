@@ -1,4 +1,4 @@
-import type { CallState } from '@core/request-state';
+import type { CallState, WriteOperation } from '@core/request-state';
 import type {
   FacilityModelAsset,
   FacilityModelInput,
@@ -46,6 +46,9 @@ export interface FacilityModelDownload {
  * @type {FacilityModelCommand}
  */
 export type FacilityModelCommand = {
+  readonly sessionRevision: number;
+  readonly uploadFileId?: number;
+  readonly uploadOperation?: WriteOperation;
   readonly scopeRevision: number;
   readonly organizationId: string;
   readonly buildingId: string;

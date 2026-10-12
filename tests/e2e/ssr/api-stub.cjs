@@ -125,6 +125,24 @@ function createApiStub(appOrigin, onShutdown) {
         },
       ],
       [
+        'GET /api/auth/password-policy',
+        {
+          status: 200,
+          body: {
+            '@id': '/api/auth/password-policy',
+            '@type': 'PasswordPolicy',
+            minimumLength: 8,
+            maximumLength: 128,
+            requireUppercase: true,
+            requireLowercase: true,
+            requireDigit: true,
+            specialCharacters: '@$!%*?&#',
+            allowedInitialCharacters:
+              'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@$!%*?&#',
+          },
+        },
+      ],
+      [
         'GET /api/auth/federated/providers',
         {
           status: 200,
@@ -132,15 +150,25 @@ function createApiStub(appOrigin, onShutdown) {
         },
       ],
     ]);
+    const session = (request.headers.cookie ?? '').match(
+      /(?:^|;\s*)refresh_token=(ssr-harness-session(?:-[ab])?)(?:;|$)/,
+    )?.[1];
+    const identity =
+      session === 'ssr-harness-session-a' ? 'a' : session === 'ssr-harness-session-b' ? 'b' : null;
     const authenticated =
-      (request.headers.cookie ?? '').includes('refresh_token=ssr-harness-session') ||
+      !!session ||
       request.headers.authorization === 'Bearer ' + E2E_ACCESS_TOKEN ||
       (request.method === 'OPTIONS' && origin === appOrigin);
     if (authenticated) {
       const org = '/api/organizations/e2e-org-1';
       const fixtures = [
         ['POST /api/auth/refresh', loginOutput()],
-        ['GET /api/me', userProfileOutput()],
+        [
+          'GET /api/me',
+          userProfileOutput(
+            identity ? { id: `e2e-user-${identity}`, email: `ssr-${identity}@example.test` } : {},
+          ),
+        ],
         [
           'GET /api/me/presence-preference',
           {

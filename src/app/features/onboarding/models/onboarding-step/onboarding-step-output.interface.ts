@@ -1,4 +1,3 @@
-import type { OnboardingStepKey } from './onboarding-step-key.type';
 import type { OnboardingStepStatus } from './onboarding-step-status.type';
 
 /**
@@ -18,9 +17,9 @@ export interface OnboardingStepOutput {
    * @description
    * Unique step key defined by the backend.
    *
-   * @type {OnboardingStepKey}
+   * @type {string}
    */
-  readonly key: OnboardingStepKey;
+  readonly key: string;
 
   /**
    * Property label

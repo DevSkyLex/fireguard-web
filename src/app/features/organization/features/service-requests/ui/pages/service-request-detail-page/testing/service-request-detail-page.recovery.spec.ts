@@ -121,6 +121,7 @@ describe('ServiceRequestDetailPage', () => {
         existingInterventionId: 'original-work',
         existingTaskId: 'original-task',
       },
+      { idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f14' },
     ]);
     await harness.navigateByUrl('/other', OtherRoutePage);
     expect(destroyed).toHaveBeenCalledOnce();

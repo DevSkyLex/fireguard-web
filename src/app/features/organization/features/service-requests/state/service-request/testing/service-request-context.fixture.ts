@@ -1,5 +1,6 @@
 import { signal, type Provider, type Signal, type WritableSignal } from '@angular/core';
 import { vi, type Mock } from 'vitest';
+import type { WriteOperation } from '@core/request-state';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { ServiceRequestCommandRepository } from '@features/organization/features/service-requests/data-access';
 import type { ServiceRequestConversionCommand } from '@features/organization/features/service-requests/models';
@@ -44,7 +45,9 @@ export function serviceRequestContext(
     readPending: Mock<
       (userId: string, organizationId: string) => Promise<ServiceRequestConversionCommand[]>
     >;
-    retain: Mock<(command: ServiceRequestConversionCommand, captured: number) => Promise<void>>;
+    retain: Mock<
+      (command: ServiceRequestConversionCommand, captured: number) => Promise<WriteOperation>
+    >;
     acknowledge: Mock<
       (command: ServiceRequestConversionCommand, captured: number) => Promise<void>
     >;
@@ -89,9 +92,20 @@ export function serviceRequestContext(
       if (!current(command.userId, command.organizationId, captured))
         throw new Error('Ownership changed');
       const previous = commands.get(command.input.clientOperationId);
-      if (previous && JSON.stringify(previous) !== JSON.stringify(command))
+      if (
+        previous &&
+        JSON.stringify({ ...previous, idempotencyKey: undefined }) !==
+          JSON.stringify({ ...command, idempotencyKey: undefined })
+      )
         throw new Error('Different intention');
-      commands.set(command.input.clientOperationId, structuredClone(command));
+      const operation = {
+        idempotencyKey:
+          previous?.idempotencyKey ||
+          command.idempotencyKey ||
+          '7c3d02a0-65f0-43ac-a12b-76f4e2c25f14',
+      };
+      commands.set(command.input.clientOperationId, { ...structuredClone(command), ...operation });
+      return operation;
     }),
     acknowledge: vi.fn(async (command: ServiceRequestConversionCommand, captured: number) => {
       if (current(command.userId, command.organizationId, captured))

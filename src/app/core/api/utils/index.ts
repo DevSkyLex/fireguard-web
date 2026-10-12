@@ -3,3 +3,7 @@ export { isApiError } from './api-error/api-error.utils';
 export { isConstraintViolation } from './constraint-violation/constraint-violation.utils';
 export { toServerFieldErrors } from './to-server-field-errors/to-server-field-errors.utils';
 export { toUnmatchedViolations } from './to-unmatched-violations/to-unmatched-violations.utils';
+export {
+  getIdempotencyErrorCode,
+  isIdempotencyOperationCompleted,
+} from './idempotency-error/idempotency-error.utils';

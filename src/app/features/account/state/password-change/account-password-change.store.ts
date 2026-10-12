@@ -1,9 +1,10 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -19,6 +20,7 @@ import type {
   ConfirmPasswordChangeOutput,
   RequestPasswordChangeOutput,
 } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { accountPasswordChangeStoreEvents } from './events';
 import type { AccountPasswordChangeState } from './models';
 
@@ -127,6 +129,21 @@ export const AccountPasswordChangeStore = signalStore(
       store,
       userProfileService = inject<UserProfileService>(UserProfileService),
       dispatcher = inject<Dispatcher>(Dispatcher),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => ({
       /**
        * Method request
@@ -143,29 +160,51 @@ export const AccountPasswordChangeStore = signalStore(
         pipe(
           tap((): void => patchState(store, { requestCallState: pendingCallState() })),
           exhaustMap((currentPassword: string) =>
-            userProfileService.requestPasswordChange({ currentPassword }).pipe(
-              tapResponse({
-                next: (challenge: RequestPasswordChangeOutput) => {
-                  patchState(store, {
-                    step: 'verify',
-                    challenge,
-                    requestCallState: successCallState(challenge),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { requestCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    accountPasswordChangeStoreEvents.requestFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@account.password.requestError:Your current password could not be verified.`,
+            userProfileService
+              .requestPasswordChange(
+                { currentPassword },
+                writeTracker.options(
+                  'userProfileService.requestPasswordChange',
+                  [{ currentPassword }],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('userProfileService.requestPasswordChange');
+                  },
+                }),
+                tapResponse({
+                  next: (challenge: RequestPasswordChangeOutput) => {
+                    patchState(store, {
+                      step: 'verify',
+                      challenge,
+                      requestCallState: successCallState(challenge),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { requestCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      accountPasswordChangeStoreEvents.requestFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.password.requestError:Your current password could not be verified.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),
@@ -186,12 +225,38 @@ export const AccountPasswordChangeStore = signalStore(
           tap((): void => patchState(store, { confirmCallState: pendingCallState() })),
           exhaustMap(({ code, newPassword }) =>
             userProfileService
-              .confirmPasswordChange({
-                token: store.challenge()?.challengeToken ?? '',
-                code,
-                newPassword,
-              })
+              .confirmPasswordChange(
+                {
+                  token: store.challenge()?.challengeToken ?? '',
+                  code,
+                  newPassword,
+                },
+                writeTracker.options(
+                  'userProfileService.confirmPasswordChange',
+                  [
+                    {
+                      token: store.challenge()?.challengeToken ?? '',
+                      code,
+                      newPassword,
+                    },
+                  ],
+                  intentSession.sessionRevision(),
+                ),
+              )
               .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('userProfileService.confirmPasswordChange');
+                  },
+                }),
                 tapResponse({
                   next: (result: ConfirmPasswordChangeOutput) => {
                     patchState(store, {

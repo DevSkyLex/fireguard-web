@@ -1,9 +1,10 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { EMPTY, pipe, switchMap, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   idleCallState,
   pendingCallState,
@@ -21,6 +22,7 @@ import type {
   PasswordResetVerifyInput,
   PasswordResetVerifyOutput,
 } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import {
   toResendAvailableAt,
   toResendAvailableIn,
@@ -184,6 +186,21 @@ export const PasswordResetStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       passwordResetService = inject<PasswordResetService>(PasswordResetService),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => ({
       /**
        * Method request
@@ -202,28 +219,50 @@ export const PasswordResetStore = signalStore(
         pipe(
           tap(() => patchState(store, { requestCallState: pendingCallState() })),
           switchMap((input: PasswordResetRequestInput) =>
-            passwordResetService.request(input).pipe(
-              tapResponse({
-                next: (response: PasswordResetRequestOutput) => {
-                  patchState(store, {
-                    currentRequest: response,
-                    challengeToken: response.challengeToken ?? null,
-                    verificationCode: null,
-                    resendAvailableAt: toResendAvailableAt(response.canResendIn),
-                    requestCallState: successCallState(response),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, { requestCallState: errorCallState(storeError) });
-                  dispatcher.dispatch(
-                    passwordResetStoreEvents.requestFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to send verification code'),
-                    ),
-                  );
-                },
-              }),
-            ),
+            passwordResetService
+              .request(
+                input,
+                writeTracker.options(
+                  'passwordResetService.request',
+                  [input],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('passwordResetService.request');
+                  },
+                }),
+                tapResponse({
+                  next: (response: PasswordResetRequestOutput) => {
+                    patchState(store, {
+                      currentRequest: response,
+                      challengeToken: response.challengeToken ?? null,
+                      verificationCode: null,
+                      resendAvailableAt: toResendAvailableAt(response.canResendIn),
+                      requestCallState: successCallState(response),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, { requestCallState: errorCallState(storeError) });
+                    dispatcher.dispatch(
+                      passwordResetStoreEvents.requestFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to send verification code'),
+                      ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),
@@ -296,11 +335,36 @@ export const PasswordResetStore = signalStore(
             }
 
             return passwordResetService
-              .confirm({
-                token,
-                ...input,
-              })
+              .confirm(
+                {
+                  token,
+                  ...input,
+                },
+                writeTracker.options(
+                  'passwordResetService.confirm',
+                  [
+                    {
+                      token,
+                      ...input,
+                    },
+                  ],
+                  intentSession.sessionRevision(),
+                ),
+              )
               .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('passwordResetService.confirm');
+                  },
+                }),
                 tapResponse({
                   next: (response: PasswordResetVerifyOutput) => {
                     patchState(store, { confirmCallState: successCallState(response) });
@@ -371,33 +435,55 @@ export const PasswordResetStore = signalStore(
               return EMPTY;
             }
 
-            return passwordResetService.resend({ token }).pipe(
-              tapResponse({
-                next: (response: PasswordResetResendOutput) => {
-                  patchState(store, {
-                    currentRequest: response,
-                    challengeToken: response.challengeToken ?? null,
-                    resendAvailableAt: toResendAvailableAt(response.canResendIn),
-                    resendCallState: successCallState(response),
-                  });
-                },
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  const retryDelay: number | null = toResendDelaySeconds(storeError);
-                  patchState(store, {
-                    resendCallState: errorCallState(storeError),
-                    ...(retryDelay !== null
-                      ? { resendAvailableAt: toResendAvailableAt(retryDelay) }
-                      : {}),
-                  });
-                  dispatcher.dispatch(
-                    passwordResetStoreEvents.resendFailed(
-                      toStoreFailureEventPayload(storeError, 'Failed to resend code'),
-                    ),
-                  );
-                },
-              }),
-            );
+            return passwordResetService
+              .resend(
+                { token },
+                writeTracker.options(
+                  'passwordResetService.resend',
+                  [{ token }],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('passwordResetService.resend');
+                  },
+                }),
+                tapResponse({
+                  next: (response: PasswordResetResendOutput) => {
+                    patchState(store, {
+                      currentRequest: response,
+                      challengeToken: response.challengeToken ?? null,
+                      resendAvailableAt: toResendAvailableAt(response.canResendIn),
+                      resendCallState: successCallState(response),
+                    });
+                  },
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    const retryDelay: number | null = toResendDelaySeconds(storeError);
+                    patchState(store, {
+                      resendCallState: errorCallState(storeError),
+                      ...(retryDelay !== null
+                        ? { resendAvailableAt: toResendAvailableAt(retryDelay) }
+                        : {}),
+                    });
+                    dispatcher.dispatch(
+                      passwordResetStoreEvents.resendFailed(
+                        toStoreFailureEventPayload(storeError, 'Failed to resend code'),
+                      ),
+                    );
+                  },
+                }),
+              );
           }),
         ),
       ),

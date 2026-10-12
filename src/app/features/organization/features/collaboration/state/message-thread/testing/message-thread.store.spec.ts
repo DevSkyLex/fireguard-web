@@ -1,16 +1,21 @@
 import { signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, type MercureConnectionStatus } from '@core/mercure';
 import { USER_IDENTITY_PORT } from '@features/account/ports';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import {
   ConversationService,
   MessageService,
   MessagingOutboxRepository,
 } from '@features/organization/features/collaboration/data-access';
 import type { MessageOutput } from '@features/organization/features/collaboration/models';
-import { MessagingSyncCoordinatorService } from '@features/organization/features/collaboration/services';
+import {
+  MessagingSyncCoordinatorService,
+  messagingSyncEvents,
+} from '@features/organization/features/collaboration/services';
 import { ORGANIZATION_MEMBER_ACCESS_PORT } from '@features/organization/ports';
 import { MESSAGE_PAGE_SIZE } from '../constants';
 import { MessageThreadStore, type MessageThreadStoreType } from '../message-thread.store';
@@ -89,6 +94,8 @@ describe('MessageThreadStore', () => {
     isConnected: ReturnType<typeof vi.fn>;
   };
   let outbox: {
+    remove: ReturnType<typeof vi.fn>;
+    markFailed: ReturnType<typeof vi.fn>;
     queue: ReturnType<typeof vi.fn>;
     listForConversation: ReturnType<typeof vi.fn>;
     retry: ReturnType<typeof vi.fn>;
@@ -106,6 +113,7 @@ describe('MessageThreadStore', () => {
     TestBed.configureTestingModule({
       providers: [
         MessageThreadStore,
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(1) } },
         { provide: MessageService, useValue: service },
         { provide: ConversationService, useValue: conversations },
         { provide: MercureService, useValue: mercure },
@@ -134,6 +142,8 @@ describe('MessageThreadStore', () => {
 
   beforeEach(() => {
     outbox = {
+      remove: vi.fn().mockResolvedValue(undefined),
+      markFailed: vi.fn().mockResolvedValue(undefined),
       queue: vi.fn().mockResolvedValue('outbox-1'),
       listForConversation: vi.fn().mockResolvedValue([]),
       retry: vi.fn().mockResolvedValue(undefined),
@@ -426,13 +436,15 @@ describe('MessageThreadStore', () => {
     expect(service.list).not.toHaveBeenCalled();
   });
 
-  it('should empty the thread so another conversation can be opened into it', () => {
+  it('should empty the thread so another conversation can be opened into it', async () => {
     service.list.mockReturnValue(of(collection([message()])));
     service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
 
     const store = createStore();
     store.load('conversation-1');
     store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+    await Promise.resolve();
+    await Promise.resolve();
 
     expect(store.failedMessageIds()).toHaveLength(1);
 
@@ -597,12 +609,39 @@ describe('MessageThreadStore', () => {
   });
 
   describe('sending', () => {
+    it('persists its identity before the first send and uses that exact committed key', async () => {
+      let commit!: (id: string) => void;
+      outbox.queue.mockReturnValueOnce(
+        new Promise<string>((resolve) => {
+          commit = resolve;
+        }),
+      );
+      service.list.mockReturnValue(of(collection([])));
+      service.postMessageWithClientId.mockReturnValue(new Subject());
+      const store = createStore();
+      store.load('conversation-1');
+      store.send({ conversationId: 'conversation-1', input: { body: 'Saved intention' } });
+      const payload = outbox.queue.mock.calls[0][2] as { clientId: string };
+      const persisted = outbox.queue.mock.calls[0][3] as { idempotencyKey: string };
+      expect(persisted.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/i);
+      expect(service.postMessageWithClientId).not.toHaveBeenCalled();
+      expect(store.messageEntities()[0].id).toBe(payload.clientId);
+      commit('durable-row');
+      await vi.waitFor(() =>
+        expect(service.postMessageWithClientId).toHaveBeenCalledWith(
+          'conversation-1',
+          payload.clientId,
+          { body: 'Saved intention' },
+          persisted,
+        ),
+      );
+    });
     /** The client id the store minted for the one send under test. */
     function sentClientId(): string {
-      return service.postMessageWithClientId.mock.calls[0][1] as string;
+      return (outbox.queue.mock.calls[0][2] as { clientId: string }).clientId;
     }
 
-    it('should show the message before the server has confirmed it', () => {
+    it('should show the message before the server has confirmed it', async () => {
       service.list.mockReturnValue(of(collection([])));
       // Never resolves: the row must be on screen while the request is open.
       service.postMessageWithClientId.mockReturnValue(new Subject());
@@ -610,6 +649,8 @@ describe('MessageThreadStore', () => {
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+      await Promise.resolve();
 
       const optimistic = store.messageEntities()[0];
 
@@ -619,7 +660,7 @@ describe('MessageThreadStore', () => {
       expect(store.total()).toBe(1);
     });
 
-    it('should send under a client-minted id and confirm onto the same row', () => {
+    it('should send under a client-minted id and confirm onto the same row', async () => {
       service.list.mockReturnValue(of(collection([])));
       service.postMessageWithClientId.mockImplementation((_conversation, clientId: string) =>
         of(message({ id: clientId, body: 'Bien reçu.' })),
@@ -628,6 +669,8 @@ describe('MessageThreadStore', () => {
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+      await Promise.resolve();
 
       // The id was ours, so there is no row to swap and no duplicate to
       // reconcile — including against the Mercure echo of our own message.
@@ -637,7 +680,7 @@ describe('MessageThreadStore', () => {
       expect(store.total()).toBe(1);
     });
 
-    it('should treat a replayed client id as success', () => {
+    it('should treat a replayed client id as success', async () => {
       service.list.mockReturnValue(of(collection([])));
       // The shape `HydraApiService.handleError` actually propagates.
       service.postMessageWithClientId.mockReturnValue(
@@ -654,22 +697,27 @@ describe('MessageThreadStore', () => {
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+      await Promise.resolve();
 
       // 409 means the message is already stored — queueing it again would be
       // wrong and showing an error would be a lie.
       expect(store.pendingMessageIds()).toEqual([]);
       expect(store.failedMessageIds()).toEqual([]);
-      expect(outbox.queue).not.toHaveBeenCalled();
+      expect(outbox.queue).toHaveBeenCalledTimes(1);
+      expect(outbox.remove).toHaveBeenCalledWith('outbox-1');
       expect(store.postError()).toBeNull();
     });
 
-    it('ignores an old conversation’s duplicate confirmation after navigating away', () => {
+    it('ignores an old conversation’s duplicate confirmation after navigating away', async () => {
       const inFlight = new Subject<MessageOutput>();
       service.list.mockReturnValue(of(collection([])));
       service.postMessageWithClientId.mockReturnValueOnce(inFlight);
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+      await Promise.resolve();
       store.load('conversation-2');
 
       inFlight.error({
@@ -684,26 +732,34 @@ describe('MessageThreadStore', () => {
       expect(store.conversationId()).toBe('conversation-2');
       expect(store.postCallState().status).toBe('idle');
       expect(store.failedMessageIds()).toEqual([]);
-      expect(outbox.queue).not.toHaveBeenCalled();
+      expect(outbox.queue).toHaveBeenCalledTimes(1);
+      expect(outbox.remove).toHaveBeenCalledWith('outbox-1');
     });
 
-    it('should keep a failed message on screen and queue it durably', () => {
+    it('should keep a failed message on screen and queue it durably', async () => {
       service.list.mockReturnValue(of(collection([])));
       service.postMessageWithClientId.mockReturnValue(throwError(() => new Error('offline')));
 
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+      await Promise.resolve();
 
       const clientId: string = sentClientId();
 
       expect(store.messageEntities()).toHaveLength(1);
       expect(store.failedMessageIds()).toEqual([clientId]);
-      expect(outbox.queue).toHaveBeenCalledWith('conversation-1', 'message.send', {
-        conversationId: 'conversation-1',
-        clientId,
-        input: { body: 'Bien reçu.' },
-      });
+      expect(outbox.queue).toHaveBeenCalledWith(
+        'conversation-1',
+        'message.send',
+        {
+          conversationId: 'conversation-1',
+          clientId,
+          input: { body: 'Bien reçu.' },
+        },
+        { idempotencyKey: expect.any(String) },
+      );
     });
 
     it('keeps the failed message in memory when durable queueing also fails', async () => {
@@ -715,21 +771,28 @@ describe('MessageThreadStore', () => {
 
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
       await Promise.resolve();
+      await Promise.resolve();
+      await Promise.resolve();
 
       expect(store.failedMessageIds()).toEqual([sentClientId()]);
       expect(store.messageEntities()[0]?.body).toBe('Bien reçu.');
-      expect(store.postError()?.message).toBe('offline');
+      expect(store.postError()?.message).toBe('Device storage full');
+      expect(service.postMessageWithClientId).not.toHaveBeenCalled();
       expect(outbox.queue).toHaveBeenCalledTimes(1);
     });
 
-    it('should not cancel an in-flight send when another is started', () => {
+    it('should not cancel an in-flight send when another is started', async () => {
       service.list.mockReturnValue(of(collection([])));
       service.postMessageWithClientId.mockReturnValue(new Subject());
 
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'First.' } });
+      await Promise.resolve();
+      await Promise.resolve();
       store.send({ conversationId: 'conversation-1', input: { body: 'Second.' } });
+      await Promise.resolve();
+      await Promise.resolve();
 
       // Two messages are two intentions; `switchMap` would have dropped the
       // first after its composer had already cleared.
@@ -737,7 +800,7 @@ describe('MessageThreadStore', () => {
       expect(store.pendingMessageIds()).toHaveLength(2);
     });
 
-    it('should not land a confirmation in the conversation opened after it', () => {
+    it('should not land a confirmation in the conversation opened after it', async () => {
       const inFlight = new Subject<MessageOutput>();
       service.list.mockReturnValue(of(collection([])));
       service.postMessageWithClientId.mockReturnValue(inFlight);
@@ -745,6 +808,8 @@ describe('MessageThreadStore', () => {
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+      await Promise.resolve();
 
       store.reset();
       store.load('conversation-2');
@@ -756,7 +821,7 @@ describe('MessageThreadStore', () => {
       expect(store.messageEntityMap()['confirmed']).toBeUndefined();
     });
 
-    it('should still queue a failed message after the reader has moved on', () => {
+    it('should still queue a failed message after the reader has moved on', async () => {
       const inFlight = new Subject<MessageOutput>();
       service.list.mockReturnValue(of(collection([])));
       service.postMessageWithClientId.mockReturnValue(inFlight);
@@ -764,6 +829,8 @@ describe('MessageThreadStore', () => {
       const store = createStore();
       store.load('conversation-1');
       store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+      await Promise.resolve();
+      await Promise.resolve();
 
       const clientId: string = sentClientId();
 
@@ -772,11 +839,16 @@ describe('MessageThreadStore', () => {
       inFlight.error(new Error('offline'));
 
       // The message was written and is owed a delivery wherever the reader went.
-      expect(outbox.queue).toHaveBeenCalledWith('conversation-1', 'message.send', {
-        conversationId: 'conversation-1',
-        clientId,
-        input: { body: 'Bien reçu.' },
-      });
+      expect(outbox.queue).toHaveBeenCalledWith(
+        'conversation-1',
+        'message.send',
+        {
+          conversationId: 'conversation-1',
+          clientId,
+          input: { body: 'Bien reçu.' },
+        },
+        { idempotencyKey: expect.any(String) },
+      );
       expect(store.failedMessageIds()).toEqual([]);
     });
   });
@@ -788,6 +860,8 @@ describe('MessageThreadStore', () => {
     const store = createStore();
     store.load('conversation-1');
     store.send({ conversationId: 'conversation-1', input: { body: 'Bien reçu.' } });
+    await Promise.resolve();
+    await Promise.resolve();
 
     const clientId: string = service.postMessageWithClientId.mock.calls[0][1] as string;
     outbox.listForConversation.mockResolvedValue([{ id: 'outbox-op-1', payload: { clientId } }]);
@@ -1276,5 +1350,68 @@ describe('MessageThreadStore', () => {
       expect(store.loadError()).toBeNull();
       expect(mercure.subscribe).not.toHaveBeenCalled();
     });
+  });
+  it('clears only durably acknowledged pending and failed client flags before refreshing the current thread', async () => {
+    service.list.mockReturnValue(of(collection([])));
+    const queued = ['ack-pending', 'keep-pending', 'ack-failed', 'keep-failed'].map((id) => ({
+      id: `operation-${id}`,
+      conversationId: 'conversation-1',
+      type: 'message.send',
+      idempotencyKey: crypto.randomUUID(),
+      status: id.endsWith('failed') ? 'failed' : 'pending',
+      createdAt: '2026-09-20T10:00:00Z',
+      error: null,
+      payload: { conversationId: 'conversation-1', clientId: id, input: { body: id } },
+    }));
+    outbox.listForConversation.mockResolvedValue(queued);
+    const store = createStore();
+    store.load('conversation-1');
+    await vi.waitFor(() =>
+      expect(store.pendingMessageIds()).toEqual(['ack-pending', 'keep-pending']),
+    );
+    expect(store.failedMessageIds()).toEqual(['ack-failed', 'keep-failed']);
+    const reads = service.list.mock.calls.length;
+    outbox.listForConversation.mockResolvedValue(
+      queued.filter((row) => row.payload.clientId.startsWith('keep-')),
+    );
+    service.list.mockReturnValue(
+      of(collection([message({ id: 'ack-pending' }), message({ id: 'ack-failed' })])),
+    );
+    TestBed.inject(Dispatcher).dispatch(
+      messagingSyncEvents.replayed({
+        conversationId: 'conversation-1',
+        clientIds: ['ack-pending', 'ack-failed'],
+      }),
+    );
+    expect(store.pendingMessageIds()).toEqual(['keep-pending']);
+    expect(store.failedMessageIds()).toEqual(['keep-failed']);
+    expect(store.messageEntityMap()['keep-pending']?.body).toBe('keep-pending');
+    expect(store.messageEntityMap()['keep-failed']?.body).toBe('keep-failed');
+    expect(service.list.mock.calls.length).toBeGreaterThan(reads);
+  });
+
+  it('ignores acknowledged client flags belonging to another conversation', async () => {
+    service.list.mockReturnValue(of(collection([])));
+    outbox.listForConversation.mockResolvedValue([
+      {
+        id: 'operation-1',
+        conversationId: 'conversation-1',
+        status: 'pending',
+        createdAt: '2026-09-20T10:00:00Z',
+        payload: { clientId: 'queued-message', input: { body: 'Keep pending' } },
+      },
+    ]);
+    const store = createStore();
+    store.load('conversation-1');
+    await vi.waitFor(() => expect(store.pendingMessageIds()).toEqual(['queued-message']));
+    const reads = service.list.mock.calls.length;
+    TestBed.inject(Dispatcher).dispatch(
+      messagingSyncEvents.replayed({
+        conversationId: 'conversation-2',
+        clientIds: ['queued-message'],
+      }),
+    );
+    expect(store.pendingMessageIds()).toEqual(['queued-message']);
+    expect(service.list).toHaveBeenCalledTimes(reads);
   });
 });

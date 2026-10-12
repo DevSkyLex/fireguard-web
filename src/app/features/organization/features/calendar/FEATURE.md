@@ -7,10 +7,11 @@
 One page: the organization's **unified calendar** —
 `/organizations/:organizationId/calendar` — reading the backend's merged,
 date-ranged feed (`GET /organizations/{organizationId}/calendar/feed`). The
-feed is the single source and merges exactly four contributors: standalone
+feed is the single source and includes FireGuard's four contributors: standalone
 calendar events, inspections (`performedAt`), interventions
-(`plannedStartAt`/`dueAt`) and preventive maintenance (`nextDueAt`). Of the
-four, only the `calendar_event` source is **writable** from this page: full
+(`plannedStartAt`/`dueAt`) and preventive maintenance (`nextDueAt`). Source identifiers
+are open strings; other contributors render their identifier with a neutral badge and
+registered calendar icon. Only the `calendar_event` source is **writable** from this page: full
 CRUD against `POST/PATCH/DELETE /organizations/{organizationId}/calendar/events`,
 gated on `organization.events.write`. This feature owns the feed transport,
 the standalone-event write transport, its models and the page; the month
@@ -96,12 +97,19 @@ page announces each move's outcome.
 
 ## Stores and data access
 
+The JSON calendar feed and secret-less token metadata remain ordinary reads. The frontend
+copies the server-issued ICS subscription URL without fetching it or appending execution
+identity to its query. ICS polling clients must support the backend-required
+`Idempotency-Key` request header: each synchronization has a new identity and retries
+retain it. The URL secret authenticates the subscription and is never its execution key.
+Calendar clients that cannot supply that header cannot synchronize this endpoint.
+
 - `CalendarService` (`data-access/services/calendar/`) — `getFeed(orgId,
 from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   only the dirty fields — see the Writable events invariant below) and
   `deleteEvent`. Also the member's iCal feed-token lifecycle against
   `/organizations/{id}/calendar/feed-token`: `createFeedToken` (POST, no
-  body — the 201 is the only response ever carrying the raw secret and full
+  body, with caller-owned `ApiRequestOptions` for unchanged retries — the 201 is the only response carrying the raw secret and full
   feed URL, and creating rotates any prior token), `getFeedTokenMetadata`
   (GET — secret-less `createdAt`/`lastUsedAt`, 404 while none exists) and
   `revokeFeedToken` (DELETE, 204).
@@ -214,10 +222,21 @@ from, to)` plus `createEvent`, `updateEvent` (merge-patch: the caller sends
   for the `createdAt`/`lastUsedAt` rendering. No new route and no new
   permission: the page's own `organization.events.read` gate covers the
   token endpoints.
+- **Feed-token write intentions and secrets belong to the open dialog.** Generate, confirmed
+  regenerate and revoke retain their execution key across failed retries and session renewal.
+  Acknowledged success ends the intention; closure, organization change, session replacement and
+  destruction clear its in-memory key and secret. Departed requests cannot repopulate the dialog.
+  Successful revocation also ends any pending creation or rotation intention, so a later explicit
+  Generate uses a new key. Failed revocation retains both original intentions for retries.
+  A confirmed expired secret replay reports completion without automatically issuing another
+  creation or rotation. The member must reopen the dialog to read metadata before explicitly
+  confirming a new rotation. Neither secrets nor keys enter browser storage or TransferState.
 - **The dialog gates dismissal while the form is dirty, in both create and edit mode.** `CalendarEventForm` reports its own dirtiness through `dirtyChanged`; `calendar-event-dialog` holds it in a local `dirty` signal and routes Escape, the backdrop and the form's own Cancel through `requestClose()`, which raises `@shared/unsaved-changes` instead of closing.
 
 ## Cross-feature dependencies
 
+- Auth's published `AUTH_SESSION_PORT` supplies the session revision for the ephemeral
+  subscription dialog; bearer renewal preserves the current write intention.
 - `@shared/calendar` (generic widget, no domain knowledge).
 - `FacilityService` (`@features/organization/features/facilities/data-access`)
   — read-only, to populate the event dialog's optional facility select.

@@ -9,6 +9,18 @@
 export interface ApiRequestOptions {
   //#region Properties
   /**
+   * Property idempotencyKey
+   * @readonly
+   *
+   * @description
+   * Stable identity for an unchanged write retry. Omitted writes receive a new identity when the
+   * service method is called; subscriptions to that observable retain it.
+   *
+   * @type {string}
+   */
+  readonly idempotencyKey?: string;
+
+  /**
    * Property params
    * @readonly
    *

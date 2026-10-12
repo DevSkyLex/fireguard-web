@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
@@ -11,6 +12,7 @@ import type {
   NotificationTypeOutput,
 } from '@features/account/models';
 import { authStoreEvents } from '@features/auth';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { NotificationStore } from '../notification.store';
 
 describe('NotificationStore', () => {
@@ -90,6 +92,7 @@ describe('NotificationStore', () => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         { provide: PLATFORM_ID, useValue: platformId },
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: NotificationService, useValue: mockNotificationService },
@@ -872,6 +875,7 @@ describe('NotificationStore', () => {
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [
+          { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
           { provide: PLATFORM_ID, useValue: 'browser' },
           { provide: NotificationService, useValue: mockNotificationService },
           { provide: MercureService, useValue: mockMercureService },

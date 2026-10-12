@@ -3,6 +3,7 @@ import { E2E_ORGANIZATION_ID } from '../fixtures/api-fixtures';
 import { directConversationOutput } from '../fixtures/direct-messages-fixtures';
 import { expectNoHorizontalOverflow } from './appearance';
 import { mockMessagesWorkspace } from './direct-messages';
+import { readMessagingOutbox } from './offline';
 
 /** Verifies account-owned IndexedDB failures, permission filtering and retry under the original client identity. */
 export async function verifyFailedMessages(page: Page, info: TestInfo): Promise<void> {
@@ -16,6 +17,16 @@ export async function verifyFailedMessages(page: Page, info: TestInfo): Promise<
   await page.route('**/api/conversations/denied-conversation', (route) =>
     route.fulfill({ status: 404, json: { type: 'not-found', status: 404, detail: 'Not found' } }),
   );
+  await page.route(/\/messages\/failure-original-client$/, async (route) => {
+    if (route.request().method() !== 'PUT') return route.fallback();
+    const row = (await readMessagingOutbox(page)).find(
+      (operation) => operation.id === 'failure-original',
+    );
+    expect(row?.idempotencyKey).toMatch(/^[0-9a-f-]{36}$/i);
+    expect(route.request().headers()['idempotency-key']).toBe(row?.idempotencyKey);
+    expect(row?.payload.clientId).toBe('failure-original-client');
+    await route.fallback();
+  });
   const requests: { url: string; header: string | undefined }[] = [];
   page.on('request', (request) => {
     if (request.method() === 'PUT' && request.url().includes('/messages/'))

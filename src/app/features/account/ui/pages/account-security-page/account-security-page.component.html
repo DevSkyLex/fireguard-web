@@ -49,11 +49,27 @@
         (setupRequested)="totpStore.setup()"
         (confirmed)="confirmTotp($event)"
         (disabled)="disableTotp($event)"
+        (recoveryDisabled)="totpStore.disable({ code: $event, proofType: 'recovery_code' })"
         (cancelled)="totpStore.cancelSetup()"
       />
 
+      @if (totpEnabled()) {
+        <app-account-recovery-codes-panel
+          [status]="recoveryStore.statusCallState()"
+          [codes]="recoveryStore.codes()"
+          [pending]="recoveryStore.pending()"
+          [failed]="recoveryStore.generateCallState().status === 'error'"
+          [proofVisible]="recoveryProofVisible()"
+          (opened)="recoveryProofVisible.set(true)"
+          (generated)="recoveryStore.generate($event)"
+          (closed)="closeRecoveryCodes()"
+          (retried)="recoveryStore.load()"
+        />
+      }
+
       <app-federated-connections-panel
         [providers]="signInMethods.enabledProviders()"
+        [descriptors]="signInMethods.providers()"
         [connections]="signInMethods.connections()"
         [loading]="signInMethods.providersLoading() || signInMethods.connectionsLoading()"
         [pending]="
@@ -67,7 +83,13 @@
         (retried)="retrySignInMethods()"
       />
 
+      <app-password-policy-status
+        [state]="passwordPolicyStore.policyCallState()"
+        (retried)="passwordPolicyStore.load()"
+      />
+
       <app-federated-password-setup-dialog
+        [passwordPolicy]="passwordPolicyStore.policy()"
         [visible]="settingPassword()"
         [challengeToken]="signInMethods.passwordSetupChallenge()"
         [maskedRecipient]="
@@ -194,6 +216,7 @@
           </header>
 
           <app-account-password-form
+            [passwordPolicy]="passwordPolicyStore.policy()"
             [step]="passwordStore.step()"
             [pending]="isChangingPassword()"
             [maskedRecipient]="passwordStore.maskedRecipient()"

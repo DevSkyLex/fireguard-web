@@ -1,18 +1,29 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError, type Observable } from 'rxjs';
+import type { ApiRequestOptions } from '@core/api/models';
 import { TotpService } from '@features/account/data-access';
 import type {
   ConfirmTotpOutput,
   DisableTotpOutput,
   SetupTotpOutput,
 } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { UserStore } from '../../user';
 import { AccountTotpEnrollmentStore } from '../account-totp-enrollment.store';
 
 interface MockTotpService {
   readonly setup: ReturnType<typeof vi.fn<() => Observable<SetupTotpOutput>>>;
   readonly confirm: ReturnType<typeof vi.fn<(code: string) => Observable<ConfirmTotpOutput>>>;
-  readonly disable: ReturnType<typeof vi.fn<(code: string) => Observable<DisableTotpOutput>>>;
+  readonly disable: ReturnType<
+    typeof vi.fn<
+      (
+        code: string,
+        proofType?: 'totp' | 'recovery_code',
+        options?: ApiRequestOptions,
+      ) => Observable<DisableTotpOutput>
+    >
+  >;
 }
 
 interface MockUserStore {
@@ -39,9 +50,13 @@ describe('AccountTotpEnrollmentStore', () => {
       confirm: vi.fn<(code: string) => Observable<ConfirmTotpOutput>>(() =>
         of({ '@id': '', '@type': 'Totp', success: true }),
       ),
-      disable: vi.fn<(code: string) => Observable<DisableTotpOutput>>(() =>
-        of({ '@id': '', '@type': 'Totp', success: true }),
-      ),
+      disable: vi.fn<
+        (
+          code: string,
+          proofType?: 'totp' | 'recovery_code',
+          options?: ApiRequestOptions,
+        ) => Observable<DisableTotpOutput>
+      >(() => of({ '@id': '', '@type': 'Totp', success: true })),
     };
     const mockUserStore: MockUserStore = {
       reload: vi.fn<() => void>(),
@@ -49,6 +64,7 @@ describe('AccountTotpEnrollmentStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         AccountTotpEnrollmentStore,
         { provide: TotpService, useValue: mockTotpService },
         { provide: UserStore, useValue: mockUserStore },
@@ -87,7 +103,10 @@ describe('AccountTotpEnrollmentStore', () => {
 
       store.confirm('123456');
 
-      expect(mockTotpService.confirm).toHaveBeenCalledWith('123456');
+      expect(mockTotpService.confirm).toHaveBeenCalledWith(
+        '123456',
+        expect.objectContaining({ idempotencyKey: expect.any(String) }),
+      );
       expect(store.isConfirming()).toBe(false);
       expect(store.confirmError()).toBeNull();
       expect(mockUserStore.reload).toHaveBeenCalledTimes(1);
@@ -110,10 +129,30 @@ describe('AccountTotpEnrollmentStore', () => {
 
       store.disable('654321');
 
-      expect(mockTotpService.disable).toHaveBeenCalledWith('654321');
+      expect(mockTotpService.disable).toHaveBeenCalledWith(
+        '654321',
+        'totp',
+        expect.objectContaining({ idempotencyKey: expect.any(String) }),
+      );
       expect(store.isDisabling()).toBe(false);
       expect(store.disableError()).toBeNull();
       expect(mockUserStore.reload).toHaveBeenCalledTimes(1);
+    });
+
+    it('retains a recovery proof retry and releases its key after successful disable', () => {
+      const { store, mockTotpService } = setup();
+      const proof = {
+        code: '123456789abcdef0123456789abcdef0',
+        proofType: 'recovery_code' as const,
+      };
+      mockTotpService.disable.mockReturnValueOnce(throwError(() => new Error('offline')));
+      store.disable(proof);
+      store.disable(proof);
+      const calls = mockTotpService.disable.mock.calls;
+      expect(calls[0]?.[1]).toBe('recovery_code');
+      expect(calls[1]?.[2]).toEqual(calls[0]?.[2]);
+      store.disable(proof);
+      expect(calls[2]?.[2]).not.toEqual(calls[0]?.[2]);
     });
 
     it('should expose a disable error and not reload on failure', () => {

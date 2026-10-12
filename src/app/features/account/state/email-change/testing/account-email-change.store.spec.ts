@@ -1,8 +1,10 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError, type Observable } from 'rxjs';
 import { UserProfileService } from '@features/account/data-access';
 import type { RequestEmailChangeInput, RequestEmailChangeOutput } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AccountEmailChangeStore } from '../account-email-change.store';
 import { accountEmailChangeStoreEvents } from '../events';
 
@@ -32,6 +34,7 @@ describe('AccountEmailChangeStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         AccountEmailChangeStore,
         { provide: UserProfileService, useValue: mockUserProfileService },
         { provide: Dispatcher, useValue: mockDispatcher },
@@ -57,10 +60,13 @@ describe('AccountEmailChangeStore', () => {
 
     store.request({ newEmail: 'new@example.com', currentPassword: 'Secret123!' });
 
-    expect(mockUserProfileService.requestEmailChange).toHaveBeenCalledWith({
-      newEmail: 'new@example.com',
-      currentPassword: 'Secret123!',
-    });
+    expect(mockUserProfileService.requestEmailChange).toHaveBeenCalledWith(
+      {
+        newEmail: 'new@example.com',
+        currentPassword: 'Secret123!',
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.requestCallState().status).toBe('success');
     expect(store.pendingEmail()).toBe('new@example.com');
     expect(store.expiresAt()).toBe('2026-08-28T12:00:00+00:00');

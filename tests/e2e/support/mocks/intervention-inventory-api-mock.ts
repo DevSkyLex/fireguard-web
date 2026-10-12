@@ -92,6 +92,18 @@ export class InterventionInventoryApiMock {
   public loseNextCommittedResponse: boolean = false;
   //#endregion
 
+  /**
+   * Property receiptLookups
+   * @readonly
+   *
+   * @description
+   * Exact client operation UUIDs acquired through the server receipt correlation projection.
+   *
+   * @access public
+   * @type {string[]}
+   */
+  public readonly receiptLookups: string[] = [];
+
   //#region Constructor
   /**
    * Constructor InterventionInventoryApiMock
@@ -184,6 +196,19 @@ export class InterventionInventoryApiMock {
       async (route) => {
         if (route.request().method() === 'GET') {
           const query = new URL(route.request().url()).searchParams;
+          const clientOperationId = query.get('clientOperationId');
+          if (clientOperationId) {
+            expect(query.get('itemsPerPage')).toBe('1');
+            this.receiptLookups.push(clientOperationId);
+            const original = this.operations.get(clientOperationId)?.receipt;
+            const current = this.receipts.find((receipt) => receipt.id === original?.id);
+            await this.fulfillCollection(
+              route,
+              `${prefix}/inventory-consumptions`,
+              current ? [current] : [],
+            );
+            return;
+          }
           expect(query.get('interventionId')).toBe(this.interventionId);
           const rows = this.receipts.filter((item) => item.interventionId === this.interventionId);
           await this.fulfillCollection(route, `${prefix}/inventory-consumptions`, rows);
@@ -235,7 +260,7 @@ export class InterventionInventoryApiMock {
           workItemId: input.workItemId ?? null,
           equipmentId: input.equipmentId ?? null,
           actorId: this.actorId,
-          occurredAt: input.occurredAt,
+          occurredAt: new Date(input.occurredAt).toISOString().replace(/\.\d{3}Z$/, '+00:00'),
           status: 'received_pending',
           reason: 'insufficient_stock',
           movementId: null,

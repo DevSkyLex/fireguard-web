@@ -84,11 +84,17 @@ export async function openPreparedInventory(page: Page): Promise<Locator> {
   return section;
 }
 
-/** Uses the public searchable reference pickers and exact decimal input. */
+/** Scrolls reference pickers into view before opening anchored options and entering quantity. */
 export async function fillConsumption(page: Page, section: Locator): Promise<void> {
-  await section.getByRole('combobox', { name: 'Part', exact: true }).fill('SEAL');
+  const part = section.getByRole('combobox', { name: 'Part', exact: true });
+  await part.scrollIntoViewIfNeeded();
+  await expect(part).toBeInViewport({ ratio: 1 });
+  await part.fill('SEAL');
   await page.getByRole('option', { name: 'Valve seal · SEAL · piece', exact: true }).click();
-  await section.getByRole('combobox', { name: 'Warehouse', exact: true }).fill('VAN');
+  const warehouse = section.getByRole('combobox', { name: 'Warehouse', exact: true });
+  await warehouse.scrollIntoViewIfNeeded();
+  await expect(warehouse).toBeInViewport({ ratio: 1 });
+  await warehouse.fill('VAN');
   await page.getByRole('option', { name: 'Service van · VAN', exact: true }).click();
   await section.getByLabel('Quantity used', { exact: true }).fill('0.25');
 }

@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { HydraApiService, type ApiRequestOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   CreateMaintenancePlanInput,
@@ -130,6 +130,7 @@ export class MaintenancePlanService extends HydraApiService {
    * @param {string} organizationId - Owning organization.
    * @param {string} planId - Due equipment operation.
    * @param {boolean} retry - Requests a new attempt after a server-recognized failure.
+   * @param {ApiRequestOptions} [options] - Retained identity and conditional request headers.
    *
    * @returns {Observable<MaintenancePlanGenerationOutput>} Work result.
    */
@@ -137,11 +138,12 @@ export class MaintenancePlanService extends HydraApiService {
     organizationId: string,
     planId: string,
     retry: boolean,
+    options?: ApiRequestOptions,
   ): Observable<MaintenancePlanGenerationOutput> {
     return this.http.post<MaintenancePlanGenerationOutput>(
       this.buildUrl(`${this.path(organizationId, planId)}/generate`),
       { retry },
-      { headers: this.buildHeaders(), withCredentials: true },
+      { headers: this.buildWriteHeaders(options), withCredentials: true },
     );
   }
 
@@ -177,14 +179,18 @@ export class MaintenancePlanService extends HydraApiService {
    * @since unreleased
    *
    * @param {string} organizationId - Owning organization.
+   * @param {ApiRequestOptions} [options] - Retained identity and conditional request headers.
    *
    * @returns {Observable<MaintenanceEngineOutput>} Preparation state.
    */
-  public prepareLegacy(organizationId: string): Observable<MaintenanceEngineOutput> {
+  public prepareLegacy(
+    organizationId: string,
+    options?: ApiRequestOptions,
+  ): Observable<MaintenanceEngineOutput> {
     return this.http.post<MaintenanceEngineOutput>(
       this.buildUrl(`${this.path(organizationId)}/prepare-legacy`),
       {},
-      { headers: this.buildHeaders(), withCredentials: true },
+      { headers: this.buildWriteHeaders(options), withCredentials: true },
     );
   }
 
@@ -199,14 +205,18 @@ export class MaintenancePlanService extends HydraApiService {
    * @since unreleased
    *
    * @param {string} organizationId - Owning organization.
+   * @param {ApiRequestOptions} [options] - Retained identity and conditional request headers.
    *
    * @returns {Observable<MaintenanceEngineOutput>} Confirmed engine state.
    */
-  public activateEngine(organizationId: string): Observable<MaintenanceEngineOutput> {
+  public activateEngine(
+    organizationId: string,
+    options?: ApiRequestOptions,
+  ): Observable<MaintenanceEngineOutput> {
     return this.http.post<MaintenanceEngineOutput>(
       this.buildUrl(`${this.path(organizationId)}/activate`),
       {},
-      { headers: this.buildHeaders(), withCredentials: true },
+      { headers: this.buildWriteHeaders(options), withCredentials: true },
     );
   }
 

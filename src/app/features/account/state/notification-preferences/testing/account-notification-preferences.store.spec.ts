@@ -1,3 +1,4 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, throwError, type Observable } from 'rxjs';
 import { NotificationService } from '@features/account/data-access';
@@ -5,6 +6,7 @@ import type {
   NotificationPreferencesOutput,
   UpdateNotificationPreferencesInput,
 } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AccountNotificationPreferencesStore } from '../account-notification-preferences.store';
 
 interface MockNotificationService {
@@ -62,6 +64,7 @@ describe('AccountNotificationPreferencesStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         AccountNotificationPreferencesStore,
         { provide: NotificationService, useValue: mockNotificationService },
       ],
@@ -111,7 +114,10 @@ describe('AccountNotificationPreferencesStore', () => {
 
     store.save(SAVE_INPUT);
 
-    expect(mockNotificationService.updatePreferences).toHaveBeenCalledWith(SAVE_INPUT);
+    expect(mockNotificationService.updatePreferences).toHaveBeenCalledWith(
+      SAVE_INPUT,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.preferences()).toEqual(SAVED_OUTPUT.preferences);
     expect(store.isSaving()).toBe(false);
   });

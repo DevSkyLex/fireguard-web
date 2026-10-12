@@ -1,13 +1,12 @@
+import type { OnboardingStepOutput } from './onboarding-step-output.interface';
+
 /**
  * Type OnboardingStepKey
  *
  * @description
- * Supported identifiers for each onboarding step
- * managed by the backend.
+ * Backend-owned identifier for a contributed or historical onboarding step.
+ * Derived from the step transport; presentation support does not determine identifier validity.
+ *
+ * @type {string}
  */
-export type OnboardingStepKey =
-  | 'create_organization'
-  | 'select_plan'
-  | 'invite_members'
-  | 'create_first_facility'
-  | 'create_first_equipment';
+export type OnboardingStepKey = OnboardingStepOutput['key'];

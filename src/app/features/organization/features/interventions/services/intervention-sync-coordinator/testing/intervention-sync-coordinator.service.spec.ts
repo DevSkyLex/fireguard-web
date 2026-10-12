@@ -254,6 +254,84 @@ describe('InterventionSyncCoordinatorService', () => {
 
       expect(sync.replayOutbox).toHaveBeenCalledWith('org-1', 'i-1');
     });
+
+    it.each(['session', 'organization', 'account'])(
+      'restarts the latest %s context after an obsolete outbox scan finishes',
+      async (context) => {
+        let resolveScan!: (interventionIds: string[]) => void;
+        offline.listInterventionIdsWithOutbox
+          .mockReturnValueOnce(
+            new Promise<string[]>((resolve) => {
+              resolveScan = resolve;
+            }),
+          )
+          .mockResolvedValueOnce(['i-restored'])
+          .mockResolvedValue([]);
+        const service = buildWithSignalConnectivity();
+
+        service.start();
+        TestBed.tick();
+        expect(offline.listInterventionIdsWithOutbox).toHaveBeenCalledTimes(1);
+
+        for (const nextRevision of [2, 3]) {
+          if (context === 'organization') organizationId.set(`org-${nextRevision}`);
+          else {
+            revision.set(nextRevision);
+            if (context === 'account') profile.set({ id: `account-${nextRevision}` });
+          }
+          TestBed.tick();
+        }
+        expect(offline.listInterventionIdsWithOutbox).toHaveBeenCalledTimes(1);
+        expect(sync.replayOutbox).not.toHaveBeenCalled();
+
+        const currentOrganizationId = organizationId();
+        offline.organizationIdForIntervention.mockResolvedValue(currentOrganizationId);
+        resolveScan(['i-obsolete']);
+
+        await vi.waitFor(() => {
+          expect(sync.replayOutbox).toHaveBeenCalledExactlyOnceWith(
+            currentOrganizationId,
+            'i-restored',
+          );
+          expect(service.syncing()).toBe(false);
+        });
+        expect(offline.organizationIdForIntervention).toHaveBeenCalledExactlyOnceWith('i-restored');
+        expect(offline.listInterventionIdsWithOutbox).toHaveBeenCalledTimes(3);
+        expect(service.lastSyncedAt()).toBeInstanceOf(Date);
+        await flush();
+        TestBed.tick();
+        await flush();
+        expect(offline.listInterventionIdsWithOutbox).toHaveBeenCalledTimes(3);
+      },
+    );
+
+    it.each(['session loss', 'offline'])(
+      'does not restart a queued background cycle after %s',
+      async (context) => {
+        let resolveScan!: (interventionIds: string[]) => void;
+        offline.listInterventionIdsWithOutbox.mockReturnValueOnce(
+          new Promise<string[]>((resolve) => {
+            resolveScan = resolve;
+          }),
+        );
+        const service = buildWithSignalConnectivity();
+
+        service.start();
+        TestBed.tick();
+        revision.set(2);
+        TestBed.tick();
+        if (context === 'session loss') authenticated.set(false);
+        else online.set(false);
+        TestBed.tick();
+        resolveScan(['i-obsolete']);
+        await flush();
+
+        expect(offline.listInterventionIdsWithOutbox).toHaveBeenCalledTimes(1);
+        expect(sync.replayOutbox).not.toHaveBeenCalled();
+        expect(service.syncing()).toBe(false);
+        expect(service.lastSyncedAt()).toBeNull();
+      },
+    );
   });
 
   describe('retryBlocked', () => {

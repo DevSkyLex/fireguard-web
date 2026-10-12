@@ -1,7 +1,7 @@
 import type { HttpResponse } from '@angular/common/http';
 import { Service } from '@angular/core';
 import { map, type Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { type ApiRequestOptions, HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   InspectionOutput,
@@ -23,7 +23,6 @@ import type {
 /**
  * Service InspectionService
  * @class InspectionService
- * @extends {HydraApiService}
  *
  * @description
  * API service for inspection management operations.
@@ -31,7 +30,10 @@ import type {
  * as well as managing non-conformities.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class InspectionService extends HydraApiService {
@@ -66,7 +68,7 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} [inspectionId] - Optional ID of a specific inspection.
    *
-   * @return {string} The constructed URL path for the inspection resource.
+   * @returns {string} The constructed URL path for the inspection resource.
    */
   private inspectionPath(organizationId: string, inspectionId?: string): string {
     const base: string = `${InspectionService.BASE_PATH}/${organizationId}/inspections`;
@@ -86,7 +88,7 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} facilityId - The ID of the facility.
    *
-   * @return {string} The constructed URL path for facility inspections.
+   * @returns {string} The constructed URL path for facility inspections.
    */
   private facilityInspectionPath(organizationId: string, facilityId: string): string {
     return `${InspectionService.BASE_PATH}/${organizationId}/facilities/${facilityId}/inspections`;
@@ -110,9 +112,11 @@ export class InspectionService extends HydraApiService {
    * @since 1.0.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {InspectionListOptions} [options] - Optional pagination, sort, search and filter parameters.
+   * @param {InspectionListOptions} [options] - Optional pagination, sort, search and filter
+   *   parameters.
    *
-   * @return {Observable<HydraCollection<InspectionOutput>>} An observable emitting the inspections collection.
+   * @returns {Observable<HydraCollection<InspectionOutput>>} An observable emitting the inspections
+   *   collection.
    */
   public list(
     organizationId: string,
@@ -161,7 +165,8 @@ export class InspectionService extends HydraApiService {
    * @param {string} interventionId - The intervention to scope the query to.
    * @param {PaginationOptions} [options] - Optional pagination.
    *
-   * @returns {Observable<HydraCollection<InspectionOutput>>} An observable emitting the linked inspections.
+   * @returns {Observable<HydraCollection<InspectionOutput>>} An observable emitting the linked
+   *   inspections.
    */
   public listByIntervention(
     interventionId: string,
@@ -195,7 +200,8 @@ export class InspectionService extends HydraApiService {
    * @param {string} facilityId - The ID of the facility.
    * @param {RequestOptions} [options] - Optional pagination and filter params.
    *
-   * @return {Observable<HydraCollection<InspectionOutput>>} An observable emitting the inspections collection.
+   * @returns {Observable<HydraCollection<InspectionOutput>>} An observable emitting the inspections
+   *   collection.
    */
   public listByFacility(
     organizationId: string,
@@ -221,7 +227,7 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} inspectionId - The ID of the inspection to retrieve.
    *
-   * @return {Observable<InspectionOutput>} An observable emitting the inspection details.
+   * @returns {Observable<InspectionOutput>} An observable emitting the inspection details.
    */
   public get(organizationId: string, inspectionId: string): Observable<InspectionOutput> {
     return this.getOne<InspectionOutput>(this.inspectionPath(organizationId, inspectionId));
@@ -241,7 +247,7 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {CreateInspectionInput} input - The data required to create the inspection.
    *
-   * @return {Observable<InspectionOutput>} An observable emitting the created inspection details.
+   * @returns {Observable<InspectionOutput>} An observable emitting the created inspection details.
    */
   public create(
     organizationId: string,
@@ -266,13 +272,15 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - organization Id value.
    * @param {string} interventionId - intervention Id value.
    * @param {CreateInspectionInput} input - input value.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
-   * @return {Observable<InspectionOutput>} Result of the create for intervention operation.
+   * @returns {Observable<InspectionOutput>} Result of the create for intervention operation.
    */
   public createForIntervention(
     organizationId: string,
     interventionId: string,
     input: CreateInspectionInput,
+    options?: ApiRequestOptions,
   ): Observable<InspectionOutput> {
     const payload: CreateInspectionInput = {
       ...input,
@@ -283,15 +291,28 @@ export class InspectionService extends HydraApiService {
       return this.put<CreateInspectionInput, InspectionOutput>(
         `/api/inspections/${input.clientId}`,
         payload,
-        { headers: { 'If-None-Match': '*' } },
+        { ...options, headers: { ...options?.headers, 'If-None-Match': '*' } },
       );
     }
 
-    return this.post<CreateInspectionInput, InspectionOutput>('/api/inspections', payload);
+    return this.post<CreateInspectionInput, InspectionOutput>('/api/inspections', payload, options);
   }
 
   /**
-   * Updates a draft inspection using JSON Merge Patch.
+   * Method update
+   * @method update
+   *
+   * @description
+   * Updates a draft inspection using JSON Merge Patch within its organization.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - The owning organization's identifier.
+   * @param {string} inspectionId - The draft inspection's identifier.
+   * @param {UpdateInspectionInput} input - The fields to change.
+   *
+   * @returns {Observable<InspectionOutput>} The inspection confirmed by the API.
    */
   public update(
     organizationId: string,
@@ -305,7 +326,19 @@ export class InspectionService extends HydraApiService {
   }
 
   /**
-   * Cancels an inspection.
+   * Method cancel
+   * @method cancel
+   *
+   * @description
+   * Cancels an inspection within its owning organization.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - The owning organization's identifier.
+   * @param {string} inspectionId - The inspection to cancel.
+   *
+   * @returns {Observable<void>} Completion after the API confirms cancellation.
    */
   public cancel(organizationId: string, inspectionId: string): Observable<void> {
     return this.delete(this.inspectionPath(organizationId, inspectionId));
@@ -325,7 +358,8 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} inspectionId - The ID of the inspection to submit.
    *
-   * @return {Observable<InspectionOutput>} An observable emitting the submitted inspection details.
+   * @returns {Observable<InspectionOutput>} An observable emitting the submitted inspection
+   *   details.
    */
   public submit(organizationId: string, inspectionId: string): Observable<InspectionOutput> {
     return this.postAction<InspectionOutput>(
@@ -347,7 +381,7 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} inspectionId - The ID of the inspection to close.
    *
-   * @return {Observable<InspectionOutput>} An observable emitting the closed inspection details.
+   * @returns {Observable<InspectionOutput>} An observable emitting the closed inspection details.
    */
   public close(organizationId: string, inspectionId: string): Observable<InspectionOutput> {
     return this.postAction<InspectionOutput>(
@@ -374,10 +408,16 @@ export class InspectionService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {InspectionExportOptions} [options] - The narrowing to apply.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
-   * @return {Observable<Blob>} The export's CSV binary content.
+   * @returns {Observable<Blob>} The export's CSV binary content.
    */
-  public exportCsv(organizationId: string, options?: InspectionExportOptions): Observable<Blob> {
+  public exportCsv(
+    organizationId: string,
+    options?: InspectionExportOptions,
+    requestOptions?: ApiRequestOptions,
+  ): Observable<Blob> {
     const params: NonNullable<RequestOptions['params']> = {};
 
     if (options?.equipmentId) params['equipmentId'] = options.equipmentId;
@@ -391,6 +431,7 @@ export class InspectionService extends HydraApiService {
 
     return this.http.get(this.buildUrl(`${this.inspectionPath(organizationId)}/export`), {
       params: this.buildParams({ params }),
+      headers: this.buildWriteHeaders(requestOptions),
       responseType: 'blob',
       withCredentials: true,
     });
@@ -413,7 +454,8 @@ export class InspectionService extends HydraApiService {
    * @param {string} inspectionId - The ID of the inspection.
    * @param {RequestOptions} [options] - Optional pagination parameters.
    *
-   * @return {Observable<HydraCollection<NonConformityOutput>>} An observable emitting the non-conformities collection.
+   * @returns {Observable<HydraCollection<NonConformityOutput>>} An observable emitting the
+   *   non-conformities collection.
    */
   public listNonConformities(
     organizationId: string,
@@ -452,7 +494,8 @@ export class InspectionService extends HydraApiService {
    * @param {string} organizationId - The unique identifier of the organization.
    * @param {NonConformityStatisticsOptions} [options] - Optional inclusive ISO 8601 window bounds.
    *
-   * @return {Observable<NonConformityStatisticsOutput>} An observable emitting the statistics snapshot.
+   * @returns {Observable<NonConformityStatisticsOutput>} An observable emitting the statistics
+   *   snapshot.
    */
   public getNonConformityStatistics(
     organizationId: string,
@@ -489,12 +532,15 @@ export class InspectionService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {NonConformityExportOptions} [options] - The narrowing to apply.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
-   * @return {Observable<Blob>} The export's CSV binary content.
+   * @returns {Observable<Blob>} The export's CSV binary content.
    */
   public exportNonConformitiesCsv(
     organizationId: string,
     options?: NonConformityExportOptions,
+    requestOptions?: ApiRequestOptions,
   ): Observable<Blob> {
     const params: NonNullable<RequestOptions['params']> = {};
 
@@ -505,6 +551,7 @@ export class InspectionService extends HydraApiService {
       this.buildUrl(`${InspectionService.BASE_PATH}/${organizationId}/non-conformities/export`),
       {
         params: this.buildParams({ params }),
+        headers: this.buildWriteHeaders(requestOptions),
         responseType: 'blob',
         withCredentials: true,
       },
@@ -529,13 +576,20 @@ export class InspectionService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {string} inspectionId - The inspection to export the report for.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
-   * @return {Observable<Blob>} The report's PDF binary content.
+   * @returns {Observable<Blob>} The report's PDF binary content.
    */
-  public exportReport(organizationId: string, inspectionId: string): Observable<Blob> {
+  public exportReport(
+    organizationId: string,
+    inspectionId: string,
+    requestOptions?: ApiRequestOptions,
+  ): Observable<Blob> {
     return this.http.get(
       this.buildUrl(this.inspectionPath(organizationId, inspectionId) + '/report'),
       {
+        headers: this.buildWriteHeaders(requestOptions),
         responseType: 'blob',
         withCredentials: true,
       },
@@ -563,12 +617,15 @@ export class InspectionService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    * @param {NonConformityExportOptions} [options] - The narrowing to apply.
+   * @param {ApiRequestOptions} [requestOptions] - Optional headers and retained execution identity
+   *   for the same export intent.
    *
-   * @return {Observable<Blob>} The report's PDF binary content.
+   * @returns {Observable<Blob>} The report's PDF binary content.
    */
   public exportNonConformitiesReport(
     organizationId: string,
     options?: NonConformityExportOptions,
+    requestOptions?: ApiRequestOptions,
   ): Observable<Blob> {
     const params: NonNullable<RequestOptions['params']> = {};
 
@@ -579,6 +636,7 @@ export class InspectionService extends HydraApiService {
       this.buildUrl(`${InspectionService.BASE_PATH}/${organizationId}/non-conformities/report`),
       {
         params: this.buildParams({ params }),
+        headers: this.buildWriteHeaders(requestOptions),
         responseType: 'blob',
         withCredentials: true,
       },
@@ -586,7 +644,20 @@ export class InspectionService extends HydraApiService {
   }
 
   /**
-   * Retrieves a single non-conformity.
+   * Method getNonConformity
+   * @method getNonConformity
+   *
+   * @description
+   * Reads one non-conformity through its owning inspection and organization.
+   *
+   * @access public
+   * @since unreleased
+   *
+   * @param {string} organizationId - The owning organization's identifier.
+   * @param {string} inspectionId - The inspection containing the non-conformity.
+   * @param {string} nonConformityId - The non-conformity to read.
+   *
+   * @returns {Observable<NonConformityOutput>} The non-conformity returned by the API.
    */
   public getNonConformity(
     organizationId: string,
@@ -613,7 +684,8 @@ export class InspectionService extends HydraApiService {
    * @param {string} inspectionId - The ID of the inspection.
    * @param {AddNonConformityInput} input - The data required to create the non-conformity.
    *
-   * @return {Observable<NonConformityOutput>} An observable emitting the created non-conformity details.
+   * @returns {Observable<NonConformityOutput>} An observable emitting the created non-conformity
+   *   details.
    */
   public addNonConformity(
     organizationId: string,
@@ -650,7 +722,8 @@ export class InspectionService extends HydraApiService {
    * @param {string} nonConformityId - The ID of the non-conformity to update.
    * @param {UpdateNonConformityStatusInput} input - Input containing the new status value.
    *
-   * @return {Observable<UpdateNonConformityStatusResult>} The resolved status update, or the pending-approval outcome.
+   * @returns {Observable<UpdateNonConformityStatusResult>} The resolved status update, or the
+   *   pending-approval outcome.
    */
   public updateNonConformityStatus(
     organizationId: string,

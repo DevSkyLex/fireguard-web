@@ -39,6 +39,7 @@ import type {
   OnboardingOutput,
   OnboardingStepKey,
   OnboardingStepOutput,
+  OnboardingStepPresentation,
   OnboardingSetupStep,
 } from '@features/onboarding/models';
 import {
@@ -56,6 +57,7 @@ import {
   OnboardingPlanForm,
   type OnboardingPlanSelection,
 } from '@features/onboarding/ui/forms';
+import { resolveOnboardingStepPresentation } from '@features/onboarding/utils';
 import { BillingService, PlanService } from '@features/organization/data-access';
 import type { PlanOutput, PlanPricingOutput } from '@features/organization/models';
 import { OrganizationLandingService } from '@features/organization/services/organization-landing';
@@ -864,14 +866,29 @@ export class OnboardingWizardPage implements OnInit {
    * @access protected
    * @since 1.0.0
    *
-   * @type {Signal<(typeof ONBOARDING_STEP_PRESENTATION)[OnboardingStepKey] | null>}
+   * @type {Signal<OnboardingStepPresentation | null>}
    */
-  protected readonly stepPresentation: Signal<
-    (typeof ONBOARDING_STEP_PRESENTATION)[OnboardingStepKey] | null
-  > = computed(() => {
+  protected readonly stepPresentation: Signal<OnboardingStepPresentation | null> = computed(() => {
     const step: OnboardingStepOutput | null = this.currentStep();
 
-    return step === null ? null : ONBOARDING_STEP_PRESENTATION[step.key];
+    return step === null ? null : resolveOnboardingStepPresentation(step);
+  });
+
+  /**
+   * Property hasStepRenderer
+   * @readonly
+   *
+   * @description
+   * Limits resource creation to the workflows implemented by this application.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {Signal<boolean>}
+   */
+  protected readonly hasStepRenderer: Signal<boolean> = computed(() => {
+    const step = this.currentStep();
+    return step !== null && Object.hasOwn(ONBOARDING_STEP_PRESENTATION, step.key);
   });
 
   /**
@@ -919,7 +936,7 @@ export class OnboardingWizardPage implements OnInit {
       return $localize`:@@onboarding.wizard.lastStep:Last step — your workspace opens right after.`;
     }
 
-    const label: string = ONBOARDING_STEP_PRESENTATION[following.key].label;
+    const label: string = resolveOnboardingStepPresentation(following).label;
 
     return $localize`:@@onboarding.wizard.nextStep:Next: ${label}:label:`;
   });

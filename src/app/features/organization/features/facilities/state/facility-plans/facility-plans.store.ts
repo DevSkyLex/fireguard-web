@@ -33,7 +33,9 @@ import {
   toStoreError,
   toStoreFailureEventPayload,
   type StoreError,
+  WriteOperationService,
 } from '@core/request-state';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { EquipmentService } from '@features/organization/features/equipments/data-access';
 import type { EquipmentOutput } from '@features/organization/features/equipments/models';
 import {
@@ -338,102 +340,789 @@ export const FacilityPlansStore = signalStore(
     }),
   })),
 
-  withMethods(
-    (
-      store,
-      service: FacilityAttachmentService = inject(FacilityAttachmentService),
-      facilityService: FacilityService = inject(FacilityService),
-      equipmentService: EquipmentService = inject(EquipmentService),
-      dispatcher: Dispatcher = inject(Dispatcher),
-      platformId: object = inject(PLATFORM_ID),
-    ) => {
-      const selectionChanged = new Subject<void>();
-      const contextChanged = new Subject<void>();
-      let selectionGeneration = 0;
-      let contextGeneration = 0;
+  withMethods((store) => {
+    const service: FacilityAttachmentService = inject(FacilityAttachmentService);
+    const facilityService: FacilityService = inject(FacilityService);
+    const equipmentService: EquipmentService = inject(EquipmentService);
+    const dispatcher: Dispatcher = inject(Dispatcher);
+    const platformId: object = inject(PLATFORM_ID);
+    const writeOperations = inject(WriteOperationService);
+    const session = inject(AUTH_SESSION_PORT);
+    const selectionChanged = new Subject<void>();
+    const contextChanged = new Subject<void>();
+    let selectionGeneration = 0;
+    let contextGeneration = 0;
+    const writeIntents = writeOperations.createTracker();
+    let uploadFiles = new WeakMap<Blob, number>();
+    let nextUploadFile = 0;
 
-      /**
-       * @description
-       * Cancels selected-plan reads, releases bytes and discards the old editor draft.
-       */
-      function clearSelectionResources(): void {
-        selectionGeneration++;
-        selectionChanged.next();
-        const previous = store.imageUrl();
-        if (previous) URL.revokeObjectURL(previous);
-        patchState(store, {
-          imageUrl: null,
-          imageKey: null,
-          imageCallState: idleCallState(),
-          planOverlay: null,
-          overlayKey: null,
-          overlayCallState: idleCallState(),
-          editMode: 'none',
-          drawTargetFacilityId: null,
-          placeEquipmentId: null,
-          draftPoints: [],
-          saveZoneGeometryCallState: idleCallState(),
-          savePinPositionCallState: idleCallState(),
-          saveCalibrationCallState: idleCallState(),
-          calibrationRevisionCallState: idleCallState(),
-        });
-      }
+    /**
+     * @description
+     * Releases caller-owned identities without retaining binary inputs in store state.
+     */
+    const clearWriteOperations = (): void => {
+      writeIntents.clear();
+      uploadFiles = new WeakMap();
+    };
 
-      /**
-       * Constant loadOverlayFn
-       *
-       * @description
-       * Shared rxMethod implementation fetching the selected plan's overlay.
-       * Exposed as {@link loadOverlay} and called internally by
-       * {@link saveZoneGeometryFn}/{@link savePinPositionFn} on a successful
-       * write so the overlay reflects it without a page reload.
-       *
-       * @since 1.4.0
-       *
-       * @type {RxMethod<{ organizationId: string; facilityId: string; attachmentId: string }>}
-       *
-       * @constant loadOverlayFn
-       */
-      const loadOverlayFn = rxMethod<{
-        organizationId: string;
-        facilityId: string;
-        attachmentId: string;
-      }>(
-        pipe(
-          switchMap(({ organizationId, facilityId, attachmentId }) => {
-            const key = JSON.stringify([organizationId, facilityId, attachmentId]);
-            if (key !== store.selectedPlanKey() || !isPlatformBrowser(platformId)) return EMPTY;
-            const generation = selectionGeneration;
-            patchState(store, {
-              planOverlay: null,
-              overlayKey: null,
-              overlayCallState: pendingCallState(),
-            });
-            return facilityService.getPlanOverlay(organizationId, facilityId, attachmentId).pipe(
-              takeUntil(selectionChanged),
+    /**
+     * @description
+     * Cancels selected-plan reads, releases bytes and discards the old editor draft.
+     */
+    function clearSelectionResources(): void {
+      selectionGeneration++;
+      selectionChanged.next();
+      const previous = store.imageUrl();
+      if (previous) URL.revokeObjectURL(previous);
+      patchState(store, {
+        imageUrl: null,
+        imageKey: null,
+        imageCallState: idleCallState(),
+        planOverlay: null,
+        overlayKey: null,
+        overlayCallState: idleCallState(),
+        editMode: 'none',
+        drawTargetFacilityId: null,
+        placeEquipmentId: null,
+        draftPoints: [],
+        saveZoneGeometryCallState: idleCallState(),
+        savePinPositionCallState: idleCallState(),
+        saveCalibrationCallState: idleCallState(),
+        calibrationRevisionCallState: idleCallState(),
+      });
+    }
+
+    /**
+     * Constant loadOverlayFn
+     *
+     * @description
+     * Shared rxMethod implementation fetching the selected plan's overlay.
+     * Exposed as {@link loadOverlay} and called internally by
+     * {@link saveZoneGeometryFn}/{@link savePinPositionFn} on a successful
+     * write so the overlay reflects it without a page reload.
+     *
+     * @since 1.4.0
+     *
+     * @type {RxMethod<{ organizationId: string; facilityId: string; attachmentId: string }>}
+     *
+     * @constant loadOverlayFn
+     */
+    const loadOverlayFn = rxMethod<{
+      organizationId: string;
+      facilityId: string;
+      attachmentId: string;
+    }>(
+      pipe(
+        switchMap(({ organizationId, facilityId, attachmentId }) => {
+          const key = JSON.stringify([organizationId, facilityId, attachmentId]);
+          if (key !== store.selectedPlanKey() || !isPlatformBrowser(platformId)) return EMPTY;
+          const generation = selectionGeneration;
+          patchState(store, {
+            planOverlay: null,
+            overlayKey: null,
+            overlayCallState: pendingCallState(),
+          });
+          return facilityService.getPlanOverlay(organizationId, facilityId, attachmentId).pipe(
+            takeUntil(selectionChanged),
+            tapResponse({
+              next: (overlay: FacilityPlanOverlayOutput): void => {
+                if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                patchState(store, {
+                  planOverlay: overlay,
+                  overlayKey: key,
+                  overlayCallState: successCallState(null),
+                });
+              },
+              error: (error: unknown): void => {
+                if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                const storeError: StoreError = toStoreError(error);
+                patchState(store, {
+                  planOverlay: null,
+                  overlayKey: null,
+                  overlayCallState: errorCallState(storeError),
+                });
+                dispatcher.dispatch(
+                  facilityPlansStoreEvents.overlayLoadFailed(
+                    toStoreFailureEventPayload(storeError, 'Failed to load the floor plan overlay'),
+                  ),
+                );
+              },
+            }),
+          );
+        }),
+      ),
+    );
+
+    /**
+     * Constant loadZoneCandidatesFn
+     *
+     * @description
+     * Fetches this facility's direct children of type `zone`/`area`
+     * (`draw-zone`'s picker options). Exposed as
+     * {@link ensureZoneCandidatesLoaded}, guarded against duplicate fetches.
+     *
+     * @since 1.4.0
+     *
+     * @type {RxMethod<void>}
+     *
+     * @constant loadZoneCandidatesFn
+     */
+    const loadZoneCandidatesFn = rxMethod<void>(
+      pipe(
+        switchMap(() => {
+          const organizationId = store.organizationId();
+          const facilityId = store.facilityId();
+          if (!organizationId || !facilityId || !isPlatformBrowser(platformId)) return EMPTY;
+          const generation = contextGeneration;
+          patchState(store, { zoneCandidatesCallState: pendingCallState() });
+          return facilityService
+            .listDescendants(organizationId, facilityId, {
+              page: store.zoneCandidatePage(),
+              itemsPerPage: 100,
+              search: store.zoneCandidateSearch(),
+            })
+            .pipe(
+              takeUntil(contextChanged),
               tapResponse({
-                next: (overlay: FacilityPlanOverlayOutput): void => {
-                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                next: (response: HydraCollection<FacilityOutput>): void => {
+                  if (generation !== contextGeneration) return;
                   patchState(store, {
-                    planOverlay: overlay,
-                    overlayKey: key,
-                    overlayCallState: successCallState(null),
+                    zoneCandidates: response.member.filter((candidate) =>
+                      ZONE_CANDIDATE_TYPES.has(candidate.type),
+                    ),
+                    zoneCandidateTotal: response.totalItems,
+                    zoneCandidatesCallState: successCallState(null),
                   });
                 },
                 error: (error: unknown): void => {
-                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, {
-                    planOverlay: null,
-                    overlayKey: null,
-                    overlayCallState: errorCallState(storeError),
-                  });
+                  if (generation !== contextGeneration) return;
+                  const storeError = toStoreError(error);
+                  patchState(store, { zoneCandidatesCallState: errorCallState(storeError) });
                   dispatcher.dispatch(
-                    facilityPlansStoreEvents.overlayLoadFailed(
+                    facilityPlansStoreEvents.zoneCandidatesFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load candidate zones'),
+                    ),
+                  );
+                },
+              }),
+            );
+        }),
+      ),
+    );
+
+    /**
+     * Constant loadFacilityEquipmentFn
+     *
+     * @description
+     * Fetches this facility's assigned equipment (`place-pin`'s picker
+     * options, and the source for each pin's dialog rows). Exposed as
+     * {@link ensureFacilityEquipmentLoaded}, guarded against duplicate
+     * fetches.
+     *
+     * @since 1.4.0
+     *
+     * @type {RxMethod<void>}
+     *
+     * @constant loadFacilityEquipmentFn
+     */
+    const loadFacilityEquipmentFn = rxMethod<void>(
+      pipe(
+        switchMap(() => {
+          const organizationId = store.organizationId();
+          const facilityId = store.facilityId();
+          if (!organizationId || !facilityId || !isPlatformBrowser(platformId)) return EMPTY;
+          const generation = contextGeneration;
+          patchState(store, { facilityEquipmentCallState: pendingCallState() });
+          return equipmentService
+            .listByFacility(organizationId, facilityId, {
+              page: store.equipmentCandidatePage(),
+              itemsPerPage: 100,
+              params: { includeDescendants: true, search: store.equipmentCandidateSearch() },
+            })
+            .pipe(
+              takeUntil(contextChanged),
+              tapResponse({
+                next: (response: HydraCollection<EquipmentOutput>): void => {
+                  if (generation !== contextGeneration) return;
+                  patchState(store, {
+                    facilityEquipment: [...response.member],
+                    equipmentCandidateTotal: response.totalItems,
+                    facilityEquipmentCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown): void => {
+                  if (generation !== contextGeneration) return;
+                  const storeError = toStoreError(error);
+                  patchState(store, { facilityEquipmentCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.facilityEquipmentFailed(
                       toStoreFailureEventPayload(
                         storeError,
-                        'Failed to load the floor plan overlay',
+                        "Failed to load this facility's equipment",
                       ),
+                    ),
+                  );
+                },
+              }),
+            );
+        }),
+      ),
+    );
+
+    /**
+     * Constant saveZoneGeometryFn
+     *
+     * @description
+     * Shared rxMethod implementation writing (or clearing, when `points`
+     * is `null`) one facility's outline on the selected plan. On success,
+     * leaves `draw-zone` mode (a no-op when called from the dialog or the
+     * clear action), invalidates the cached candidate lists so they
+     * re-fetch on next open, and reloads the overlay. Conflicts refresh the
+     * overlay while retaining the draft; stable API codes supply recovery guidance.
+     * Concurrent submissions never cancel an accepted write.
+     *
+     * @since 1.4.0
+     *
+     * @type {RxMethod<{
+     *   organizationId: string;
+     *   facilityId: string;
+     *   attachmentId: string | null;
+     *   points: ReadonlyArray<readonly [number, number]> | null;
+     * }>}
+     *
+     * @constant saveZoneGeometryFn
+     */
+    const saveZoneGeometryFn = rxMethod<{
+      organizationId: string;
+      facilityId: string;
+      attachmentId: string | null;
+      points: ReadonlyArray<readonly [number, number]> | null;
+    }>(
+      pipe(
+        mergeMap(({ organizationId, facilityId, attachmentId, points }) => {
+          if (
+            !store.selectedPlanReady() ||
+            store.saveZoneGeometryCallState().status === 'pending' ||
+            !session.isAuthenticated()
+          )
+            return EMPTY;
+
+          if (points && sanitizePolygon(points).status === 'rejected') {
+            const message = $localize`:@@facility.plans.editor.invalidPolygon:Draw a polygon with non-zero area and no crossing edges.`;
+            const storeError = toStoreError({ message, status: 422 });
+            patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
+            dispatcher.dispatch(
+              facilityPlansStoreEvents.zoneGeometrySaveFailed(errorFeedback(message)),
+            );
+            return EMPTY;
+          }
+          const generation = selectionGeneration;
+          const key = store.selectedPlanKey();
+          patchState(store, { saveZoneGeometryCallState: pendingCallState() });
+          const action = `geometry:${facilityId}`;
+          const sessionRevision = session.sessionRevision();
+          const operation = writeIntents.options(
+            action,
+            { attachmentId, points, organizationId, key, contextGeneration },
+            sessionRevision,
+          );
+          return facilityService
+            .setPlanGeometry(organizationId, facilityId, { attachmentId, points }, operation)
+            .pipe(
+              tapResponse({
+                next: (): void => {
+                  if (
+                    generation !== selectionGeneration ||
+                    key !== store.selectedPlanKey() ||
+                    !session.isAuthenticated() ||
+                    sessionRevision !== session.sessionRevision()
+                  )
+                    return;
+                  writeIntents.complete(action);
+                  patchState(store, {
+                    saveZoneGeometryCallState: successCallState(null),
+                    editMode: 'none',
+                    drawTargetFacilityId: null,
+                    draftPoints: [],
+                    zoneCandidatesCallState: idleCallState(),
+                  });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.zoneGeometrySaveSucceeded(
+                      successFeedback(
+                        points === null
+                          ? $localize`:@@facility.plans.editor.toast.zoneCleared:Zone outline cleared`
+                          : $localize`:@@facility.plans.editor.toast.zoneSaved:Zone outline saved`,
+                      ),
+                    ),
+                  );
+
+                  const currentFacilityId: string | null = store.facilityId();
+                  const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+                  if (currentFacilityId && plan) {
+                    loadOverlayFn({
+                      organizationId,
+                      facilityId: currentFacilityId,
+                      attachmentId: plan.id,
+                    });
+                  }
+                },
+                error: (error: unknown): void => {
+                  if (
+                    generation !== selectionGeneration ||
+                    key !== store.selectedPlanKey() ||
+                    !session.isAuthenticated() ||
+                    sessionRevision !== session.sessionRevision()
+                  )
+                    return;
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
+                  const currentFacilityId: string | null = store.facilityId();
+                  const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+                  if (
+                    (storeError.code === 409 || storeError.code === 412) &&
+                    currentFacilityId &&
+                    plan
+                  ) {
+                    loadOverlayFn({
+                      organizationId,
+                      facilityId: currentFacilityId,
+                      attachmentId: plan.id,
+                    });
+                  }
+
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.zoneGeometrySaveFailed(
+                      errorFeedback(
+                        planWriteErrorMessage(
+                          storeError,
+                          $localize`:@@facility.plans.editor.error.zoneSaveFailed:Failed to save the zone outline`,
+                        ),
+                        {
+                          code: storeError.code,
+                          retryable: storeError.retryable,
+                          timestamp: storeError.timestamp,
+                        },
+                      ),
+                    ),
+                  );
+                },
+              }),
+            );
+        }),
+      ),
+    );
+
+    /**
+     * Constant savePinPositionFn
+     *
+     * @description
+     * Shared rxMethod implementation writing (or clearing, when `x`/`y`
+     * are `null`) one equipment item's pin on the selected plan. On
+     * success, leaves `place-pin` mode when `exitPlaceMode` is set,
+     * invalidates the cached equipment candidates, and reloads the
+     * overlay. Conflicts preserve the editor context and refresh the
+     * overlay. Stable API codes identify the relevant business constraint.
+     *
+     * @since 1.4.0
+     *
+     * @type {RxMethod<{
+     *   organizationId: string;
+     *   equipmentId: string;
+     *   attachmentId: string | null;
+     *   x: number | null;
+     *   y: number | null;
+     *   exitPlaceMode: boolean;
+     * }>}
+     *
+     * @constant savePinPositionFn
+     */
+    const savePinPositionFn = rxMethod<{
+      organizationId: string;
+      equipmentId: string;
+      attachmentId: string | null;
+      x: number | null;
+      y: number | null;
+      exitPlaceMode: boolean;
+    }>(
+      pipe(
+        mergeMap(({ organizationId, equipmentId, attachmentId, x, y, exitPlaceMode }) => {
+          if (
+            !store.selectedPlanReady() ||
+            store.savePinPositionCallState().status === 'pending' ||
+            !session.isAuthenticated()
+          )
+            return EMPTY;
+          const generation = selectionGeneration;
+          const key = store.selectedPlanKey();
+          patchState(store, { savePinPositionCallState: pendingCallState() });
+          const action = `pin:${equipmentId}`;
+          const sessionRevision = session.sessionRevision();
+          const operation = writeIntents.options(
+            action,
+            { attachmentId, x, y, organizationId, key, contextGeneration },
+            sessionRevision,
+          );
+          return equipmentService
+            .setPlanPosition(organizationId, equipmentId, { attachmentId, x, y }, operation)
+            .pipe(
+              tapResponse({
+                next: (): void => {
+                  if (
+                    generation !== selectionGeneration ||
+                    key !== store.selectedPlanKey() ||
+                    !session.isAuthenticated() ||
+                    sessionRevision !== session.sessionRevision()
+                  )
+                    return;
+                  writeIntents.complete(action);
+                  patchState(store, {
+                    savePinPositionCallState: successCallState(null),
+                    ...(exitPlaceMode ? { editMode: 'none' as const, placeEquipmentId: null } : {}),
+                    facilityEquipmentCallState: idleCallState(),
+                  });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.pinPositionSaveSucceeded(
+                      successFeedback(
+                        attachmentId === null
+                          ? $localize`:@@facility.plans.editor.toast.pinRemoved:Equipment removed from plan`
+                          : $localize`:@@facility.plans.editor.toast.pinSaved:Equipment position saved`,
+                      ),
+                    ),
+                  );
+
+                  const currentFacilityId: string | null = store.facilityId();
+                  const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+                  if (currentFacilityId && plan) {
+                    loadOverlayFn({
+                      organizationId,
+                      facilityId: currentFacilityId,
+                      attachmentId: plan.id,
+                    });
+                  }
+                },
+                error: (error: unknown): void => {
+                  if (
+                    generation !== selectionGeneration ||
+                    key !== store.selectedPlanKey() ||
+                    !session.isAuthenticated() ||
+                    sessionRevision !== session.sessionRevision()
+                  )
+                    return;
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { savePinPositionCallState: errorCallState(storeError) });
+                  const currentFacilityId: string | null = store.facilityId();
+                  const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+                  if (
+                    (storeError.code === 409 || storeError.code === 412) &&
+                    currentFacilityId &&
+                    plan
+                  ) {
+                    loadOverlayFn({
+                      organizationId,
+                      facilityId: currentFacilityId,
+                      attachmentId: plan.id,
+                    });
+                  }
+
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.pinPositionSaveFailed(
+                      errorFeedback(
+                        planWriteErrorMessage(
+                          storeError,
+                          $localize`:@@facility.plans.editor.error.pinSaveFailed:Failed to save the equipment position`,
+                        ),
+                        {
+                          code: storeError.code,
+                          retryable: storeError.retryable,
+                          timestamp: storeError.timestamp,
+                        },
+                      ),
+                    ),
+                  );
+                },
+              }),
+            );
+        }),
+      ),
+    );
+
+    /**
+     * Constant refreshCalibrationRevisionFn
+     *
+     * @description
+     * Refreshes only the attachment revision after conflict without replacing open form drafts.
+     */
+    const refreshCalibrationRevisionFn = rxMethod<{
+      readonly plan: FacilityAttachmentOutput;
+      readonly generation: number;
+      readonly key: string | null;
+    }>(
+      pipe(
+        switchMap(({ plan, generation, key }) => {
+          patchState(store, { calibrationRevisionCallState: pendingCallState() });
+          return service.list(plan.facilityId, 'floor_plan').pipe(
+            takeUntil(selectionChanged),
+            tapResponse({
+              next: (response: HydraCollection<FacilityAttachmentOutput>): void => {
+                if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                const refreshed = response.member.find((item) => item.id === plan.id);
+                patchState(store, { calibrationRevisionCallState: successCallState(null) });
+                if (refreshed) patchState(store, setEntity(refreshed, { collection: 'plan' }));
+              },
+              error: (error: unknown): void => {
+                if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                patchState(store, {
+                  calibrationRevisionCallState: errorCallState(toStoreError(error)),
+                });
+              },
+            }),
+          );
+        }),
+      ),
+    );
+
+    return {
+      /**
+       * @description
+       * Opens two-point calibration while retaining normalized image coordinates.
+       */
+      enterCalibrationMode(): void {
+        if (!store.selectedPlanReady()) return;
+        patchState(store, {
+          editMode: 'calibrate',
+          draftPoints: [],
+          drawTargetFacilityId: null,
+          placeEquipmentId: null,
+          saveCalibrationCallState: idleCallState(),
+          calibrationRevisionCallState: idleCallState(),
+        });
+      },
+
+      /**
+       * @description
+       * Server-searches descendant drawing targets, starting on the first page.
+       */
+      searchZoneCandidates(search: string): void {
+        patchState(store, { zoneCandidateSearch: search.trim(), zoneCandidatePage: 1 });
+        loadZoneCandidatesFn();
+      },
+
+      /**
+       * @description
+       * Selects a server page of descendant drawing candidates.
+       */
+      changeZoneCandidatePage(page: number): void {
+        if (page < 1 || page > Math.ceil(store.zoneCandidateTotal() / 100)) return;
+        patchState(store, { zoneCandidatePage: page });
+        loadZoneCandidatesFn();
+      },
+
+      /**
+       * @description
+       * Server-searches equipment across this facility and its descendants.
+       */
+      searchEquipmentCandidates(search: string): void {
+        patchState(store, { equipmentCandidateSearch: search.trim(), equipmentCandidatePage: 1 });
+        loadFacilityEquipmentFn();
+      },
+
+      /**
+       * @description
+       * Selects a server page of descendant equipment candidates.
+       */
+      changeEquipmentCandidatePage(page: number): void {
+        if (page < 1 || page > Math.ceil(store.equipmentCandidateTotal() / 100)) return;
+        patchState(store, { equipmentCandidatePage: page });
+        loadFacilityEquipmentFn();
+      },
+
+      /**
+       * @description
+       * Writes calibration with optimistic concurrency; a rejection leaves measurement and form
+       * drafts intact.
+       */
+      saveCalibration: rxMethod<FacilityPlanCalibration | null>(
+        pipe(
+          mergeMap((calibration) => {
+            const plan = store.selectedPlan();
+            if (
+              !plan ||
+              !store.selectedPlanReady() ||
+              store.saveCalibrationCallState().status === 'pending' ||
+              store.calibrationRevisionCallState().status === 'pending'
+            )
+              return EMPTY;
+            const generation = selectionGeneration;
+            const key = store.selectedPlanKey();
+            patchState(store, { saveCalibrationCallState: pendingCallState() });
+            return service.setCalibration(plan.id, calibration, plan.revision).pipe(
+              tapResponse({
+                next: (saved: FacilityAttachmentOutput): void => {
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  patchState(store, setEntity(saved, { collection: 'plan' }), {
+                    saveCalibrationCallState: successCallState(null),
+                    editMode: 'none',
+                    draftPoints: [],
+                  });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.calibrationSaved(
+                      successFeedback(
+                        $localize`:@@facility.calibration.saved:Floor plan calibration saved`,
+                      ),
+                    ),
+                  );
+                },
+                error: (error: unknown): void => {
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  const storeError = toStoreError(error);
+                  // The dialog owns this error; a second toast can cover its retry action.
+                  patchState(store, {
+                    saveCalibrationCallState: errorCallState({
+                      ...storeError,
+                      message: planWriteErrorMessage(
+                        storeError,
+                        $localize`:@@facility.calibration.failed:Could not save the floor plan calibration`,
+                      ),
+                    }),
+                  });
+                  if (storeError.code === 409 || storeError.code === 412) {
+                    refreshCalibrationRevisionFn({ plan, generation, key });
+                  }
+                },
+              }),
+            );
+          }),
+        ),
+      ),
+
+      /**
+       * Method load
+       * @method load
+       *
+       * @description
+       * Fetches the facility's floor plans (kind=floor_plan). Cancels any
+       * in-flight request via switchMap. Also records `organizationId` and
+       * `facilityId`, which the overlay fetch and the editor's candidate
+       * fetches need and have no other way to learn (their own triggers
+       * are internal, not a page call that could pass them directly).
+       *
+       * @since 1.0.0
+       *
+       * @type {RxMethod<{ facilityId: string; organizationId: string }>}
+       */
+      load: rxMethod<{ facilityId: string; organizationId: string }>(
+        pipe(
+          tap(({ organizationId, facilityId }): void => {
+            if (store.organizationId() !== organizationId || store.facilityId() !== facilityId) {
+              contextGeneration += 1;
+              clearWriteOperations();
+              contextChanged.next();
+              clearSelectionResources();
+              patchState(store, removeAllEntities({ collection: 'plan' }), {
+                ...INITIAL_STATE,
+                selectionRevision: store.selectionRevision() + 1,
+              });
+            }
+            patchState(store, {
+              listCallState: pendingCallState(),
+              organizationId,
+              facilityId,
+            });
+          }),
+          switchMap(({ facilityId }) =>
+            service.list(facilityId, 'floor_plan').pipe(
+              takeUntil(contextChanged),
+              tapResponse({
+                next: (response: HydraCollection<FacilityAttachmentOutput>): void => {
+                  patchState(store, setAllEntities([...response.member], { collection: 'plan' }), {
+                    listCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown): void => {
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { listCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.listFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load floor plans'),
+                    ),
+                  );
+                },
+              }),
+            ),
+          ),
+        ),
+      ),
+
+      /**
+       * Method upload
+       * @method upload
+       *
+       * @description
+       * Uploads one image as a floor plan (kind: 'floor_plan').
+       *
+       * @since 1.0.0
+       *
+       * @type {RxMethod<{ facilityId: string; file: File }>}
+       */
+      upload: rxMethod<{ facilityId: string; file: File }>(
+        pipe(
+          mergeMap(({ facilityId, file }) => {
+            if (
+              !isPlatformBrowser(platformId) ||
+              !session.isAuthenticated() ||
+              store.uploadCallState().status === 'pending' ||
+              (store.facilityId() !== null && store.facilityId() !== facilityId)
+            )
+              return EMPTY;
+            const generation = contextGeneration;
+            const sessionRevision = session.sessionRevision();
+            let fileId = uploadFiles.get(file);
+            if (fileId === undefined) {
+              fileId = ++nextUploadFile;
+              uploadFiles.set(file, fileId);
+            }
+            const operation = writeIntents.options(
+              'upload',
+              { facilityId, fileId, fileName: file.name, kind: 'floor_plan', generation },
+              sessionRevision,
+            );
+            patchState(store, { uploadCallState: pendingCallState() });
+            return service.upload(facilityId, file, file.name, 'floor_plan', operation).pipe(
+              tapResponse({
+                next: (plan: FacilityAttachmentOutput): void => {
+                  if (
+                    generation !== contextGeneration ||
+                    sessionRevision !== session.sessionRevision() ||
+                    !session.isAuthenticated()
+                  )
+                    return;
+                  writeIntents.complete('upload');
+                  patchState(store, addEntity(plan, { collection: 'plan' }), {
+                    uploadCallState: successCallState(plan),
+                    selectedPlanId: plan.id,
+                  });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.uploadSucceeded(
+                      successFeedback(
+                        $localize`:@@facility.plans.toast.uploaded:Floor plan uploaded`,
+                      ),
+                    ),
+                  );
+                },
+                error: (error: unknown): void => {
+                  if (
+                    generation !== contextGeneration ||
+                    sessionRevision !== session.sessionRevision() ||
+                    !session.isAuthenticated()
+                  )
+                    return;
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { uploadCallState: errorCallState(storeError) });
+                  if ([400, 413, 415, 422].includes(Number(storeError.code)))
+                    writeIntents.complete('upload');
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.uploadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to upload floor plan'),
                     ),
                   );
                 },
@@ -441,1230 +1130,607 @@ export const FacilityPlansStore = signalStore(
             );
           }),
         ),
-      );
+      ),
 
       /**
-       * Constant loadZoneCandidatesFn
+       * Method setPrimary
+       * @method setPrimary
        *
        * @description
-       * Fetches this facility's direct children of type `zone`/`area`
-       * (`draw-zone`'s picker options). Exposed as
-       * {@link ensureZoneCandidatesLoaded}, guarded against duplicate fetches.
+       * Sets one plan as the facility's primary plan. The backend atomically
+       * unsets the previous primary; this store mirrors that swap locally on
+       * success rather than re-fetching the list.
        *
-       * @since 1.4.0
+       * @since 1.0.0
        *
-       * @type {RxMethod<void>}
-       *
-       * @constant loadZoneCandidatesFn
+       * @type {RxMethod<{ attachmentId: string }>}
        */
-      const loadZoneCandidatesFn = rxMethod<void>(
+      setPrimary: rxMethod<{ attachmentId: string }>(
         pipe(
-          switchMap(() => {
-            const organizationId = store.organizationId();
-            const facilityId = store.facilityId();
-            if (!organizationId || !facilityId || !isPlatformBrowser(platformId)) return EMPTY;
+          mergeMap(({ attachmentId }) => {
+            if (store.setPrimaryCallState().status === 'pending') return EMPTY;
             const generation = contextGeneration;
-            patchState(store, { zoneCandidatesCallState: pendingCallState() });
-            return facilityService
-              .listDescendants(organizationId, facilityId, {
-                page: store.zoneCandidatePage(),
-                itemsPerPage: 100,
-                search: store.zoneCandidateSearch(),
-              })
-              .pipe(
-                takeUntil(contextChanged),
-                tapResponse({
-                  next: (response: HydraCollection<FacilityOutput>): void => {
-                    if (generation !== contextGeneration) return;
-                    patchState(store, {
-                      zoneCandidates: response.member.filter((candidate) =>
-                        ZONE_CANDIDATE_TYPES.has(candidate.type),
-                      ),
-                      zoneCandidateTotal: response.totalItems,
-                      zoneCandidatesCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== contextGeneration) return;
-                    const storeError = toStoreError(error);
-                    patchState(store, { zoneCandidatesCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.zoneCandidatesFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to load candidate zones'),
-                      ),
-                    );
-                  },
-                }),
-              );
-          }),
-        ),
-      );
-
-      /**
-       * Constant loadFacilityEquipmentFn
-       *
-       * @description
-       * Fetches this facility's assigned equipment (`place-pin`'s picker
-       * options, and the source for each pin's dialog rows). Exposed as
-       * {@link ensureFacilityEquipmentLoaded}, guarded against duplicate
-       * fetches.
-       *
-       * @since 1.4.0
-       *
-       * @type {RxMethod<void>}
-       *
-       * @constant loadFacilityEquipmentFn
-       */
-      const loadFacilityEquipmentFn = rxMethod<void>(
-        pipe(
-          switchMap(() => {
-            const organizationId = store.organizationId();
-            const facilityId = store.facilityId();
-            if (!organizationId || !facilityId || !isPlatformBrowser(platformId)) return EMPTY;
-            const generation = contextGeneration;
-            patchState(store, { facilityEquipmentCallState: pendingCallState() });
-            return equipmentService
-              .listByFacility(organizationId, facilityId, {
-                page: store.equipmentCandidatePage(),
-                itemsPerPage: 100,
-                params: { includeDescendants: true, search: store.equipmentCandidateSearch() },
-              })
-              .pipe(
-                takeUntil(contextChanged),
-                tapResponse({
-                  next: (response: HydraCollection<EquipmentOutput>): void => {
-                    if (generation !== contextGeneration) return;
-                    patchState(store, {
-                      facilityEquipment: [...response.member],
-                      equipmentCandidateTotal: response.totalItems,
-                      facilityEquipmentCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== contextGeneration) return;
-                    const storeError = toStoreError(error);
-                    patchState(store, { facilityEquipmentCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.facilityEquipmentFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          "Failed to load this facility's equipment",
-                        ),
-                      ),
-                    );
-                  },
-                }),
-              );
-          }),
-        ),
-      );
-
-      /**
-       * Constant saveZoneGeometryFn
-       *
-       * @description
-       * Shared rxMethod implementation writing (or clearing, when `points`
-       * is `null`) one facility's outline on the selected plan. On success,
-       * leaves `draw-zone` mode (a no-op when called from the dialog or the
-       * clear action), invalidates the cached candidate lists so they
-       * re-fetch on next open, and reloads the overlay. Conflicts refresh the
-       * overlay while retaining the draft; stable API codes supply recovery guidance.
-       * Concurrent submissions never cancel an accepted write.
-       *
-       * @since 1.4.0
-       *
-       * @type {RxMethod<{
-       *   organizationId: string;
-       *   facilityId: string;
-       *   attachmentId: string | null;
-       *   points: ReadonlyArray<readonly [number, number]> | null;
-       * }>}
-       *
-       * @constant saveZoneGeometryFn
-       */
-      const saveZoneGeometryFn = rxMethod<{
-        organizationId: string;
-        facilityId: string;
-        attachmentId: string | null;
-        points: ReadonlyArray<readonly [number, number]> | null;
-      }>(
-        pipe(
-          mergeMap(({ organizationId, facilityId, attachmentId, points }) => {
-            if (
-              !store.selectedPlanReady() ||
-              store.saveZoneGeometryCallState().status === 'pending'
-            )
-              return EMPTY;
-
-            if (points && sanitizePolygon(points).status === 'rejected') {
-              const message = $localize`:@@facility.plans.editor.invalidPolygon:Draw a polygon with non-zero area and no crossing edges.`;
-              const storeError = toStoreError({ message, status: 422 });
-              patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
-              dispatcher.dispatch(
-                facilityPlansStoreEvents.zoneGeometrySaveFailed(errorFeedback(message)),
-              );
-              return EMPTY;
-            }
-            const generation = selectionGeneration;
-            const key = store.selectedPlanKey();
-            patchState(store, { saveZoneGeometryCallState: pendingCallState() });
-            return facilityService
-              .setPlanGeometry(organizationId, facilityId, { attachmentId, points })
-              .pipe(
-                tapResponse({
-                  next: (): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    patchState(store, {
-                      saveZoneGeometryCallState: successCallState(null),
-                      editMode: 'none',
-                      drawTargetFacilityId: null,
-                      draftPoints: [],
-                      zoneCandidatesCallState: idleCallState(),
-                    });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.zoneGeometrySaveSucceeded(
-                        successFeedback(
-                          points === null
-                            ? $localize`:@@facility.plans.editor.toast.zoneCleared:Zone outline cleared`
-                            : $localize`:@@facility.plans.editor.toast.zoneSaved:Zone outline saved`,
-                        ),
-                      ),
-                    );
-
-                    const currentFacilityId: string | null = store.facilityId();
-                    const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-                    if (currentFacilityId && plan) {
-                      loadOverlayFn({
-                        organizationId,
-                        facilityId: currentFacilityId,
-                        attachmentId: plan.id,
-                      });
-                    }
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { saveZoneGeometryCallState: errorCallState(storeError) });
-                    const currentFacilityId: string | null = store.facilityId();
-                    const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-                    if (
-                      (storeError.code === 409 || storeError.code === 412) &&
-                      currentFacilityId &&
-                      plan
-                    ) {
-                      loadOverlayFn({
-                        organizationId,
-                        facilityId: currentFacilityId,
-                        attachmentId: plan.id,
-                      });
-                    }
-
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.zoneGeometrySaveFailed(
-                        errorFeedback(
-                          planWriteErrorMessage(
-                            storeError,
-                            $localize`:@@facility.plans.editor.error.zoneSaveFailed:Failed to save the zone outline`,
-                          ),
-                          {
-                            code: storeError.code,
-                            retryable: storeError.retryable,
-                            timestamp: storeError.timestamp,
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                }),
-              );
-          }),
-        ),
-      );
-
-      /**
-       * Constant savePinPositionFn
-       *
-       * @description
-       * Shared rxMethod implementation writing (or clearing, when `x`/`y`
-       * are `null`) one equipment item's pin on the selected plan. On
-       * success, leaves `place-pin` mode when `exitPlaceMode` is set,
-       * invalidates the cached equipment candidates, and reloads the
-       * overlay. Conflicts preserve the editor context and refresh the
-       * overlay. Stable API codes identify the relevant business constraint.
-       *
-       * @since 1.4.0
-       *
-       * @type {RxMethod<{
-       *   organizationId: string;
-       *   equipmentId: string;
-       *   attachmentId: string | null;
-       *   x: number | null;
-       *   y: number | null;
-       *   exitPlaceMode: boolean;
-       * }>}
-       *
-       * @constant savePinPositionFn
-       */
-      const savePinPositionFn = rxMethod<{
-        organizationId: string;
-        equipmentId: string;
-        attachmentId: string | null;
-        x: number | null;
-        y: number | null;
-        exitPlaceMode: boolean;
-      }>(
-        pipe(
-          mergeMap(({ organizationId, equipmentId, attachmentId, x, y, exitPlaceMode }) => {
-            if (!store.selectedPlanReady() || store.savePinPositionCallState().status === 'pending')
-              return EMPTY;
-            const generation = selectionGeneration;
-            const key = store.selectedPlanKey();
-            patchState(store, { savePinPositionCallState: pendingCallState() });
-            return equipmentService
-              .setPlanPosition(organizationId, equipmentId, { attachmentId, x, y })
-              .pipe(
-                tapResponse({
-                  next: (): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    patchState(store, {
-                      savePinPositionCallState: successCallState(null),
-                      ...(exitPlaceMode
-                        ? { editMode: 'none' as const, placeEquipmentId: null }
-                        : {}),
-                      facilityEquipmentCallState: idleCallState(),
-                    });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.pinPositionSaveSucceeded(
-                        successFeedback(
-                          attachmentId === null
-                            ? $localize`:@@facility.plans.editor.toast.pinRemoved:Equipment removed from plan`
-                            : $localize`:@@facility.plans.editor.toast.pinSaved:Equipment position saved`,
-                        ),
-                      ),
-                    );
-
-                    const currentFacilityId: string | null = store.facilityId();
-                    const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-                    if (currentFacilityId && plan) {
-                      loadOverlayFn({
-                        organizationId,
-                        facilityId: currentFacilityId,
-                        attachmentId: plan.id,
-                      });
-                    }
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { savePinPositionCallState: errorCallState(storeError) });
-                    const currentFacilityId: string | null = store.facilityId();
-                    const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-                    if (
-                      (storeError.code === 409 || storeError.code === 412) &&
-                      currentFacilityId &&
-                      plan
-                    ) {
-                      loadOverlayFn({
-                        organizationId,
-                        facilityId: currentFacilityId,
-                        attachmentId: plan.id,
-                      });
-                    }
-
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.pinPositionSaveFailed(
-                        errorFeedback(
-                          planWriteErrorMessage(
-                            storeError,
-                            $localize`:@@facility.plans.editor.error.pinSaveFailed:Failed to save the equipment position`,
-                          ),
-                          {
-                            code: storeError.code,
-                            retryable: storeError.retryable,
-                            timestamp: storeError.timestamp,
-                          },
-                        ),
-                      ),
-                    );
-                  },
-                }),
-              );
-          }),
-        ),
-      );
-
-      /**
-       * Constant refreshCalibrationRevisionFn
-       *
-       * @description
-       * Refreshes only the attachment revision after conflict without replacing open form drafts.
-       */
-      const refreshCalibrationRevisionFn = rxMethod<{
-        readonly plan: FacilityAttachmentOutput;
-        readonly generation: number;
-        readonly key: string | null;
-      }>(
-        pipe(
-          switchMap(({ plan, generation, key }) => {
-            patchState(store, { calibrationRevisionCallState: pendingCallState() });
-            return service.list(plan.facilityId, 'floor_plan').pipe(
-              takeUntil(selectionChanged),
+            patchState(store, {
+              setPrimaryCallState: pendingCallState(),
+              settingPrimaryId: attachmentId,
+            });
+            return service.setPrimary(attachmentId).pipe(
               tapResponse({
-                next: (response: HydraCollection<FacilityAttachmentOutput>): void => {
-                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
-                  const refreshed = response.member.find((item) => item.id === plan.id);
-                  patchState(store, { calibrationRevisionCallState: successCallState(null) });
-                  if (refreshed) patchState(store, setEntity(refreshed, { collection: 'plan' }));
+                next: (plan: FacilityAttachmentOutput): void => {
+                  if (generation !== contextGeneration) return;
+                  const previousPrimaryId: string | undefined = store
+                    .planEntities()
+                    .find((entry) => entry.isPrimaryPlan && entry.id !== plan.id)?.id;
+
+                  patchState(
+                    store,
+                    ...(previousPrimaryId
+                      ? [
+                          updateEntity(
+                            { id: previousPrimaryId, changes: { isPrimaryPlan: false } },
+                            { collection: 'plan' },
+                          ),
+                        ]
+                      : []),
+                    setEntity(plan, { collection: 'plan' }),
+                    { setPrimaryCallState: successCallState(plan), settingPrimaryId: null },
+                  );
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.setPrimarySucceeded(
+                      successFeedback(
+                        $localize`:@@facility.plans.toast.primarySet:Primary plan updated`,
+                      ),
+                    ),
+                  );
                 },
                 error: (error: unknown): void => {
-                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  if (generation !== contextGeneration) return;
+                  const storeError: StoreError = toStoreError(error);
                   patchState(store, {
-                    calibrationRevisionCallState: errorCallState(toStoreError(error)),
+                    setPrimaryCallState: errorCallState(storeError),
+                    settingPrimaryId: null,
                   });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.setPrimaryFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to set the primary plan'),
+                    ),
+                  );
                 },
               }),
             );
           }),
         ),
-      );
+      ),
 
-      return {
-        /**
-         * @description
-         * Opens two-point calibration while retaining normalized image coordinates.
-         */
-        enterCalibrationMode(): void {
-          if (!store.selectedPlanReady()) return;
-          patchState(store, {
-            editMode: 'calibrate',
-            draftPoints: [],
-            drawTargetFacilityId: null,
-            placeEquipmentId: null,
-            saveCalibrationCallState: idleCallState(),
-            calibrationRevisionCallState: idleCallState(),
-          });
-        },
-
-        /**
-         * @description
-         * Server-searches descendant drawing targets, starting on the first page.
-         */
-        searchZoneCandidates(search: string): void {
-          patchState(store, { zoneCandidateSearch: search.trim(), zoneCandidatePage: 1 });
-          loadZoneCandidatesFn();
-        },
-
-        /**
-         * @description
-         * Selects a server page of descendant drawing candidates.
-         */
-        changeZoneCandidatePage(page: number): void {
-          if (page < 1 || page > Math.ceil(store.zoneCandidateTotal() / 100)) return;
-          patchState(store, { zoneCandidatePage: page });
-          loadZoneCandidatesFn();
-        },
-
-        /**
-         * @description
-         * Server-searches equipment across this facility and its descendants.
-         */
-        searchEquipmentCandidates(search: string): void {
-          patchState(store, { equipmentCandidateSearch: search.trim(), equipmentCandidatePage: 1 });
-          loadFacilityEquipmentFn();
-        },
-
-        /**
-         * @description
-         * Selects a server page of descendant equipment candidates.
-         */
-        changeEquipmentCandidatePage(page: number): void {
-          if (page < 1 || page > Math.ceil(store.equipmentCandidateTotal() / 100)) return;
-          patchState(store, { equipmentCandidatePage: page });
-          loadFacilityEquipmentFn();
-        },
-
-        /**
-         * @description
-         * Writes calibration with optimistic concurrency; a rejection leaves measurement and form
-         * drafts intact.
-         */
-        saveCalibration: rxMethod<FacilityPlanCalibration | null>(
-          pipe(
-            mergeMap((calibration) => {
-              const plan = store.selectedPlan();
-              if (
-                !plan ||
-                !store.selectedPlanReady() ||
-                store.saveCalibrationCallState().status === 'pending' ||
-                store.calibrationRevisionCallState().status === 'pending'
-              )
-                return EMPTY;
-              const generation = selectionGeneration;
-              const key = store.selectedPlanKey();
-              patchState(store, { saveCalibrationCallState: pendingCallState() });
-              return service.setCalibration(plan.id, calibration, plan.revision).pipe(
-                tapResponse({
-                  next: (saved: FacilityAttachmentOutput): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    patchState(store, setEntity(saved, { collection: 'plan' }), {
-                      saveCalibrationCallState: successCallState(null),
-                      editMode: 'none',
-                      draftPoints: [],
-                    });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.calibrationSaved(
-                        successFeedback(
-                          $localize`:@@facility.calibration.saved:Floor plan calibration saved`,
-                        ),
+      /**
+       * Method remove
+       * @method remove
+       *
+       * @description
+       * Deletes one plan, pinned to its revision.
+       *
+       * @since 1.0.0
+       *
+       * @type {RxMethod<{ attachmentId: string; revision: number }>}
+       */
+      remove: rxMethod<{ attachmentId: string; revision: number }>(
+        pipe(
+          mergeMap(({ attachmentId, revision }) => {
+            if (store.deleteCallState().status === 'pending') return EMPTY;
+            const generation = contextGeneration;
+            patchState(store, { deleteCallState: pendingCallState(), deletingId: attachmentId });
+            return service.remove(attachmentId, revision).pipe(
+              tapResponse({
+                next: (): void => {
+                  if (generation !== contextGeneration) return;
+                  patchState(store, removeEntity(attachmentId, { collection: 'plan' }), {
+                    deleteCallState: successCallState(null),
+                    deletingId: null,
+                    selectedPlanId:
+                      store.selectedPlanId() === attachmentId ? null : store.selectedPlanId(),
+                  });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.deleteSucceeded(
+                      successFeedback(
+                        $localize`:@@facility.plans.toast.deleted:Floor plan deleted`,
                       ),
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    const storeError = toStoreError(error);
-                    // The dialog owns this error; a second toast can cover its retry action.
-                    patchState(store, {
-                      saveCalibrationCallState: errorCallState({
-                        ...storeError,
-                        message: planWriteErrorMessage(
-                          storeError,
-                          $localize`:@@facility.calibration.failed:Could not save the floor plan calibration`,
-                        ),
-                      }),
-                    });
-                    if (storeError.code === 409 || storeError.code === 412) {
-                      refreshCalibrationRevisionFn({ plan, generation, key });
-                    }
-                  },
-                }),
-              );
-            }),
-          ),
+                    ),
+                  );
+                },
+                error: (error: unknown): void => {
+                  if (generation !== contextGeneration) return;
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, {
+                    deleteCallState: errorCallState(storeError),
+                    deletingId: null,
+                  });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.deleteFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to delete floor plan'),
+                    ),
+                  );
+                },
+              }),
+            );
+          }),
         ),
+      ),
 
-        /**
-         * Method load
-         * @method load
-         *
-         * @description
-         * Fetches the facility's floor plans (kind=floor_plan). Cancels any
-         * in-flight request via switchMap. Also records `organizationId` and
-         * `facilityId`, which the overlay fetch and the editor's candidate
-         * fetches need and have no other way to learn (their own triggers
-         * are internal, not a page call that could pass them directly).
-         *
-         * @since 1.0.0
-         *
-         * @type {RxMethod<{ facilityId: string; organizationId: string }>}
-         */
-        load: rxMethod<{ facilityId: string; organizationId: string }>(
-          pipe(
-            tap(({ organizationId, facilityId }): void => {
-              if (store.organizationId() !== organizationId || store.facilityId() !== facilityId) {
-                contextGeneration += 1;
-                contextChanged.next();
-                clearSelectionResources();
-                patchState(store, removeAllEntities({ collection: 'plan' }), {
-                  ...INITIAL_STATE,
-                  selectionRevision: store.selectionRevision() + 1,
-                });
-              }
-              patchState(store, {
-                listCallState: pendingCallState(),
-                organizationId,
-                facilityId,
-              });
-            }),
-            switchMap(({ facilityId }) =>
-              service.list(facilityId, 'floor_plan').pipe(
-                takeUntil(contextChanged),
-                tapResponse({
-                  next: (response: HydraCollection<FacilityAttachmentOutput>): void => {
-                    patchState(
-                      store,
-                      setAllEntities([...response.member], { collection: 'plan' }),
-                      { listCallState: successCallState(null) },
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { listCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.listFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to load floor plans'),
-                      ),
-                    );
-                  },
-                }),
-              ),
-            ),
-          ),
+      /**
+       * Method selectPlan
+       * @method selectPlan
+       *
+       * @description
+       * Selects the plan shown by the viewer.
+       *
+       * @since 1.0.0
+       *
+       * @param {string} planId - The plan to show.
+       *
+       * @returns {void}
+       */
+      selectPlan(planId: string): void {
+        if (store.selectedPlan()?.id === planId) return;
+        clearSelectionResources();
+        patchState(store, {
+          selectedPlanId: planId,
+          selectionRevision: store.selectionRevision() + 1,
+        });
+      },
+
+      /**
+       * @description
+       * Releases resources and cancels reads when the selected plan disappears.
+       */
+      clearSelectionResources,
+      clearWriteOperations,
+
+      /**
+       * @description
+       * Clears a facility context when its parameterized page is reused.
+       */
+      reset(): void {
+        contextGeneration += 1;
+        clearWriteOperations();
+        contextChanged.next();
+        clearSelectionResources();
+        patchState(store, removeAllEntities({ collection: 'plan' }), {
+          ...INITIAL_STATE,
+          selectionRevision: store.selectionRevision() + 1,
+        });
+      },
+
+      /**
+       * Method loadImage
+       * @method loadImage
+       *
+       * @description
+       * Fetches one plan's binary content (GET
+       * /api/facility-attachments/{id}/download) and republishes it as a
+       * browser object URL in planImageUrl, revoking whichever object URL
+       * was there before. A no-op outside the browser platform, since
+       * URL.createObjectURL has no server counterpart.
+       *
+       * @since 1.1.0
+       *
+       * @type {RxMethod<{ attachmentId: string }>}
+       */
+      loadImage: rxMethod<{ attachmentId: string }>(
+        pipe(
+          switchMap(({ attachmentId }) => {
+            const key = store.selectedPlanKey();
+            if (!key || store.selectedPlan()?.id !== attachmentId || !isPlatformBrowser(platformId))
+              return EMPTY;
+            const generation = selectionGeneration;
+            const previous = store.imageUrl();
+            if (previous) URL.revokeObjectURL(previous);
+            patchState(store, {
+              imageUrl: null,
+              imageKey: null,
+              imageCallState: pendingCallState(),
+            });
+            return service.download(attachmentId).pipe(
+              takeUntil(selectionChanged),
+              tapResponse({
+                next: (blob: Blob): void => {
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  patchState(store, {
+                    imageUrl: URL.createObjectURL(blob),
+                    imageKey: key,
+                    imageCallState: successCallState(null),
+                  });
+                },
+                error: (error: unknown): void => {
+                  if (generation !== selectionGeneration || key !== store.selectedPlanKey()) return;
+                  const storeError: StoreError = toStoreError(error);
+                  patchState(store, { imageCallState: errorCallState(storeError) });
+                  dispatcher.dispatch(
+                    facilityPlansStoreEvents.imageLoadFailed(
+                      toStoreFailureEventPayload(storeError, 'Failed to load the floor plan image'),
+                    ),
+                  );
+                },
+              }),
+            );
+          }),
         ),
+      ),
 
-        /**
-         * Method upload
-         * @method upload
-         *
-         * @description
-         * Uploads one image as a floor plan (kind: 'floor_plan').
-         *
-         * @since 1.0.0
-         *
-         * @type {RxMethod<{ facilityId: string; file: File }>}
-         */
-        upload: rxMethod<{ facilityId: string; file: File }>(
-          pipe(
-            mergeMap(({ facilityId, file }) => {
-              if (
-                store.uploadCallState().status === 'pending' ||
-                (store.facilityId() !== null && store.facilityId() !== facilityId)
-              )
-                return EMPTY;
-              const generation = contextGeneration;
-              patchState(store, { uploadCallState: pendingCallState() });
-              return service.upload(facilityId, file, file.name, 'floor_plan').pipe(
-                tapResponse({
-                  next: (plan: FacilityAttachmentOutput): void => {
-                    if (generation !== contextGeneration) return;
-                    patchState(store, addEntity(plan, { collection: 'plan' }), {
-                      uploadCallState: successCallState(plan),
-                      selectedPlanId: plan.id,
-                    });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.uploadSucceeded(
-                        successFeedback(
-                          $localize`:@@facility.plans.toast.uploaded:Floor plan uploaded`,
-                        ),
-                      ),
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== contextGeneration) return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { uploadCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.uploadFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to upload floor plan'),
-                      ),
-                    );
-                  },
-                }),
-              );
-            }),
-          ),
-        ),
+      /**
+       * Method loadOverlay
+       * @method loadOverlay
+       *
+       * @description
+       * Fetches one plan's zone/equipment overlay. See {@link loadOverlayFn}.
+       *
+       * @since 1.2.0
+       *
+       * @type {RxMethod<{
+       *   organizationId: string;
+       *   facilityId: string;
+       *   attachmentId: string;
+       * }>}
+       */
+      loadOverlay: loadOverlayFn,
 
-        /**
-         * Method setPrimary
-         * @method setPrimary
-         *
-         * @description
-         * Sets one plan as the facility's primary plan. The backend atomically
-         * unsets the previous primary; this store mirrors that swap locally on
-         * success rather than re-fetching the list.
-         *
-         * @since 1.0.0
-         *
-         * @type {RxMethod<{ attachmentId: string }>}
-         */
-        setPrimary: rxMethod<{ attachmentId: string }>(
-          pipe(
-            mergeMap(({ attachmentId }) => {
-              if (store.setPrimaryCallState().status === 'pending') return EMPTY;
-              const generation = contextGeneration;
-              patchState(store, {
-                setPrimaryCallState: pendingCallState(),
-                settingPrimaryId: attachmentId,
-              });
-              return service.setPrimary(attachmentId).pipe(
-                tapResponse({
-                  next: (plan: FacilityAttachmentOutput): void => {
-                    if (generation !== contextGeneration) return;
-                    const previousPrimaryId: string | undefined = store
-                      .planEntities()
-                      .find((entry) => entry.isPrimaryPlan && entry.id !== plan.id)?.id;
+      /**
+       * Method setShowZones
+       * @method setShowZones
+       *
+       * @description
+       * Toggles the overlay's zone-polygon layer.
+       *
+       * @since 1.2.0
+       *
+       * @param {boolean} value - Whether zones should render.
+       *
+       * @returns {void}
+       */
+      setShowZones(value: boolean): void {
+        patchState(store, { showZones: value });
+      },
 
-                    patchState(
-                      store,
-                      ...(previousPrimaryId
-                        ? [
-                            updateEntity(
-                              { id: previousPrimaryId, changes: { isPrimaryPlan: false } },
-                              { collection: 'plan' },
-                            ),
-                          ]
-                        : []),
-                      setEntity(plan, { collection: 'plan' }),
-                      { setPrimaryCallState: successCallState(plan), settingPrimaryId: null },
-                    );
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.setPrimarySucceeded(
-                        successFeedback(
-                          $localize`:@@facility.plans.toast.primarySet:Primary plan updated`,
-                        ),
-                      ),
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== contextGeneration) return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, {
-                      setPrimaryCallState: errorCallState(storeError),
-                      settingPrimaryId: null,
-                    });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.setPrimaryFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to set the primary plan'),
-                      ),
-                    );
-                  },
-                }),
-              );
-            }),
-          ),
-        ),
+      /**
+       * Method setShowEquipment
+       * @method setShowEquipment
+       *
+       * @description
+       * Toggles the overlay's equipment-pin layer.
+       *
+       * @since 1.2.0
+       *
+       * @param {boolean} value - Whether equipment pins should render.
+       *
+       * @returns {void}
+       */
+      setShowEquipment(value: boolean): void {
+        patchState(store, { showEquipment: value });
+      },
 
-        /**
-         * Method remove
-         * @method remove
-         *
-         * @description
-         * Deletes one plan, pinned to its revision.
-         *
-         * @since 1.0.0
-         *
-         * @type {RxMethod<{ attachmentId: string; revision: number }>}
-         */
-        remove: rxMethod<{ attachmentId: string; revision: number }>(
-          pipe(
-            mergeMap(({ attachmentId, revision }) => {
-              if (store.deleteCallState().status === 'pending') return EMPTY;
-              const generation = contextGeneration;
-              patchState(store, { deleteCallState: pendingCallState(), deletingId: attachmentId });
-              return service.remove(attachmentId, revision).pipe(
-                tapResponse({
-                  next: (): void => {
-                    if (generation !== contextGeneration) return;
-                    patchState(store, removeEntity(attachmentId, { collection: 'plan' }), {
-                      deleteCallState: successCallState(null),
-                      deletingId: null,
-                      selectedPlanId:
-                        store.selectedPlanId() === attachmentId ? null : store.selectedPlanId(),
-                    });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.deleteSucceeded(
-                        successFeedback(
-                          $localize`:@@facility.plans.toast.deleted:Floor plan deleted`,
-                        ),
-                      ),
-                    );
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== contextGeneration) return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, {
-                      deleteCallState: errorCallState(storeError),
-                      deletingId: null,
-                    });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.deleteFailed(
-                        toStoreFailureEventPayload(storeError, 'Failed to delete floor plan'),
-                      ),
-                    );
-                  },
-                }),
-              );
-            }),
-          ),
-        ),
+      // ── Editor: candidate lists ──────────────────────────────────────────────
 
-        /**
-         * Method selectPlan
-         * @method selectPlan
-         *
-         * @description
-         * Selects the plan shown by the viewer.
-         *
-         * @since 1.0.0
-         *
-         * @param {string} planId - The plan to show.
-         *
-         * @returns {void}
-         */
-        selectPlan(planId: string): void {
-          if (store.selectedPlan()?.id === planId) return;
-          clearSelectionResources();
-          patchState(store, {
-            selectedPlanId: planId,
-            selectionRevision: store.selectionRevision() + 1,
-          });
-        },
+      /**
+       * Method ensureZoneCandidatesLoaded
+       * @method ensureZoneCandidatesLoaded
+       *
+       * @description
+       * Loads this facility's direct children of type `zone`/`area`
+       * (`draw-zone`'s picker options) once, browser-only, guarded against a
+       * duplicate fetch on repeated opens of the picker.
+       *
+       * @since 1.4.0
+       *
+       * @returns {void}
+       */
+      ensureZoneCandidatesLoaded(): void {
+        if (!isPlatformBrowser(platformId)) return;
 
-        /**
-         * @description
-         * Releases resources and cancels reads when the selected plan disappears.
-         */
-        clearSelectionResources,
+        const callState = store.zoneCandidatesCallState();
+        if (callState.status === 'pending' || callState.status === 'success') return;
 
-        /**
-         * @description
-         * Clears a facility context when its parameterized page is reused.
-         */
-        reset(): void {
-          contextGeneration += 1;
-          contextChanged.next();
-          clearSelectionResources();
-          patchState(store, removeAllEntities({ collection: 'plan' }), {
-            ...INITIAL_STATE,
-            selectionRevision: store.selectionRevision() + 1,
-          });
-        },
+        loadZoneCandidatesFn();
+      },
 
-        /**
-         * Method loadImage
-         * @method loadImage
-         *
-         * @description
-         * Fetches one plan's binary content (GET
-         * /api/facility-attachments/{id}/download) and republishes it as a
-         * browser object URL in planImageUrl, revoking whichever object URL
-         * was there before. A no-op outside the browser platform, since
-         * URL.createObjectURL has no server counterpart.
-         *
-         * @since 1.1.0
-         *
-         * @type {RxMethod<{ attachmentId: string }>}
-         */
-        loadImage: rxMethod<{ attachmentId: string }>(
-          pipe(
-            switchMap(({ attachmentId }) => {
-              const key = store.selectedPlanKey();
-              if (
-                !key ||
-                store.selectedPlan()?.id !== attachmentId ||
-                !isPlatformBrowser(platformId)
-              )
-                return EMPTY;
-              const generation = selectionGeneration;
-              const previous = store.imageUrl();
-              if (previous) URL.revokeObjectURL(previous);
-              patchState(store, {
-                imageUrl: null,
-                imageKey: null,
-                imageCallState: pendingCallState(),
-              });
-              return service.download(attachmentId).pipe(
-                takeUntil(selectionChanged),
-                tapResponse({
-                  next: (blob: Blob): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    patchState(store, {
-                      imageUrl: URL.createObjectURL(blob),
-                      imageKey: key,
-                      imageCallState: successCallState(null),
-                    });
-                  },
-                  error: (error: unknown): void => {
-                    if (generation !== selectionGeneration || key !== store.selectedPlanKey())
-                      return;
-                    const storeError: StoreError = toStoreError(error);
-                    patchState(store, { imageCallState: errorCallState(storeError) });
-                    dispatcher.dispatch(
-                      facilityPlansStoreEvents.imageLoadFailed(
-                        toStoreFailureEventPayload(
-                          storeError,
-                          'Failed to load the floor plan image',
-                        ),
-                      ),
-                    );
-                  },
-                }),
-              );
-            }),
-          ),
-        ),
+      /**
+       * Method ensureFacilityEquipmentLoaded
+       * @method ensureFacilityEquipmentLoaded
+       *
+       * @description
+       * Loads this facility's assigned equipment (`place-pin`'s picker
+       * options, and the source for each pin's dialog rows) once,
+       * browser-only, guarded against a duplicate fetch.
+       *
+       * @since 1.4.0
+       *
+       * @returns {void}
+       */
+      ensureFacilityEquipmentLoaded(): void {
+        if (!isPlatformBrowser(platformId)) return;
 
-        /**
-         * Method loadOverlay
-         * @method loadOverlay
-         *
-         * @description
-         * Fetches one plan's zone/equipment overlay. See {@link loadOverlayFn}.
-         *
-         * @since 1.2.0
-         *
-         * @type {RxMethod<{
-         *   organizationId: string;
-         *   facilityId: string;
-         *   attachmentId: string;
-         * }>}
-         */
-        loadOverlay: loadOverlayFn,
+        const callState = store.facilityEquipmentCallState();
+        if (callState.status === 'pending' || callState.status === 'success') return;
 
-        /**
-         * Method setShowZones
-         * @method setShowZones
-         *
-         * @description
-         * Toggles the overlay's zone-polygon layer.
-         *
-         * @since 1.2.0
-         *
-         * @param {boolean} value - Whether zones should render.
-         *
-         * @returns {void}
-         */
-        setShowZones(value: boolean): void {
-          patchState(store, { showZones: value });
-        },
+        loadFacilityEquipmentFn();
+      },
 
-        /**
-         * Method setShowEquipment
-         * @method setShowEquipment
-         *
-         * @description
-         * Toggles the overlay's equipment-pin layer.
-         *
-         * @since 1.2.0
-         *
-         * @param {boolean} value - Whether equipment pins should render.
-         *
-         * @returns {void}
-         */
-        setShowEquipment(value: boolean): void {
-          patchState(store, { showEquipment: value });
-        },
+      // ── Editor: mode and draft ───────────────────────────────────────────────
 
-        // ── Editor: candidate lists ──────────────────────────────────────────────
+      /**
+       * Method enterDrawZoneMode
+       * @method enterDrawZoneMode
+       *
+       * @description
+       * Starts drawing a new outline for the given child facility.
+       *
+       * @since 1.4.0
+       *
+       * @param {string} targetFacilityId - The zone/area the outline belongs to.
+       *
+       * @returns {void}
+       */
+      enterDrawZoneMode(targetFacilityId: string): void {
+        if (!store.selectedPlanReady()) return;
+        patchState(store, {
+          editMode: 'draw-zone',
+          drawTargetFacilityId: targetFacilityId,
+          placeEquipmentId: null,
+          draftPoints: [],
+        });
+      },
 
-        /**
-         * Method ensureZoneCandidatesLoaded
-         * @method ensureZoneCandidatesLoaded
-         *
-         * @description
-         * Loads this facility's direct children of type `zone`/`area`
-         * (`draw-zone`'s picker options) once, browser-only, guarded against a
-         * duplicate fetch on repeated opens of the picker.
-         *
-         * @since 1.4.0
-         *
-         * @returns {void}
-         */
-        ensureZoneCandidatesLoaded(): void {
-          if (!isPlatformBrowser(platformId)) return;
+      /**
+       * Method enterPlacePinMode
+       * @method enterPlacePinMode
+       *
+       * @description
+       * Starts placing the given equipment item on the plan.
+       *
+       * @since 1.4.0
+       *
+       * @param {string} equipmentId - The equipment to place.
+       *
+       * @returns {void}
+       */
+      enterPlacePinMode(equipmentId: string): void {
+        if (!store.selectedPlanReady()) return;
+        patchState(store, {
+          editMode: 'place-pin',
+          placeEquipmentId: equipmentId,
+          drawTargetFacilityId: null,
+          draftPoints: [],
+        });
+      },
 
-          const callState = store.zoneCandidatesCallState();
-          if (callState.status === 'pending' || callState.status === 'success') return;
+      /**
+       * Method cancelEditing
+       * @method cancelEditing
+       *
+       * @description
+       * Leaves `draw-zone`/`place-pin` mode, discarding any in-progress draft.
+       *
+       * @since 1.4.0
+       *
+       * @returns {void}
+       */
+      cancelEditing(): void {
+        patchState(store, {
+          editMode: 'none',
+          drawTargetFacilityId: null,
+          placeEquipmentId: null,
+          draftPoints: [],
+        });
+      },
 
-          loadZoneCandidatesFn();
-        },
+      /**
+       * Method addDraftVertex
+       * @method addDraftVertex
+       *
+       * @description
+       * Appends a vertex to the in-progress `draw-zone` outline.
+       *
+       * @since 1.4.0
+       *
+       * @param {readonly [number, number]} point - The vertex, in normalized `[0, 1]` image
+       *   coordinates.
+       *
+       * @returns {void}
+       */
+      addDraftVertex(point: readonly [number, number]): void {
+        if (
+          !store.selectedPlanReady() ||
+          (store.editMode() !== 'draw-zone' && store.editMode() !== 'calibrate')
+        )
+          return;
+        if (store.editMode() === 'calibrate' && store.draftPoints().length >= 2) return;
 
-        /**
-         * Method ensureFacilityEquipmentLoaded
-         * @method ensureFacilityEquipmentLoaded
-         *
-         * @description
-         * Loads this facility's assigned equipment (`place-pin`'s picker
-         * options, and the source for each pin's dialog rows) once,
-         * browser-only, guarded against a duplicate fetch.
-         *
-         * @since 1.4.0
-         *
-         * @returns {void}
-         */
-        ensureFacilityEquipmentLoaded(): void {
-          if (!isPlatformBrowser(platformId)) return;
+        patchState(store, { draftPoints: [...store.draftPoints(), point] });
+      },
 
-          const callState = store.facilityEquipmentCallState();
-          if (callState.status === 'pending' || callState.status === 'success') return;
+      /**
+       * Method undoDraftVertex
+       * @method undoDraftVertex
+       *
+       * @description
+       * Removes the last vertex of the in-progress `draw-zone` outline, if any.
+       *
+       * @since 1.4.0
+       *
+       * @returns {void}
+       */
+      undoDraftVertex(): void {
+        patchState(store, { draftPoints: store.draftPoints().slice(0, -1) });
+      },
 
-          loadFacilityEquipmentFn();
-        },
+      // ── Editor: writes ────────────────────────────────────────────────────────
 
-        // ── Editor: mode and draft ───────────────────────────────────────────────
+      /**
+       * Method finishDrawZone
+       * @method finishDrawZone
+       *
+       * @description
+       * Submits the in-progress outline (at least three vertices required) as
+       * the draw target facility's geometry on the selected plan. A no-op
+       * outside `draw-zone` mode or below the vertex minimum.
+       *
+       * @since 1.4.0
+       *
+       * @returns {void}
+       */
+      finishDrawZone(): void {
+        if (!store.selectedPlanReady() || store.editMode() !== 'draw-zone') return;
+        const organizationId: string | null = store.organizationId();
+        const facilityId: string | null = store.drawTargetFacilityId();
+        const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+        const points: ReadonlyArray<readonly [number, number]> = store.draftPoints();
+        if (!organizationId || !facilityId || !plan || points.length < 3) return;
 
-        /**
-         * Method enterDrawZoneMode
-         * @method enterDrawZoneMode
-         *
-         * @description
-         * Starts drawing a new outline for the given child facility.
-         *
-         * @since 1.4.0
-         *
-         * @param {string} targetFacilityId - The zone/area the outline belongs to.
-         *
-         * @returns {void}
-         */
-        enterDrawZoneMode(targetFacilityId: string): void {
-          if (!store.selectedPlanReady()) return;
-          patchState(store, {
-            editMode: 'draw-zone',
-            drawTargetFacilityId: targetFacilityId,
-            placeEquipmentId: null,
-            draftPoints: [],
-          });
-        },
+        saveZoneGeometryFn({ organizationId, facilityId, attachmentId: plan.id, points });
+      },
 
-        /**
-         * Method enterPlacePinMode
-         * @method enterPlacePinMode
-         *
-         * @description
-         * Starts placing the given equipment item on the plan.
-         *
-         * @since 1.4.0
-         *
-         * @param {string} equipmentId - The equipment to place.
-         *
-         * @returns {void}
-         */
-        enterPlacePinMode(equipmentId: string): void {
-          if (!store.selectedPlanReady()) return;
-          patchState(store, {
-            editMode: 'place-pin',
-            placeEquipmentId: equipmentId,
-            drawTargetFacilityId: null,
-            draftPoints: [],
-          });
-        },
+      /**
+       * Method clearZoneGeometry
+       * @method clearZoneGeometry
+       *
+       * @description
+       * Clears an existing zone's outline (the "Clear geometry" action in its edit dialog).
+       *
+       * @since 1.4.0
+       *
+       * @param {string} facilityId - The zone to clear.
+       *
+       * @returns {void}
+       */
+      clearZoneGeometry(facilityId: string): void {
+        if (!store.selectedPlanReady()) return;
+        const organizationId: string | null = store.organizationId();
+        if (!organizationId) return;
 
-        /**
-         * Method cancelEditing
-         * @method cancelEditing
-         *
-         * @description
-         * Leaves `draw-zone`/`place-pin` mode, discarding any in-progress draft.
-         *
-         * @since 1.4.0
-         *
-         * @returns {void}
-         */
-        cancelEditing(): void {
-          patchState(store, {
-            editMode: 'none',
-            drawTargetFacilityId: null,
-            placeEquipmentId: null,
-            draftPoints: [],
-          });
-        },
+        saveZoneGeometryFn({ organizationId, facilityId, attachmentId: null, points: null });
+      },
 
-        /**
-         * Method addDraftVertex
-         * @method addDraftVertex
-         *
-         * @description
-         * Appends a vertex to the in-progress `draw-zone` outline.
-         *
-         * @since 1.4.0
-         *
-         * @param {readonly [number, number]} point - The vertex, in normalized `[0, 1]` image
-         *   coordinates.
-         *
-         * @returns {void}
-         */
-        addDraftVertex(point: readonly [number, number]): void {
-          if (
-            !store.selectedPlanReady() ||
-            (store.editMode() !== 'draw-zone' && store.editMode() !== 'calibrate')
-          )
-            return;
-          if (store.editMode() === 'calibrate' && store.draftPoints().length >= 2) return;
+      /**
+       * Method saveZoneGeometryFromDialog
+       * @method saveZoneGeometryFromDialog
+       *
+       * @description
+       * The non-pointer "Edit coordinates" dialog's submit path.
+       *
+       * @since 1.4.0
+       *
+       * @param {string} facilityId - The zone whose outline is written.
+       * @param {ReadonlyArray<readonly [number, number]>} points - The submitted vertices.
+       *
+       * @returns {void}
+       */
+      saveZoneGeometryFromDialog(
+        facilityId: string,
+        points: ReadonlyArray<readonly [number, number]>,
+      ): void {
+        if (!store.selectedPlanReady()) return;
+        const organizationId: string | null = store.organizationId();
+        const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+        if (!organizationId || !plan || points.length < 3) return;
 
-          patchState(store, { draftPoints: [...store.draftPoints(), point] });
-        },
+        saveZoneGeometryFn({ organizationId, facilityId, attachmentId: plan.id, points });
+      },
 
-        /**
-         * Method undoDraftVertex
-         * @method undoDraftVertex
-         *
-         * @description
-         * Removes the last vertex of the in-progress `draw-zone` outline, if any.
-         *
-         * @since 1.4.0
-         *
-         * @returns {void}
-         */
-        undoDraftVertex(): void {
-          patchState(store, { draftPoints: store.draftPoints().slice(0, -1) });
-        },
+      /**
+       * Method placePin
+       * @method placePin
+       *
+       * @description
+       * Places the `place-pin` mode's equipment at the given point. A
+       * no-op outside `place-pin` mode.
+       *
+       * @since 1.4.0
+       *
+       * @param {readonly [number, number]} point - The pin's position, in normalized `[0, 1]`
+       *   image coordinates.
+       *
+       * @returns {void}
+       */
+      placePin(point: readonly [number, number]): void {
+        if (!store.selectedPlanReady() || store.editMode() !== 'place-pin') return;
+        const organizationId: string | null = store.organizationId();
+        const equipmentId: string | null = store.placeEquipmentId();
+        const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+        if (!organizationId || !equipmentId || !plan) return;
 
-        // ── Editor: writes ────────────────────────────────────────────────────────
+        savePinPositionFn({
+          organizationId,
+          equipmentId,
+          attachmentId: plan.id,
+          x: point[0],
+          y: point[1],
+          exitPlaceMode: true,
+        });
+      },
 
-        /**
-         * Method finishDrawZone
-         * @method finishDrawZone
-         *
-         * @description
-         * Submits the in-progress outline (at least three vertices required) as
-         * the draw target facility's geometry on the selected plan. A no-op
-         * outside `draw-zone` mode or below the vertex minimum.
-         *
-         * @since 1.4.0
-         *
-         * @returns {void}
-         */
-        finishDrawZone(): void {
-          if (!store.selectedPlanReady() || store.editMode() !== 'draw-zone') return;
-          const organizationId: string | null = store.organizationId();
-          const facilityId: string | null = store.drawTargetFacilityId();
-          const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-          const points: ReadonlyArray<readonly [number, number]> = store.draftPoints();
-          if (!organizationId || !facilityId || !plan || points.length < 3) return;
+      /**
+       * Method movePin
+       * @method movePin
+       *
+       * @description
+       * Moves an already-placed pin (drag-and-drop), independent of `editMode`.
+       *
+       * @since 1.4.0
+       *
+       * @param {string} equipmentId - The pin's equipment id.
+       * @param {readonly [number, number]} point - The pin's new position, in normalized `[0, 1]`
+       *   image coordinates.
+       *
+       * @returns {void}
+       */
+      movePin(equipmentId: string, point: readonly [number, number]): void {
+        if (!store.selectedPlanReady()) return;
+        const organizationId: string | null = store.organizationId();
+        const plan: FacilityAttachmentOutput | null = store.selectedPlan();
+        if (!organizationId || !plan) return;
 
-          saveZoneGeometryFn({ organizationId, facilityId, attachmentId: plan.id, points });
-        },
+        savePinPositionFn({
+          organizationId,
+          equipmentId,
+          attachmentId: plan.id,
+          x: point[0],
+          y: point[1],
+          exitPlaceMode: false,
+        });
+      },
 
-        /**
-         * Method clearZoneGeometry
-         * @method clearZoneGeometry
-         *
-         * @description
-         * Clears an existing zone's outline (the "Clear geometry" action in its edit dialog).
-         *
-         * @since 1.4.0
-         *
-         * @param {string} facilityId - The zone to clear.
-         *
-         * @returns {void}
-         */
-        clearZoneGeometry(facilityId: string): void {
-          if (!store.selectedPlanReady()) return;
-          const organizationId: string | null = store.organizationId();
-          if (!organizationId) return;
+      /**
+       * Method removePinFromPlan
+       * @method removePinFromPlan
+       *
+       * @description
+       * Clears an equipment item's pin (the "Remove from plan" action).
+       *
+       * @since 1.4.0
+       *
+       * @param {string} equipmentId - The pin's equipment id.
+       *
+       * @returns {void}
+       */
+      removePinFromPlan(equipmentId: string): void {
+        if (!store.selectedPlanReady()) return;
+        const organizationId: string | null = store.organizationId();
+        if (!organizationId) return;
 
-          saveZoneGeometryFn({ organizationId, facilityId, attachmentId: null, points: null });
-        },
-
-        /**
-         * Method saveZoneGeometryFromDialog
-         * @method saveZoneGeometryFromDialog
-         *
-         * @description
-         * The non-pointer "Edit coordinates" dialog's submit path.
-         *
-         * @since 1.4.0
-         *
-         * @param {string} facilityId - The zone whose outline is written.
-         * @param {ReadonlyArray<readonly [number, number]>} points - The submitted vertices.
-         *
-         * @returns {void}
-         */
-        saveZoneGeometryFromDialog(
-          facilityId: string,
-          points: ReadonlyArray<readonly [number, number]>,
-        ): void {
-          if (!store.selectedPlanReady()) return;
-          const organizationId: string | null = store.organizationId();
-          const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-          if (!organizationId || !plan || points.length < 3) return;
-
-          saveZoneGeometryFn({ organizationId, facilityId, attachmentId: plan.id, points });
-        },
-
-        /**
-         * Method placePin
-         * @method placePin
-         *
-         * @description
-         * Places the `place-pin` mode's equipment at the given point. A
-         * no-op outside `place-pin` mode.
-         *
-         * @since 1.4.0
-         *
-         * @param {readonly [number, number]} point - The pin's position, in normalized `[0, 1]`
-         *   image coordinates.
-         *
-         * @returns {void}
-         */
-        placePin(point: readonly [number, number]): void {
-          if (!store.selectedPlanReady() || store.editMode() !== 'place-pin') return;
-          const organizationId: string | null = store.organizationId();
-          const equipmentId: string | null = store.placeEquipmentId();
-          const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-          if (!organizationId || !equipmentId || !plan) return;
-
-          savePinPositionFn({
-            organizationId,
-            equipmentId,
-            attachmentId: plan.id,
-            x: point[0],
-            y: point[1],
-            exitPlaceMode: true,
-          });
-        },
-
-        /**
-         * Method movePin
-         * @method movePin
-         *
-         * @description
-         * Moves an already-placed pin (drag-and-drop), independent of `editMode`.
-         *
-         * @since 1.4.0
-         *
-         * @param {string} equipmentId - The pin's equipment id.
-         * @param {readonly [number, number]} point - The pin's new position, in normalized `[0, 1]`
-         *   image coordinates.
-         *
-         * @returns {void}
-         */
-        movePin(equipmentId: string, point: readonly [number, number]): void {
-          if (!store.selectedPlanReady()) return;
-          const organizationId: string | null = store.organizationId();
-          const plan: FacilityAttachmentOutput | null = store.selectedPlan();
-          if (!organizationId || !plan) return;
-
-          savePinPositionFn({
-            organizationId,
-            equipmentId,
-            attachmentId: plan.id,
-            x: point[0],
-            y: point[1],
-            exitPlaceMode: false,
-          });
-        },
-
-        /**
-         * Method removePinFromPlan
-         * @method removePinFromPlan
-         *
-         * @description
-         * Clears an equipment item's pin (the "Remove from plan" action).
-         *
-         * @since 1.4.0
-         *
-         * @param {string} equipmentId - The pin's equipment id.
-         *
-         * @returns {void}
-         */
-        removePinFromPlan(equipmentId: string): void {
-          if (!store.selectedPlanReady()) return;
-          const organizationId: string | null = store.organizationId();
-          if (!organizationId) return;
-
-          savePinPositionFn({
-            organizationId,
-            equipmentId,
-            attachmentId: null,
-            x: null,
-            y: null,
-            exitPlaceMode: false,
-          });
-        },
-      };
-    },
-  ),
+        savePinPositionFn({
+          organizationId,
+          equipmentId,
+          attachmentId: null,
+          x: null,
+          y: null,
+          exitPlaceMode: false,
+        });
+      },
+    };
+  }),
 
   withHooks((store) => {
     let previousKey: string | null = null;
+    const session = inject(AUTH_SESSION_PORT);
+    let previousSession = session.sessionRevision();
 
     return {
       /**
@@ -1674,6 +1740,14 @@ export const FacilityPlansStore = signalStore(
        * its overlay, keyed on the same selection.
        */
       onInit(): void {
+        effect(() => {
+          const revision = session.sessionRevision();
+          const authenticated = session.isAuthenticated();
+          if (revision !== previousSession || !authenticated) {
+            previousSession = revision;
+            untracked(() => store.reset());
+          }
+        });
         effect((): void => {
           const selected: FacilityAttachmentOutput | null = store.selectedPlan();
           const selectedKey = store.selectedPlanKey();
@@ -1704,6 +1778,7 @@ export const FacilityPlansStore = signalStore(
        * Revokes the last live object URL so the store never leaks one.
        */
       onDestroy(): void {
+        store.clearWriteOperations();
         store.clearSelectionResources();
       },
     };

@@ -21,9 +21,11 @@ import {
   AccountEmailChangeStore,
   AccountPasswordChangeStore,
   AccountTotpEnrollmentStore,
+  RecoveryCodesStore,
   UserStore,
 } from '@features/account/state';
 import { AccountMfaPanel } from '@features/account/ui/components/account-mfa-panel';
+import { AccountRecoveryCodesPanel } from '@features/account/ui/components/account-recovery-codes-panel';
 import { AccountSessionsPanel } from '@features/account/ui/components/account-sessions-panel';
 import { AccountTrustedDevicesPanel } from '@features/account/ui/components/account-trusted-devices-panel';
 import { AccountDeactivateDialog } from '@features/account/ui/dialogs/account-deactivate-dialog';
@@ -33,6 +35,8 @@ import {
   AUTH_SESSION_PORT,
   FederatedConnectionsPanel,
   FederatedPasswordSetupDialog,
+  PasswordPolicyStore,
+  PasswordPolicyStatus,
   resolveFederatedAuthErrorMessage,
   type AuthSessionPort,
   type FederatedProvider,
@@ -67,6 +71,8 @@ import { HlmSpinner } from '@shared/ui/spinner';
 @Component({
   selector: 'app-account-security-page',
   imports: [
+    AccountRecoveryCodesPanel,
+    PasswordPolicyStatus,
     NgIcon,
     ...HlmEmptyImports,
     AccountDeactivateDialog,
@@ -83,6 +89,8 @@ import { HlmSpinner } from '@shared/ui/spinner';
     HlmSpinner,
   ],
   providers: [
+    RecoveryCodesStore,
+    PasswordPolicyStore,
     AccountDeactivationStore,
     AccountEmailChangeStore,
     AccountPasswordChangeStore,
@@ -95,6 +103,84 @@ import { HlmSpinner } from '@shared/ui/spinner';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountSecurityPage implements OnInit {
+  /**
+   * Property recoveryStore
+   * @readonly
+   *
+   * @description
+   * Page-owned transient recovery code state.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {RecoveryCodesStore}
+   */
+  protected readonly recoveryStore: RecoveryCodesStore = inject(RecoveryCodesStore);
+  /**
+   * Property recoveryProofVisible
+   * @readonly
+   *
+   * @description
+   * Whether the current TOTP proof form is open.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly recoveryProofVisible: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Method closeRecoveryCodes
+   *
+   * @description
+   * Handles close recovery codes for the current account flow.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void} Completes the local action.
+   */
+  protected closeRecoveryCodes(): void {
+    this.recoveryProofVisible.set(false);
+    this.recoveryStore.clear();
+    this.recoveryStore.load();
+  }
+
+  /**
+   * Property recoveryStatusEffect
+   * @readonly
+   *
+   * @description
+   * Provides recovery status effect for the current account flow.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {EffectRef}
+   */
+  private readonly recoveryStatusEffect: EffectRef = effect(() => {
+    const enabled = this.totpEnabled();
+    if (!isPlatformBrowser(this.platformId)) return;
+    untracked(() => {
+      this.recoveryProofVisible.set(false);
+      this.recoveryStore.clear();
+      if (enabled) this.recoveryStore.load();
+    });
+  });
+  /**
+   * Property passwordPolicyStore
+   * @readonly
+   *
+   * @description
+   * Route-critical public requirements with an isolated SSR handoff.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {PasswordPolicyStore}
+   */
+  protected readonly passwordPolicyStore: PasswordPolicyStore = inject(PasswordPolicyStore);
   //#region Properties
   /**
    * Property userStore
@@ -208,7 +294,8 @@ export class AccountSecurityPage implements OnInit {
    *
    * @type {AccountDeactivationStore}
    */
-  protected readonly deactivationStore = inject(AccountDeactivationStore);
+  protected readonly deactivationStore: InstanceType<typeof AccountDeactivationStore> =
+    inject(AccountDeactivationStore);
 
   /**
    * Property authSession
@@ -252,7 +339,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @type {FederatedAuthStore}
    */
-  private readonly federatedStore = inject(FederatedAuthStore);
+  private readonly federatedStore: FederatedAuthStore = inject(FederatedAuthStore);
 
   /**
    * Property document
@@ -266,7 +353,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @type {Document}
    */
-  private readonly document = inject(DOCUMENT);
+  private readonly document: Document = inject(DOCUMENT);
 
   /**
    * Property platformId
@@ -280,7 +367,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @type {object}
    */
-  private readonly platformId = inject(PLATFORM_ID);
+  private readonly platformId: object = inject(PLATFORM_ID);
 
   /**
    * Property confirmingDeactivation
@@ -338,7 +425,7 @@ export class AccountSecurityPage implements OnInit {
    *
    * @type {FederatedAuthStore}
    */
-  protected readonly signInMethods = this.federatedStore;
+  protected readonly signInMethods: FederatedAuthStore = this.federatedStore;
 
   /**
    * Property signInMethodsError

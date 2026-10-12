@@ -1557,9 +1557,7 @@ describe('InterventionWorkspaceStore evidence upload', () => {
       'intervention-1',
       file,
       'evidence.jpg',
-      undefined,
-      workItem.id,
-      undefined,
+      { label: undefined, workItemId: workItem.id, kind: undefined },
     );
     expect(store.attachments()).toEqual([created]);
     expect(store.workItems()[0]?.evidenceCount).toBe(1);
@@ -1623,9 +1621,7 @@ describe('InterventionWorkspaceStore evidence upload', () => {
       'intervention-1',
       file,
       'signature.png',
-      undefined,
-      undefined,
-      'signature',
+      { label: undefined, workItemId: undefined, kind: 'signature' },
     );
     expect(dispatchSpy).toHaveBeenCalledWith(
       expect.objectContaining({

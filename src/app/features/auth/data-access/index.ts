@@ -6,3 +6,5 @@ export { EmailChangeService } from './services/email-change/email-change.service
 export { RegistrationService } from './services/registration/registration.service';
 export { FederatedAuthService } from './services/federation/federated-auth.service';
 export { EmailOwnershipService } from './services/email-ownership/email-ownership.service';
+
+export { PasswordPolicyService } from './services/password-policy/password-policy.service';

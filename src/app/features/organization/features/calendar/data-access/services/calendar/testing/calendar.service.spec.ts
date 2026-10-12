@@ -138,6 +138,47 @@ describe('CalendarService', () => {
     expect(received).toMatchObject({ createdAt: '2026-08-01T08:00:00+00:00' });
   });
 
+  it('should preserve an explicit feed-token identity across lost-response retries and repeated subscriptions', () => {
+    const options = { idempotencyKey: 'feed-token-intention' };
+    const request = service.createFeedToken('org-1', options);
+    request.subscribe({ error: () => undefined });
+    const first = httpMock.expectOne(
+      'https://api.test/api/organizations/org-1/calendar/feed-token',
+    );
+    expect(first.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+    first.error(new ProgressEvent('error'));
+
+    request.subscribe();
+    const resubscribed = httpMock.expectOne(
+      'https://api.test/api/organizations/org-1/calendar/feed-token',
+    );
+    expect(resubscribed.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+    resubscribed.flush({ secret: 'original-secret' });
+
+    service.createFeedToken('org-1', options).subscribe();
+    const retried = httpMock.expectOne(
+      'https://api.test/api/organizations/org-1/calendar/feed-token',
+    );
+    expect(retried.request.headers.get('Idempotency-Key')).toBe(options.idempotencyKey);
+    retried.flush({ secret: 'original-secret' });
+  });
+
+  it('should mint separate identities for separate feed-token invocations without caller options', () => {
+    service.createFeedToken('org-1').subscribe();
+    const first = httpMock.expectOne(
+      'https://api.test/api/organizations/org-1/calendar/feed-token',
+    );
+    const firstKey = first.request.headers.get('Idempotency-Key');
+    first.flush({ secret: 'first-secret' });
+    service.createFeedToken('org-1').subscribe();
+    const second = httpMock.expectOne(
+      'https://api.test/api/organizations/org-1/calendar/feed-token',
+    );
+    expect(firstKey).toMatch(/^[\da-f-]{36}$/);
+    expect(second.request.headers.get('Idempotency-Key')).not.toBe(firstKey);
+    second.flush({ secret: 'second-secret' });
+  });
+
   it('should propagate the metadata 404 untouched for the no-token state', () => {
     let caught: unknown;
     service.getFeedTokenMetadata('org-1').subscribe({ error: (error) => (caught = error) });
@@ -155,13 +196,16 @@ describe('CalendarService', () => {
 
   it('should DELETE the feed token', () => {
     let completed = false;
-    service.revokeFeedToken('org-1').subscribe({ complete: () => (completed = true) });
+    service
+      .revokeFeedToken('org-1', { idempotencyKey: 'revoke-feed-intention' })
+      .subscribe({ complete: () => (completed = true) });
 
     const request = httpMock.expectOne(
       'https://api.test/api/organizations/org-1/calendar/feed-token',
     );
     expect(request.request.method).toBe('DELETE');
     expect(request.request.withCredentials).toBe(true);
+    expect(request.request.headers.get('Idempotency-Key')).toBe('revoke-feed-intention');
 
     request.flush(null, { status: 204, statusText: 'No Content' });
     expect(completed).toBe(true);

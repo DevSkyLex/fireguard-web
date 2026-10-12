@@ -20,6 +20,7 @@ import {
 import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideCopy, lucideShieldCheck, lucideSmartphone } from '@ng-icons/lucide';
 import type { SetupTotpOutput } from '@features/account/models';
+import { RecoveryCodeForm } from '@features/auth';
 import { HlmBadge } from '@shared/ui/badge';
 import { HlmButton } from '@shared/ui/button';
 import { HlmCardTitle } from '@shared/ui/card';
@@ -85,13 +86,56 @@ const SECRET_GROUP_SIZE: number = 4;
  */
 @Component({
   selector: 'app-account-mfa-panel',
-  imports: [HlmCardTitle, NgIcon, AccountOtpCodeForm, HlmBadge, HlmButton],
+  imports: [RecoveryCodeForm, HlmCardTitle, NgIcon, AccountOtpCodeForm, HlmBadge, HlmButton],
   providers: [provideIcons({ lucideCheck, lucideCopy, lucideShieldCheck, lucideSmartphone })],
   templateUrl: './account-mfa-panel.component.html',
   host: { class: 'block' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountMfaPanel {
+  /**
+   * Property recoveryDisabled
+   * @readonly
+   *
+   * @description
+   * Provides recovery disabled for the current account flow.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {OutputEmitterRef<string>}
+   */
+  public readonly recoveryDisabled: OutputEmitterRef<string> = output<string>();
+  /**
+   * Property usingRecovery
+   * @readonly
+   *
+   * @description
+   * Whether the alternate recovery proof form is selected.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {WritableSignal<boolean>}
+   */
+  protected readonly usingRecovery: WritableSignal<boolean> = signal(false);
+
+  /**
+   * Method toggleRecoveryProof
+   *
+   * @description
+   * Handles toggle recovery proof for the current account flow.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @returns {void} Completes the local action.
+   */
+  protected toggleRecoveryProof(): void {
+    if (this.isDisabling()) return;
+    this.disableForm()?.reset();
+    this.usingRecovery.update((current) => !current);
+  }
   //#region Inputs
   /**
    * Property totpEnabled
@@ -449,6 +493,7 @@ export class AccountMfaPanel {
   protected stopDisarming(): void {
     this.disableForm()?.reset();
     this.disarming.set(false);
+    this.usingRecovery.set(false);
   }
 
   /**

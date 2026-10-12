@@ -2,7 +2,10 @@ import { provideZonelessChangeDetection, signal, type WritableSignal } from '@an
 import { TestBed, type ComponentFixture } from '@angular/core/testing';
 import { provideRouter, Router } from '@angular/router';
 import type { MockInstance } from 'vitest';
+import { successCallState } from '@core/request-state';
+import { PasswordPolicyStore } from '@features/auth/state';
 import { PasswordResetStore } from '@features/auth/state';
+import { DEFAULT_PASSWORD_POLICY } from '@features/auth/state/password-policy/testing/password-policy.fixture';
 import { NewPasswordPage } from '../new-password-page.component';
 
 describe('NewPasswordPage', () => {
@@ -43,6 +46,20 @@ describe('NewPasswordPage', () => {
       ],
     });
 
+    TestBed.overrideComponent(NewPasswordPage, {
+      set: {
+        providers: [
+          {
+            provide: PasswordPolicyStore,
+            useValue: {
+              policy: signal(DEFAULT_PASSWORD_POLICY),
+              policyCallState: signal(successCallState(DEFAULT_PASSWORD_POLICY)),
+              load: vi.fn(),
+            },
+          },
+        ],
+      },
+    });
     navigate = vi.spyOn(TestBed.inject(Router), 'navigate').mockResolvedValue(true);
 
     fixture = TestBed.createComponent(NewPasswordPage);

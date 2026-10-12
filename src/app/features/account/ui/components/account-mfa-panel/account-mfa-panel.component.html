@@ -120,15 +120,46 @@
       <p class="text-sm text-foreground" i18n="@@account.mfa.disableHint">
         Enter a current code from your app to confirm it is you.
       </p>
-      <app-account-otp-code-form
-        #disableForm
-        inputId="account-mfa-disable-code"
-        [destructive]="true"
-        [submitLabel]="disableLabel"
-        [pending]="isDisabling()"
-        (submitted)="disabled.emit($event)"
-        (cancelled)="stopDisarming()"
-      />
+      @if (usingRecovery()) {
+        <app-recovery-code-form
+          [pending]="isDisabling()"
+          (submitted)="recoveryDisabled.emit($event)"
+        />
+        <button
+          hlmBtn
+          type="button"
+          variant="ghost"
+          [disabled]="isDisabling()"
+          (click)="stopDisarming()"
+          i18n="@@common.cancel"
+        >
+          Cancel
+        </button>
+      } @else {
+        <app-account-otp-code-form
+          #disableForm
+          inputId="account-mfa-disable-code"
+          [destructive]="true"
+          [submitLabel]="disableLabel"
+          [pending]="isDisabling()"
+          (submitted)="disabled.emit($event)"
+          (cancelled)="stopDisarming()"
+        />
+      }
+      <button
+        hlmBtn
+        type="button"
+        variant="link"
+        class="mobile-ui:min-h-11"
+        [disabled]="isDisabling()"
+        (click)="toggleRecoveryProof()"
+      >
+        @if (usingRecovery()) {
+          <span i18n="@@auth.recovery.useAuthenticator">Use my authenticator</span>
+        } @else {
+          <span i18n="@@auth.recovery.useCode">Use a recovery code</span>
+        }
+      </button>
     </div>
   }
 </section>

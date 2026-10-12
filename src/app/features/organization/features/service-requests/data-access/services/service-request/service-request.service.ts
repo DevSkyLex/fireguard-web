@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { HydraApiService, type ApiRequestOptions, type RequestOptions } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import type {
   ServiceRequestOutput,
@@ -213,6 +213,7 @@ export class ServiceRequestService extends HydraApiService {
    * @param {string} organizationId - Owning organization authority.
    * @param {ServiceRequestOutput} request - Displayed immutable request revision.
    * @param {ConvertServiceRequestInput} input - Explicit validated command payload.
+   * @param {ApiRequestOptions | undefined} options - Durable write identity reused across retries.
    *
    * @returns {Observable<ServiceRequestOutput>} Server-confirmed request projection.
    */
@@ -220,11 +221,15 @@ export class ServiceRequestService extends HydraApiService {
     organizationId: string,
     request: ServiceRequestOutput,
     input: ConvertServiceRequestInput,
+    options?: ApiRequestOptions,
   ): Observable<ServiceRequestOutput> {
     return this.post<ConvertServiceRequestInput, ServiceRequestOutput>(
       `/api/organizations/${organizationId}/service-requests/${request.id}/convert`,
       input,
-      { headers: { 'If-Match': `"revision-${request.revision}"` } },
+      {
+        ...options,
+        headers: { ...options?.headers, 'If-Match': `"revision-${request.revision}"` },
+      },
     );
   }
 

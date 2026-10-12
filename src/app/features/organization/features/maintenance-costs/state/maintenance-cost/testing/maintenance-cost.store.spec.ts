@@ -1,6 +1,8 @@
+import { HttpErrorResponse } from '@angular/common/http';
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { of, Subject, throwError } from 'rxjs';
+import type { WriteOperation } from '@core/request-state';
 import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { OrganizationPermissionService } from '@features/organization/access';
 import { OrganizationMemberService } from '@features/organization/data-access';
@@ -94,7 +96,7 @@ describe('MaintenanceCostStore', () => {
     journal = {
       captureOwner: vi.fn().mockReturnValue('user-a'),
       readPending: vi.fn().mockResolvedValue(null),
-      retain: vi.fn().mockResolvedValue(undefined),
+      retain: vi.fn().mockResolvedValue({ idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' }),
       acknowledge: vi.fn().mockResolvedValue(undefined),
     };
   });
@@ -164,7 +166,15 @@ describe('MaintenanceCostStore', () => {
       revision: 0,
     });
     await vi.waitFor(() => expect(store.writeCallState().status).toBe('error'));
-    expect(api.writePlanning).toHaveBeenCalledExactlyOnceWith('org', cost.interventionId, input, 0);
+    expect(api.writePlanning).toHaveBeenCalledExactlyOnceWith(
+      'org',
+      cost.interventionId,
+      input,
+      0,
+      {
+        idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
+      },
+    );
     expect(store.writeCallState().error?.code).toBe(412);
     expect(store.costCallState().data).toEqual(cost);
     expect(store.command()).toMatchObject({ revision: 0, input });
@@ -338,8 +348,8 @@ describe('MaintenanceCostStore', () => {
     await setup();
     let release!: () => void;
     journal.retain.mockReturnValueOnce(
-      new Promise<void>((resolve) => {
-        release = resolve;
+      new Promise<WriteOperation>((resolve) => {
+        release = () => resolve({ idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11' });
       }),
     );
     const command = {
@@ -360,6 +370,113 @@ describe('MaintenanceCostStore', () => {
     release();
     await vi.waitFor(() => expect(api.createExpense).toHaveBeenCalledTimes(1));
     expect(api.createExpense.mock.calls[0]?.[2]).toEqual(command.input);
+  });
+
+  it.each([
+    'idempotency_outcome_unknown',
+    'idempotency_result_unavailable',
+    'idempotency_owner_lost',
+    'idempotency_conflict',
+    'idempotency_replay_expired',
+    'access_denied',
+  ])('keeps an uncertain expense and its original HTTP key after %s', async (code) => {
+    await setup();
+    api.createExpense.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: code === 'access_denied' ? 403 : 409,
+            error: { code, operationCompleted: false },
+          }),
+      ),
+    );
+    const command = {
+      kind: 'expense' as const,
+      organizationId: 'org',
+      interventionId: cost.interventionId,
+      input: {
+        clientId: 'same-business-id',
+        amount: '1',
+        description: 'Original',
+        incurredAt: '2025-01-01T00:00:00Z',
+      },
+    };
+    store.write(command);
+    await vi.waitFor(() => expect(store.uncertainWrite()).toBe(true));
+    expect(journal.acknowledge).not.toHaveBeenCalled();
+    expect(store.command()).toEqual({
+      ...command,
+      idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
+    });
+    store.write({ ...command, input: { ...command.input, amount: '999' } });
+    await vi.waitFor(() => expect(api.createExpense).toHaveBeenCalledTimes(2));
+    expect(api.createExpense.mock.calls[1]).toEqual(api.createExpense.mock.calls[0]);
+  });
+
+  it('acknowledges only a proven completed expired expense and refreshes its authoritative dossier', async () => {
+    await setup();
+    api.createExpense.mockReturnValueOnce(
+      throwError(
+        () =>
+          new HttpErrorResponse({
+            status: 409,
+            error: { code: 'idempotency_replay_expired', operationCompleted: true },
+          }),
+      ),
+    );
+    store.write({
+      kind: 'expense',
+      organizationId: 'org',
+      interventionId: cost.interventionId,
+      input: {
+        clientId: 'completed-business-id',
+        amount: '1',
+        description: 'Original',
+        incurredAt: '2025-01-01T00:00:00Z',
+      },
+    });
+    await vi.waitFor(() => expect(journal.acknowledge).toHaveBeenCalledOnce());
+    expect(api.readCost).toHaveBeenCalledExactlyOnceWith('org', cost.interventionId);
+    expect(store.command()).toBeNull();
+    expect(store.writeCallState().data).toBeNull();
+    expect(store.costCallState().data).toEqual(cost);
+  });
+
+  it('keeps the HTTP key on an unchanged planning retry and replaces it after explicit revision review', async () => {
+    await setup();
+    journal.retain.mockImplementation(async (command) => ({
+      idempotencyKey: command.idempotencyKey ?? 'new-reviewed-key',
+    }));
+    api.writePlanning.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 0 })));
+    const command = {
+      kind: 'planning' as const,
+      idempotencyKey: 'original-planning-key',
+      organizationId: 'org',
+      interventionId: cost.interventionId,
+      input: { plannedBudget: '1', estimatedMinutes: null, resources: [] },
+      revision: 3,
+    };
+    store.write(command);
+    await vi.waitFor(() => expect(store.uncertainWrite()).toBe(true));
+    api.writePlanning.mockReturnValueOnce(throwError(() => new HttpErrorResponse({ status: 412 })));
+    store.retryWrite();
+    await vi.waitFor(() => expect(store.writeCallState().error?.code).toBe(412));
+    expect(api.writePlanning.mock.calls[1]).toEqual(api.writePlanning.mock.calls[0]);
+    store.write({
+      kind: 'planning',
+      organizationId: 'org',
+      interventionId: cost.interventionId,
+      input: { ...command.input, plannedBudget: '2' },
+      revision: 4,
+    });
+    await vi.waitFor(() => expect(api.writePlanning).toHaveBeenCalledTimes(3));
+    expect(api.writePlanning.mock.calls[2]).toEqual([
+      'org',
+      cost.interventionId,
+      { ...command.input, plannedBudget: '2' },
+      4,
+      { idempotencyKey: 'new-reviewed-key' },
+    ]);
   });
 
   it('clears private scope and fences an accepted response when the actor changes', async () => {
@@ -413,7 +530,10 @@ describe('MaintenanceCostStore', () => {
     };
     store.write(command);
     await vi.waitFor(() => expect(store.uncertainWrite()).toBe(true));
-    expect(store.command()).toEqual(command);
+    expect(store.command()).toEqual({
+      ...command,
+      idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
+    });
     store.retryWrite();
     await vi.waitFor(() => expect(store.command()).toBeNull());
     expect(api.createExpense.mock.calls[1]?.[2]).toEqual(command.input);
@@ -455,7 +575,10 @@ describe('MaintenanceCostStore', () => {
     rejectAcknowledgement(new Error('Journal deletion failed'));
     await vi.waitFor(() => expect(store.uncertainWrite()).toBe(true));
     expect(store.writeCallState().error?.code).toBe(0);
-    expect(store.command()).toEqual(command);
+    expect(store.command()).toEqual({
+      ...command,
+      idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
+    });
     expect(journal.readPending).toHaveBeenCalledTimes(1);
     store.retryWrite();
     await vi.waitFor(() => expect(store.command()).toBeNull());
@@ -579,7 +702,10 @@ describe('MaintenanceCostStore', () => {
     store.retryWrite();
     await vi.waitFor(() => expect(store.writeCallState().status).toBe('error'));
     expect(store.uncertainWrite()).toBe(true);
-    expect(store.command()).toEqual(command);
+    expect(store.command()).toEqual({
+      ...command,
+      idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f11',
+    });
     expect(journal.acknowledge).not.toHaveBeenCalled();
     expect(api.createExpense).toHaveBeenCalledTimes(1);
     store.retryWrite();

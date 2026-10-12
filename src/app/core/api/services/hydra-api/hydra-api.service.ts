@@ -9,6 +9,7 @@ import { inject, LOCALE_ID, Service } from '@angular/core';
 import { type Observable, catchError, map, throwError } from 'rxjs';
 import { ENV_CONFIG } from '@core/config/environment/env.token';
 import type { EnvironmentConfig } from '@core/config/environment/environment-config.interface';
+import { WriteOperationService } from '@core/request-state';
 import {
   type ApiError,
   type ApiRequestOptions,
@@ -39,6 +40,7 @@ export type {
  * All domain-specific services should extend this class.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  *
  * @example
@@ -86,8 +88,33 @@ export abstract class HydraApiService {
    */
   protected readonly env: EnvironmentConfig = inject<EnvironmentConfig>(ENV_CONFIG);
 
-  /** Active Angular bundle locale, shared by all Hydra requests. */
+  /**
+   * Property localeId
+   * @readonly
+   *
+   * @description
+   * Active Angular bundle locale, shared by all Hydra requests.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {string}
+   */
   protected readonly localeId: string = inject<string>(LOCALE_ID);
+
+  /**
+   * Property writeOperations
+   * @readonly
+   *
+   * @description
+   * Creates a stable identity before constructing each new mutation observable.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {WriteOperationService}
+   */
+  protected readonly writeOperations: WriteOperationService = inject(WriteOperationService);
 
   /**
    * Property defaultHeaders
@@ -136,7 +163,6 @@ export abstract class HydraApiService {
    * hand-built `params` passthrough. A whitespace-only `search` is treated as
    * unset. Callers still forwarding sort or search through `options.params`
    * keep working unchanged — this method never deduplicates against it.
-   *
    * A readonly array value in `options.params` is appended as a repeated
    * `key[]=` param, one per member, the shape an `isAnyOf` narrowing sends —
    * a scalar value still sends the single `key=` form (§10.6).
@@ -182,6 +208,7 @@ export abstract class HydraApiService {
    *
    * @param {HttpParams} params - Parameters already built from standard options.
    * @param {NonNullable<ApiRequestOptions['params']>} values - Extra query parameters.
+   *
    * @returns {HttpParams} Parameters with extra values appended.
    */
   private appendPassThroughParams(
@@ -232,6 +259,96 @@ export abstract class HydraApiService {
   }
 
   /**
+   * Method buildWriteHeaders
+   * @method buildWriteHeaders
+   *
+   * @description
+   * Preserves an explicit operation key or creates one before HTTP observable construction.
+   * Multipart requests remove Content-Type so the browser supplies its boundary.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @param {ApiRequestOptions} [options] - Caller-owned immutable write identity and headers.
+   * @param {boolean} [multipart] - Whether the body uses browser-managed multipart encoding.
+   *
+   * @returns {HttpHeaders} Headers retaining one idempotency key for all subscriptions.
+   */
+  protected buildWriteHeaders(options?: ApiRequestOptions, multipart = false): HttpHeaders {
+    const headers = this.buildHeaders(options);
+    const key =
+      options?.idempotencyKey ??
+      headers.get('Idempotency-Key') ??
+      this.writeOperations.create().idempotencyKey;
+    const keyed = headers.set('Idempotency-Key', key);
+    return multipart ? keyed.delete('Content-Type') : keyed;
+  }
+
+  /**
+   * Method postMultipart
+   * @method postMultipart
+   *
+   * @description
+   * Posts multipart data with a stable operation key and browser-managed Content-Type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @template TOutput - Type of the returned transport resource.
+   *
+   * @param {string} endpoint - API endpoint path.
+   * @param {FormData} body - Immutable upload intention.
+   * @param {ApiRequestOptions} [options] - Caller-owned write identity.
+   *
+   * @returns {Observable<TOutput>} The upload response.
+   */
+  protected postMultipart<TOutput>(
+    endpoint: string,
+    body: FormData,
+    options?: ApiRequestOptions,
+  ): Observable<TOutput> {
+    return this.http
+      .post<TOutput>(this.buildUrl(endpoint), body, {
+        headers: this.buildWriteHeaders(options, true),
+        params: this.buildParams(options),
+        withCredentials: true,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method putMultipart
+   * @method putMultipart
+   *
+   * @description
+   * Replaces multipart data with a stable operation key and browser-managed Content-Type.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @template TOutput - Type of the returned transport resource.
+   *
+   * @param {string} endpoint - API endpoint path.
+   * @param {FormData} body - Immutable upload intention.
+   * @param {ApiRequestOptions} [options] - Caller-owned write identity.
+   *
+   * @returns {Observable<TOutput>} The upload response.
+   */
+  protected putMultipart<TOutput>(
+    endpoint: string,
+    body: FormData,
+    options?: ApiRequestOptions,
+  ): Observable<TOutput> {
+    return this.http
+      .put<TOutput>(this.buildUrl(endpoint), body, {
+        headers: this.buildWriteHeaders(options, true),
+        params: this.buildParams(options),
+        withCredentials: true,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
    * Method getOne
    *
    * @description
@@ -254,6 +371,37 @@ export abstract class HydraApiService {
     return this.http
       .get<T>(this.buildUrl(endpoint), {
         headers: this.buildHeaders(options),
+        params: this.buildParams(options),
+        withCredentials: true,
+      })
+      .pipe(catchError(this.handleError));
+  }
+
+  /**
+   * Method getOneWithWriteIdentity
+   * @method getOneWithWriteIdentity
+   *
+   * @description
+   * Retrieves an explicitly stateful resource with one identity allocated before observable
+   * construction. Use only when the server synchronizes persisted state during the GET.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @template T - Type of the returned Hydra item.
+   *
+   * @param {string} endpoint - Stateful API endpoint path.
+   * @param {ApiRequestOptions} [options] - Caller-owned retry identity and request options.
+   *
+   * @returns {Observable<T>} State synchronized by this logical request.
+   */
+  protected getOneWithWriteIdentity<T extends HydraItem>(
+    endpoint: string,
+    options?: ApiRequestOptions,
+  ): Observable<T> {
+    return this.http
+      .get<T>(this.buildUrl(endpoint), {
+        headers: this.buildWriteHeaders(options),
         params: this.buildParams(options),
         withCredentials: true,
       })
@@ -314,7 +462,7 @@ export abstract class HydraApiService {
   ): Observable<TOutput> {
     return this.http
       .post<TOutput>(this.buildUrl(endpoint), body, {
-        headers: this.buildHeaders(options),
+        headers: this.buildWriteHeaders(options),
         params: this.buildParams(options),
         withCredentials: true,
       })
@@ -343,7 +491,7 @@ export abstract class HydraApiService {
   ): Observable<TOutput> {
     return this.http
       .post<TOutput>(this.buildUrl(endpoint), null, {
-        headers: this.buildHeaders(options),
+        headers: this.buildWriteHeaders(options),
         params: this.buildParams(options),
         withCredentials: true,
       })
@@ -374,7 +522,7 @@ export abstract class HydraApiService {
     body: Partial<TInput>,
     options?: ApiRequestOptions,
   ): Observable<TOutput> {
-    const headers: HttpHeaders = this.buildHeaders(options).set(
+    const headers: HttpHeaders = this.buildWriteHeaders(options).set(
       'Content-Type',
       'application/merge-patch+json',
     );
@@ -417,7 +565,7 @@ export abstract class HydraApiService {
     body: Partial<TInput>,
     options?: ApiRequestOptions,
   ): Observable<HttpResponse<TOutput>> {
-    const headers: HttpHeaders = this.buildHeaders(options).set(
+    const headers: HttpHeaders = this.buildWriteHeaders(options).set(
       'Content-Type',
       'application/merge-patch+json',
     );
@@ -457,7 +605,7 @@ export abstract class HydraApiService {
   ): Observable<TOutput> {
     return this.http
       .put<TOutput>(this.buildUrl(endpoint), body, {
-        headers: this.buildHeaders(options),
+        headers: this.buildWriteHeaders(options),
         params: this.buildParams(options),
         withCredentials: true,
       })
@@ -481,7 +629,7 @@ export abstract class HydraApiService {
   protected delete(endpoint: string, options?: ApiRequestOptions): Observable<void> {
     return this.http
       .delete<void>(this.buildUrl(endpoint), {
-        headers: this.buildHeaders(options),
+        headers: this.buildWriteHeaders(options),
         params: this.buildParams(options),
         withCredentials: true,
       })
@@ -504,8 +652,10 @@ export abstract class HydraApiService {
    * @since 1.6.0
    *
    * @template TOutput - Type of the returned Hydra item.
+   *
    * @param {string} endpoint - API endpoint path.
    * @param {ApiRequestOptions} [options] - Request options.
+   *
    * @returns {Observable<TOutput>} Observable emitting the post-delete resource.
    */
   protected deleteOne<TOutput extends HydraItem>(
@@ -514,7 +664,7 @@ export abstract class HydraApiService {
   ): Observable<TOutput> {
     return this.http
       .delete<TOutput>(this.buildUrl(endpoint), {
-        headers: this.buildHeaders(options),
+        headers: this.buildWriteHeaders(options),
         params: this.buildParams(options),
         withCredentials: true,
       })
@@ -522,7 +672,7 @@ export abstract class HydraApiService {
   }
 
   /**
-   * Method handleError
+   * Property handleError
    *
    * @description
    * Centralized error handling that transforms HttpErrorResponse
@@ -531,16 +681,30 @@ export abstract class HydraApiService {
    * @access protected
    * @since 1.0.0
    *
+   * @type {(error: HttpErrorResponse) => Observable<never>}
+   *
    * @param {HttpErrorResponse} error - HTTP error response from Angular.
    *
    * @returns {Observable<never>} Observable that throws the API error.
    */
-  protected handleError = (error: HttpErrorResponse): Observable<never> => {
-    if (isApiError(error.error)) {
-      return throwError(() => error.error as ApiError | ConstraintViolation);
+  protected handleError: (error: HttpErrorResponse) => Observable<never> = (
+    error: HttpErrorResponse,
+  ): Observable<never> => {
+    const body: unknown = error.error;
+    const operationCompleted =
+      typeof body === 'object' &&
+      body !== null &&
+      'operationCompleted' in body &&
+      typeof body.operationCompleted === 'boolean'
+        ? body.operationCompleted
+        : undefined;
+    if (isApiError(body)) {
+      const problem: ApiError | ConstraintViolation =
+        'operationCompleted' in body ? { ...body, status: error.status, operationCompleted } : body;
+
+      return throwError(() => problem);
     }
 
-    const body: unknown = error.error;
     const detail =
       typeof body === 'object' &&
       body !== null &&
@@ -567,6 +731,7 @@ export abstract class HydraApiService {
         : fallbackTitle;
     const apiError: ApiError = {
       ...(code ? { code } : {}),
+      ...(operationCompleted === undefined ? {} : { operationCompleted }),
       '@id': '',
       '@type': 'Error',
       status: error.status || 0,

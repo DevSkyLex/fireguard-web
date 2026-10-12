@@ -20,7 +20,7 @@ import { NgIcon, provideIcons } from '@ng-icons/core';
 import { lucideCheck, lucideCircle } from '@ng-icons/lucide';
 import type { BrnOverlayState } from '@spartan-ng/brain/overlay';
 import type { StoreError } from '@core/request-state';
-import { PASSWORD_MIN_LENGTH } from '@features/auth/constants';
+import type { PasswordPolicyOutput } from '@features/auth/models';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth/validators';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
@@ -74,6 +74,20 @@ import type { RegisterFormValues } from './models';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterForm {
+  /**
+   * Property passwordPolicy
+   * @readonly
+   *
+   * @description
+   * Authoritative server policy; an absent value keeps creation invalid.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<PasswordPolicyOutput | null>}
+   */
+  public readonly passwordPolicy: InputSignal<PasswordPolicyOutput | null> =
+    input<PasswordPolicyOutput | null>(null);
   //#region Inputs
   /**
    * Property pending
@@ -167,7 +181,7 @@ export class RegisterForm {
       required(path.email, { message: $localize`:@@auth.email.required:Enter your email address` });
       email(path.email, { message: $localize`:@@auth.email.invalid:Enter a valid email address` });
 
-      applyPasswordRules(path.password);
+      applyPasswordRules(path.password, () => this.passwordPolicy());
       applyPasswordConfirmation(path.confirmPassword, path.password);
     },
   );
@@ -269,37 +283,64 @@ export class RegisterForm {
    *   readonly matches: (value: string) => boolean;
    * }[]}
    */
-  protected readonly passwordCriteria: readonly {
-    readonly id: 'minLength' | 'uppercase' | 'lowercase' | 'digit' | 'symbol';
-    readonly label: string;
-    readonly matches: (value: string) => boolean;
-  }[] = [
-    {
-      id: 'minLength',
-      label: $localize`:@@auth.password.requirements.minLength:At least ${PASSWORD_MIN_LENGTH}:min: characters`,
-      matches: (value: string): boolean => value.length >= PASSWORD_MIN_LENGTH,
-    },
-    {
-      id: 'uppercase',
-      label: $localize`:@@auth.password.requirements.uppercase:An upper case letter`,
-      matches: (value: string): boolean => /[A-Z]/.test(value),
-    },
-    {
-      id: 'lowercase',
-      label: $localize`:@@auth.password.requirements.lowercase:A lower case letter`,
-      matches: (value: string): boolean => /[a-z]/.test(value),
-    },
-    {
-      id: 'digit',
-      label: $localize`:@@auth.password.requirements.digit:A digit`,
-      matches: (value: string): boolean => /\d/.test(value),
-    },
-    {
-      id: 'symbol',
-      label: $localize`:@@auth.password.requirements.symbol:A symbol (@$!%*?&#)`,
-      matches: (value: string): boolean => /[@$!%*?&#]/.test(value),
-    },
-  ];
+  protected readonly passwordCriteria: Signal<
+    readonly {
+      readonly id: string;
+      readonly label: string;
+      readonly matches: (value: string) => boolean;
+    }[]
+  > = computed(() => {
+    const policy = this.passwordPolicy();
+    if (!policy) return [];
+    const criteria = [
+      {
+        id: 'minLength',
+        label: $localize`:@@auth.password.requirements.minLength:At least ${policy.minimumLength}:min: characters`,
+        matches: (value: string): boolean => Array.from(value).length >= policy.minimumLength,
+      },
+      {
+        id: 'maxLength',
+        label: $localize`:@@auth.password.maxLength:Use at most ${policy.maximumLength}:max: characters`,
+        matches: (value: string): boolean => Array.from(value).length <= policy.maximumLength,
+      },
+    ];
+    if (policy.requireUppercase)
+      criteria.push({
+        id: 'uppercase',
+        label: $localize`:@@auth.password.requirements.uppercase:An upper case letter`,
+        matches: (value: string): boolean => /[A-Z]/.test(value),
+      });
+    if (policy.requireLowercase)
+      criteria.push({
+        id: 'lowercase',
+        label: $localize`:@@auth.password.requirements.lowercase:A lower case letter`,
+        matches: (value: string): boolean => /[a-z]/.test(value),
+      });
+    if (policy.requireDigit)
+      criteria.push({
+        id: 'digit',
+        label: $localize`:@@auth.password.requirements.digit:A digit`,
+        matches: (value: string): boolean => /\d/.test(value),
+      });
+    if (policy.specialCharacters)
+      criteria.push({
+        id: 'symbol',
+        label: $localize`:@@auth.password.requirements.symbols:Include one of these symbols: ${policy.specialCharacters}:SYMBOLS:`,
+        matches: (value: string): boolean =>
+          Array.from(policy.specialCharacters).some((character) => value.includes(character)),
+      });
+    const initialCharacters = policy.allowedInitialCharacters;
+    if (initialCharacters)
+      criteria.push({
+        id: 'initialCharacter',
+        label: $localize`:@@auth.password.initialCharacter:Start with one of these characters: ${initialCharacters}:CHARACTERS:`,
+        matches: (value: string): boolean => {
+          const first = Array.from(value)[0];
+          return !!first && initialCharacters.includes(first);
+        },
+      });
+    return criteria;
+  });
 
   /**
    * Property passwordRequirementsDescription
@@ -314,9 +355,11 @@ export class RegisterForm {
    *
    * @type {string}
    */
-  protected readonly passwordRequirementsDescription: string = this.passwordCriteria
-    .map((criterion) => criterion.label)
-    .join('. ');
+  protected readonly passwordRequirementsDescription: Signal<string> = computed(() =>
+    this.passwordCriteria()
+      .map((criterion) => criterion.label)
+      .join('. '),
+  );
 
   /**
    * Property requirementMetLabel
@@ -362,7 +405,7 @@ export class RegisterForm {
    * @type {Signal<string>}
    */
   protected readonly passwordRequirementsAnnouncement: Signal<string> = computed(() =>
-    this.passwordCriteria
+    this.passwordCriteria()
       .map(
         (criterion) =>
           `${criterion.label}: ${criterion.matches(this.passwordValue()) ? this.requirementMetLabel : this.requirementNotMetLabel}`,

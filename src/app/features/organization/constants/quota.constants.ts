@@ -24,7 +24,9 @@ export const QUOTA_NEAR_LIMIT_RATIO = 0.8;
  *
  * @since 1.0.0
  */
-export const ORGANIZATION_QUOTA_RESOURCE_LABELS: Record<OrganizationQuotaResource, string> = {
+export const ORGANIZATION_QUOTA_RESOURCE_LABELS: Readonly<
+  Partial<Record<OrganizationQuotaResource, string>>
+> = {
   members: $localize`:@@quotaResource.members:Members`,
   facilities: $localize`:@@quotaResource.facilities:Facilities`,
   equipment: $localize`:@@quotaResource.equipment:Equipment`,

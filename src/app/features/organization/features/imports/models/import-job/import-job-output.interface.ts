@@ -1,5 +1,4 @@
 import type { HydraItem } from '@core/api/models';
-import type { ImportJobKind } from './import-job-kind.type';
 import type { ImportJobStatus } from './import-job-status.type';
 import type { ImportRowErrorOutput } from './import-row-error-output.interface';
 
@@ -98,9 +97,9 @@ export interface ImportJobOutput extends HydraItem {
    * @description
    * Maintains the kind view state.
    *
-   * @type {ImportJobKind}
+   * @type {string}
    */
-  readonly kind: ImportJobKind;
+  readonly kind: string;
 
   /**
    * Property status

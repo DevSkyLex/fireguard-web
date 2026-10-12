@@ -6,9 +6,9 @@
  * Normalized error container for async store calls.
  * Always produced via `toStoreError(unknown)` to guarantee a consistent shape.
  *
- * @template TError - The raw error type preserved at `error`. Defaults to `unknown`.
- *
  * @since 1.0.0
+ *
+ * @template TError - The raw error type preserved at `error`. Defaults to `unknown`.
  */
 export interface StoreError<TError = unknown> {
   //#region Properties
@@ -51,8 +51,8 @@ export interface StoreError<TError = unknown> {
    *
    * @description
    * Whether the caller may safely retry the failed operation.
-   * `true` for server errors (5xx), `false` for client errors
-   * and non-HTTP failures.
+   * Transport failures and in-progress receipts allow an unchanged retry. Other idempotency
+   * failures require review with the original identity, including unknown server outcomes.
    *
    * @type {boolean}
    */

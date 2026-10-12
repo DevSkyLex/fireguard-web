@@ -35,6 +35,38 @@ describe('TotpService', () => {
     httpMock.verify();
   });
 
+  it('reads status without code values and sends generation with the retained key', () => {
+    service.recoveryStatus().subscribe();
+    const status = httpMock.expectOne(`${baseUrl}/recovery-codes`);
+    expect(status.request.method).toBe('GET');
+    expect(status.request.headers.has('Idempotency-Key')).toBe(false);
+    status.flush({ '@id': '', '@type': 'RecoveryStatus', remainingCount: 4, generatedAt: null });
+    service
+      .generateRecoveryCodes('123456', { idempotencyKey: '11111111-1111-4111-8111-111111111111' })
+      .subscribe();
+    const generate = httpMock.expectOne(`${baseUrl}/recovery-codes`);
+    expect(generate.request.body).toEqual({ code: '123456' });
+    expect(generate.request.headers.get('Idempotency-Key')).toBe(
+      '11111111-1111-4111-8111-111111111111',
+    );
+    generate.flush({
+      '@id': '',
+      '@type': 'RecoveryCodes',
+      codes: [],
+      generatedAt: '2026-10-11T12:00:00Z',
+    });
+  });
+
+  it('sends the recovery discriminator only for a recovery disable proof', () => {
+    service.disable('123456789abcdef0123456789abcdef0', 'recovery_code').subscribe();
+    const request = httpMock.expectOne(`${baseUrl}/disable`);
+    expect(request.request.body).toEqual({
+      code: '123456789abcdef0123456789abcdef0',
+      proofType: 'recovery_code',
+    });
+    request.flush({ '@id': '', '@type': 'Totp', success: true });
+  });
+
   describe('setup', () => {
     it('should send a bodyless POST and return the generated secret and URI', () => {
       const mockOutput: SetupTotpOutput = {

@@ -1,8 +1,10 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError, type Observable } from 'rxjs';
 import { UserProfileService } from '@features/account/data-access';
 import type { UserProfileOutput } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { AccountDeactivationStore } from '../account-deactivation.store';
 import { accountDeactivationStoreEvents } from '../events';
 
@@ -27,6 +29,7 @@ describe('AccountDeactivationStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         AccountDeactivationStore,
         { provide: UserProfileService, useValue: mockUserProfileService },
         { provide: Dispatcher, useValue: mockDispatcher },

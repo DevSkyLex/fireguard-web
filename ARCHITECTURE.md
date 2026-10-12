@@ -1894,7 +1894,7 @@ Each interceptor has a single responsibility.
 
 - `ssr-cookie-forward` (core-owned): copies browser-sent cookies (`Cookie` header) to outgoing server-side HTTP requests, enabling transparent session forwarding during SSR. No side effects on the browser.
 - `auth` (owned by `features/auth`): injects the `Authorization: Bearer <token>` header on all requests whose URL does not match the public endpoints list. Does not perform refresh logic.
-- `unauthorized` (owned by `features/auth`): catches `401 Unauthorized` responses and triggers a session invalidation and redirect. Does not retry requests.
+- `unauthorized` (owned by `features/auth`): renews a refused request once while its original session owner remains current, preserving its write identity on the retry clone. Failed renewal invalidates the session and redirects.
 
 ### 11.3 HydraApiService contract
 
@@ -1908,6 +1908,20 @@ Each interceptor has a single responsibility.
 - `buildUrl(path, id?)`, `buildParams(options?)`, `buildHeaders()` for lower-level assembly,
 - automatic `withCredentials: true` and `Content-Type: application/ld+json`,
 - centralized error handling via `catchError(this.handleError)`.
+
+Mutation helpers allocate one `Idempotency-Key` before constructing the cold HTTP observable.
+Repeated subscriptions, RxJS retries and 401 renewal clones retain that identity; a new method
+invocation allocates a new intention unless `ApiRequestOptions.idempotencyKey` is supplied.
+`buildWriteHeaders`, `postMultipart` and `putMultipart` cover direct and upload writes; multipart
+Content-Type remains browser-managed. The core idempotency interceptor requires preallocated
+identities only within the configured API boundary and never generates a key on subscription.
+
+`@core/request-state` publishes `WriteOperation`, `WriteOperationService` and its caller-owned
+`WriteOperationTracker`. Explicit operations serve durable queues and uploads. Trackers retain an
+unchanged JSON payload and owner revision only in memory, and must be completed after success and
+cleared on session loss or store destruction. No operation payload, credential or tracker enters
+TransferState. Typed idempotency errors preserve the original key; unknown or expired outcomes
+require review, while `idempotency_in_progress` permits an unchanged retry.
 
 Rules:
 

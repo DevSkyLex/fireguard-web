@@ -48,10 +48,13 @@ describe('PresencePreferenceStore', () => {
     store.load();
     api.updatePreference.mockReturnValue(of({ doNotDisturb: true, invisible: true, revision: 4 }));
     store.setInvisible(true);
-    expect(api.updatePreference).toHaveBeenCalledExactlyOnceWith({
-      invisible: true,
-      doNotDisturb: false,
-    });
+    expect(api.updatePreference).toHaveBeenCalledExactlyOnceWith(
+      {
+        invisible: true,
+        doNotDisturb: false,
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.invisible()).toBe(true);
     expect(store.doNotDisturb()).toBe(false);
     store.applyRealtime(
@@ -77,10 +80,13 @@ describe('PresencePreferenceStore', () => {
     store.setContext(0, true);
     store.load();
     store.setDoNotDisturb(true);
-    expect(api.updatePreference).toHaveBeenCalledExactlyOnceWith({
-      doNotDisturb: true,
-      invisible: false,
-    });
+    expect(api.updatePreference).toHaveBeenCalledExactlyOnceWith(
+      {
+        doNotDisturb: true,
+        invisible: false,
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.doNotDisturb()).toBe(true);
     expect(store.invisible()).toBe(false);
   });
@@ -92,10 +98,13 @@ describe('PresencePreferenceStore', () => {
       of({ doNotDisturb: false, invisible: false, revision: 2 }),
     );
     store.setActive();
-    expect(api.updatePreference).toHaveBeenCalledExactlyOnceWith({
-      doNotDisturb: false,
-      invisible: false,
-    });
+    expect(api.updatePreference).toHaveBeenCalledExactlyOnceWith(
+      {
+        doNotDisturb: false,
+        invisible: false,
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
   });
 
   it('has no implicit preference and starts no requests before the browser coordinator activates it', () => {

@@ -1,9 +1,11 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { TrustedDeviceService } from '@features/auth/data-access';
 import type { TrustedDeviceOutput } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { TrustedDeviceStore } from '../trusted-device.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -51,6 +53,7 @@ describe('TrustedDeviceStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         TrustedDeviceStore,
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: TrustedDeviceService, useValue: mockTrustedDeviceService },
@@ -92,7 +95,10 @@ describe('TrustedDeviceStore', () => {
     store.revokeDevice('device-1');
     await flushEffects();
 
-    expect(mockTrustedDeviceService.revoke).toHaveBeenCalledWith('device-1');
+    expect(mockTrustedDeviceService.revoke).toHaveBeenCalledWith(
+      'device-1',
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.revokeCallState().status).toBe('success');
     expect(store.devices()).toEqual([device2]);
     expect(store.totalDevices()).toBe(1);

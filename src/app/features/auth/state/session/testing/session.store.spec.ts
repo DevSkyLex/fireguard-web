@@ -1,9 +1,11 @@
+import { signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
 import { SessionService } from '@features/auth/data-access';
 import type { SessionOutput } from '@features/auth/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { SessionStore } from '../session.store';
 
 const flushEffects = async (): Promise<void> => {
@@ -54,6 +56,7 @@ describe('SessionStore', () => {
 
     TestBed.configureTestingModule({
       providers: [
+        { provide: AUTH_SESSION_PORT, useValue: { sessionRevision: signal(0) } },
         SessionStore,
         { provide: Dispatcher, useValue: mockDispatcher },
         { provide: SessionService, useValue: mockSessionService },
@@ -96,7 +99,10 @@ describe('SessionStore', () => {
     store.revoke('other');
     await flushEffects();
 
-    expect(mockSessionService.revoke).toHaveBeenCalledWith('other');
+    expect(mockSessionService.revoke).toHaveBeenCalledWith(
+      'other',
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.revokeCallState().status).toBe('success');
     expect(store.sessions()).toEqual([currentSession]);
     expect(store.totalSessions()).toBe(1);

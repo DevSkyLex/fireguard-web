@@ -2,7 +2,6 @@ import type { OrganizationQuotaResource } from '@features/organization/models';
 
 /**
  * Constant ORGANIZATION_QUOTA_RESOURCE_LABELS
- * @const ORGANIZATION_QUOTA_RESOURCE_LABELS
  *
  * @description
  * Localized human label for each capped resource, used to name a meter row.
@@ -12,10 +11,12 @@ import type { OrganizationQuotaResource } from '@features/organization/models';
  *
  * @since 1.0.0
  *
- * @type {Readonly<Record<OrganizationQuotaResource, string>>}
+ * @type {Readonly<Partial<Record<OrganizationQuotaResource, string>>>}
+ *
+ * @const ORGANIZATION_QUOTA_RESOURCE_LABELS
  */
 export const ORGANIZATION_QUOTA_RESOURCE_LABELS: Readonly<
-  Record<OrganizationQuotaResource, string>
+  Partial<Record<OrganizationQuotaResource, string>>
 > = {
   members: $localize`:@@org.settings.usage.members:Members`,
   facilities: $localize`:@@org.settings.usage.facilities:Facilities`,
@@ -25,7 +26,6 @@ export const ORGANIZATION_QUOTA_RESOURCE_LABELS: Readonly<
 
 /**
  * Constant ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS
- * @const ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS
  *
  * @description
  * Explains what contributes to each quota so an administrator can act before
@@ -33,10 +33,12 @@ export const ORGANIZATION_QUOTA_RESOURCE_LABELS: Readonly<
  *
  * @since 1.1.0
  *
- * @type {Readonly<Record<OrganizationQuotaResource, string>>}
+ * @type {Readonly<Partial<Record<OrganizationQuotaResource, string>>>}
+ *
+ * @const ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS
  */
 export const ORGANIZATION_QUOTA_RESOURCE_DESCRIPTIONS: Readonly<
-  Record<OrganizationQuotaResource, string>
+  Partial<Record<OrganizationQuotaResource, string>>
 > = {
   members: $localize`:@@org.settings.usage.membersDescription:Active members count toward this limit; pending invitations count after they join.`,
   facilities: $localize`:@@org.settings.usage.facilitiesDescription:Every site and nested facility in this organization counts toward this limit.`,

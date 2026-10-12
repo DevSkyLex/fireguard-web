@@ -41,6 +41,7 @@ import {
   tap,
   timer,
 } from 'rxjs';
+import { getIdempotencyErrorCode, isApiError } from '@core/api';
 import type { HydraCollection } from '@core/api/models';
 import { MercureService, type MercureConnectionStatus } from '@core/mercure';
 import {
@@ -51,8 +52,10 @@ import {
   successCallState,
   toStoreError,
   toStoreFailureEventPayload,
+  WriteOperationService,
 } from '@core/request-state';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import {
   ConversationService,
   MessageService,
@@ -412,16 +415,17 @@ export const MessageThreadStore = signalStore(
     }),
   ),
 
-  withMethods(
-    (
-      store,
-      service = inject(MessageService),
-      dispatcher = inject(Dispatcher),
-      outbox = inject(MessagingOutboxRepository),
-      coordinator = inject(MessagingSyncCoordinatorService),
-      memberAccess = inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT),
-      userIdentity = inject<UserIdentityPort>(USER_IDENTITY_PORT),
-    ) => ({
+  withMethods((store) => {
+    const service = inject(MessageService);
+    const dispatcher = inject(Dispatcher);
+    const outbox = inject(MessagingOutboxRepository);
+    const coordinator = inject(MessagingSyncCoordinatorService);
+    const writeOperations = inject(WriteOperationService);
+    const session = inject(AUTH_SESSION_PORT);
+    const memberAccess = inject<OrganizationMemberAccessPort>(ORGANIZATION_MEMBER_ACCESS_PORT);
+    const userIdentity = inject<UserIdentityPort>(USER_IDENTITY_PORT);
+
+    return {
       /**
        * @description
        * Opens a conversation on its newest messages.
@@ -572,15 +576,14 @@ export const MessageThreadStore = signalStore(
        * Posts a message under a client-minted id.
        * The id being ours is what makes the rest safe: the confirmation lands
        * on the optimistic row rather than beside it, the Mercure echo of our
-       * own message upserts onto it too, a `409` means the message is already
-       * stored and is therefore success, and a failure can be queued for replay
-       * without risking a duplicate.
+       * own message upserts onto it too. The intention and HTTP receipt key are persisted before
+       * sending; only the native client-resource-already-exists problem confirms a duplicate.
        * Both handlers check the thread is still on the conversation the message
        * was written in. `mergeMap` deliberately lets a send outlive the route
        * change that started it, so without that check a message sent in one
        * conversation lands in whichever one the reader opened next. The outbox
-       * queue is outside that check: the message was written and is owed a
-       * delivery wherever the reader has gone.
+       * queue survives a conversation change, while owner/session replacement fences sends and
+       * their consequences.
        */
       send: rxMethod<{ readonly conversationId: string; readonly input: PostMessageInput }>(
         pipe(
@@ -589,6 +592,19 @@ export const MessageThreadStore = signalStore(
           // the composer for a message that never left.
           mergeMap(({ conversationId, input }) => {
             const clientId: string = crypto.randomUUID();
+            const writeOperation = writeOperations.create();
+            const revision = session.sessionRevision();
+            const owner = userIdentity.profile()?.id ?? userIdentity.profile()?.sub ?? null;
+            const isCurrentOwner = (): boolean =>
+              session.sessionRevision() === revision &&
+              (userIdentity.profile()?.id ?? userIdentity.profile()?.sub ?? null) === owner;
+            let queuedOperationId: string | null = null;
+            const queued = outbox.queue(
+              conversationId,
+              'message.send',
+              { conversationId, clientId, input },
+              writeOperation,
+            );
 
             patchState(
               store,
@@ -609,9 +625,18 @@ export const MessageThreadStore = signalStore(
               },
             );
 
-            return service.postMessageWithClientId(conversationId, clientId, input).pipe(
+            return defer(() => queued).pipe(
+              switchMap((id) => {
+                queuedOperationId = id;
+                return isCurrentOwner()
+                  ? service.postMessageWithClientId(conversationId, clientId, input, writeOperation)
+                  : EMPTY;
+              }),
               tapResponse({
                 next: (message: MessageOutput): void => {
+                  if (!isCurrentOwner()) return;
+                  if (queuedOperationId)
+                    void outbox.remove(queuedOperationId).catch(() => undefined);
                   dispatcher.dispatch(messageThreadStoreEvents.posted(message));
 
                   if (store.conversationId() !== conversationId) return;
@@ -622,10 +647,17 @@ export const MessageThreadStore = signalStore(
                   });
                 },
                 error: (error: unknown): void => {
+                  if (!isCurrentOwner()) return;
                   const storeError = toStoreError(error);
                   const isCurrent: boolean = store.conversationId() === conversationId;
 
-                  if (storeError.code === 409) {
+                  if (
+                    isApiError(error) &&
+                    error.status === 409 &&
+                    error.type === '/problems/client-resource-already-exists'
+                  ) {
+                    if (queuedOperationId)
+                      void outbox.remove(queuedOperationId).catch(() => undefined);
                     if (isCurrent) {
                       patchState(store, {
                         postCallState: successCallState(null),
@@ -644,9 +676,19 @@ export const MessageThreadStore = signalStore(
                     });
                   }
 
-                  void outbox
-                    .queue(conversationId, 'message.send', { conversationId, clientId, input })
-                    .catch(() => undefined);
+                  const receiptFailure = getIdempotencyErrorCode(error);
+                  if (
+                    queuedOperationId &&
+                    receiptFailure &&
+                    receiptFailure !== 'idempotency_in_progress'
+                  ) {
+                    void outbox
+                      .markFailed(
+                        queuedOperationId,
+                        storeError.message ?? 'The operation requires review.',
+                      )
+                      .catch(() => undefined);
+                  }
 
                   dispatcher.dispatch(
                     messageThreadStoreEvents.postFailed(
@@ -1076,8 +1118,8 @@ export const MessageThreadStore = signalStore(
 
         await coordinator.flush();
       },
-    }),
-  ),
+    };
+  }),
 
   withComputed((store, mercure = inject(MercureService)) => ({
     /**
@@ -1422,8 +1464,8 @@ export const MessageThreadStore = signalStore(
   withHooks((store, events = inject(Events)) => ({
     onInit(): void {
       // The outbox knows the message left; the thread knows which row was
-      // showing as unsent. Without this the row stays marked failed until the
-      // member reloads.
+      // showing as unsent. Clear both pending and failed indicators only for
+      // client identities acknowledged after durable queue removal.
       events
         .on(messagingSyncEvents.replayed)
         .pipe(takeUntilDestroyed())
@@ -1431,6 +1473,9 @@ export const MessageThreadStore = signalStore(
           if (payload.conversationId !== store.conversationId()) return;
 
           patchState(store, {
+            pendingMessageIds: store
+              .pendingMessageIds()
+              .filter((id: string): boolean => !payload.clientIds.includes(id)),
             failedMessageIds: store
               .failedMessageIds()
               .filter((id: string): boolean => !payload.clientIds.includes(id)),

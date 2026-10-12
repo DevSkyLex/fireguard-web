@@ -6,6 +6,9 @@ import {
   MAINTENANCE_COST_URL,
 } from '../support/helpers/maintenance-costs';
 
+// Retain the first failed execution even when a subsequent retry succeeds.
+test.use({ trace: 'retain-on-failure' });
+
 test.describe('Private maintenance financial dossier', () => {
   test('saves revision-zero preparation with exact amounts and only the applicable resource tuple', async ({
     page,

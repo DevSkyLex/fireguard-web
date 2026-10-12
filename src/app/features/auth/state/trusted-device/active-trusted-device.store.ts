@@ -4,6 +4,7 @@ import { patchState, signalStore, withComputed, withMethods, withState } from '@
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { pipe, switchMap, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   idleCallState,
   pendingCallState,
@@ -21,7 +22,6 @@ import type { ActiveTrustedDeviceState } from './models';
 //#region Initial State
 /**
  * Constant INITIAL_ACTIVE_TRUSTED_DEVICE_STATE
- * @const INITIAL_ACTIVE_TRUSTED_DEVICE_STATE
  *
  * @description
  * Initial state for the ActiveTrustedDeviceStore. Seeds the pending flag
@@ -30,6 +30,8 @@ import type { ActiveTrustedDeviceState } from './models';
  * @since 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const INITIAL_ACTIVE_TRUSTED_DEVICE_STATE
  */
 const INITIAL_ACTIVE_TRUSTED_DEVICE_STATE: ActiveTrustedDeviceState = {
   pendingTrustDevice: false,
@@ -38,8 +40,7 @@ const INITIAL_ACTIVE_TRUSTED_DEVICE_STATE: ActiveTrustedDeviceState = {
 //#endregion
 
 /**
- * Store ActiveTrustedDeviceStore
- * @const ActiveTrustedDeviceStore
+ * Constant ActiveTrustedDeviceStore
  *
  * @description
  * Root-level NgRx SignalStore for the device-trust flow. Manages the
@@ -54,6 +55,12 @@ const INITIAL_ACTIVE_TRUSTED_DEVICE_STATE: ActiveTrustedDeviceState = {
  * For listing and revoking trusted devices use the component-scoped
  * {@link TrustedDeviceStore} instead.
  *
+ * @version 1.0.0
+ *
+ * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const ActiveTrustedDeviceStore
+ *
  * @example
  * ```typescript
  * // In MFA verification page
@@ -64,9 +71,6 @@ const INITIAL_ACTIVE_TRUSTED_DEVICE_STATE: ActiveTrustedDeviceState = {
  *   activeTrustedDeviceStore.trustDevice();
  * }
  * ```
- *
- * @version 1.0.0
- * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 export const ActiveTrustedDeviceStore = signalStore(
   { providedIn: 'root' },
@@ -78,9 +82,8 @@ export const ActiveTrustedDeviceStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isTrusting
-     *
      * @description
+     * Computed isTrusting
      * Returns true while the trust-device API call is in-flight.
      *
      * @since 1.0.0
@@ -90,9 +93,8 @@ export const ActiveTrustedDeviceStore = signalStore(
     isTrusting: computed<boolean>(() => store.trustCallState().status === 'pending'),
 
     /**
-     * Computed trustSuccess
-     *
      * @description
+     * Computed trustSuccess
      * Returns true if the last trust-device call succeeded.
      *
      * @since 1.0.0
@@ -102,9 +104,8 @@ export const ActiveTrustedDeviceStore = signalStore(
     trustSuccess: computed<boolean>(() => store.trustCallState().status === 'success'),
 
     /**
-     * Computed trustError
-     *
      * @description
+     * Computed trustError
      * Returns the trust call state error, or `null` if idle/pending/success.
      *
      * @since 1.0.0
@@ -121,6 +122,7 @@ export const ActiveTrustedDeviceStore = signalStore(
       store,
       dispatcher = inject<Dispatcher>(Dispatcher),
       trustedDeviceService = inject<TrustedDeviceService>(TrustedDeviceService),
+      writeTracker = inject(WriteOperationService).createTracker(),
     ) => ({
       //#region Reactive Methods
       /**
@@ -142,7 +144,8 @@ export const ActiveTrustedDeviceStore = signalStore(
             });
           }),
           switchMap(() =>
-            trustedDeviceService.trustDevice().pipe(
+            trustedDeviceService.trustDevice(writeTracker.options('trustDevice', [], 0)).pipe(
+              tap(() => writeTracker.complete('trustDevice')),
               tapResponse({
                 next: (response: TrustDeviceOutput) => {
                   patchState(store, { trustCallState: successCallState(response) });
@@ -201,6 +204,7 @@ export const ActiveTrustedDeviceStore = signalStore(
        * @since 1.0.0
        */
       clear(): void {
+        writeTracker.clear();
         patchState(store, INITIAL_ACTIVE_TRUSTED_DEVICE_STATE);
       },
       //#endregion
@@ -210,12 +214,13 @@ export const ActiveTrustedDeviceStore = signalStore(
 );
 
 /**
- * Type ActiveTrustedDeviceStoreType
- * @type ActiveTrustedDeviceStoreType
+ * Type ActiveTrustedDeviceStore
  *
  * @description
  * Type alias for the ActiveTrustedDeviceStore instance.
  *
  * @since 1.0.0
+ *
+ * @type ActiveTrustedDeviceStoreType
  */
 export type ActiveTrustedDeviceStore = InstanceType<typeof ActiveTrustedDeviceStore>;

@@ -98,6 +98,25 @@ See the [organization routing reference](../../../../docs/guides/organization-an
 
 ## State and Data Access
 
+Organization logo upload retains one private in-memory intent for the same immutable file,
+wire filename and organization visit. Manual retries keep its key; success, removal, a changed
+file/name, workspace/session replacement or settings-store destruction ends that intent. Late
+success cannot clear a newer intent. The transport accepts explicit `ApiRequestOptions`, preserves
+browser-managed multipart headers, and never persists or transfers the file through SSR state.
+
+Live organization and facility safety-register PDF exports capture one HTTP execution identity
+per `ComplianceService` invocation, retaining it through retries and cold resubscriptions. Their
+optional `ApiRequestOptions` accepts an existing key and headers for an unchanged manual retry;
+a new export scope or intent receives a new key. Compliance summaries, snapshot lists and
+immutable archived PDF downloads remain ordinary reads.
+
+Invitation listing reconciles expired invitations on the server. `OrganizationInvitationService.list`
+captures an execution identity before subscription, retains it through retries and cold
+resubscriptions, and accepts a retained key through its existing `RequestOptions`. New
+list intents receive new keys; the public invitation preview remains an ordinary read.
+Execution identities stay in request headers and local intent memory, without payload
+persistence or authenticated TransferState.
+
 Primary stores:
 
 - `ActiveOrganizationStore`
@@ -151,6 +170,12 @@ A subscription plan caps the quantity of countable resources (`ORGANIZATION_QUOT
 members, facilities, equipment, inspections). A plan stores a `limits` map of resource → integer
 cap; a resource absent from the map is unlimited. Plans do **not** disable features — they only
 limit quantities.
+
+Quota resource identifiers are open strings. Known FireGuard resources retain their labels and
+descriptions; additional resources use their identifier and a neutral explanation in usage views.
+The server's plan quota labels and summaries remain authoritative for plan cards. Public
+organization permission names also accept backend contributions; the known constants remain
+convenience values and confer no permission independently of the effective permissions payload.
 
 - Enforcement is **strict and backend-owned**: each create flow (member add/invite, facility,
   equipment, inspection) asserts the quota before persisting and returns **HTTP 409** when the cap

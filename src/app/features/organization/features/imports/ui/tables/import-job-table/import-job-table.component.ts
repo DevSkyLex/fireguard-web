@@ -28,8 +28,13 @@ import { HlmItemImports } from '@shared/ui/item';
 import { HlmProgressImports } from '@shared/ui/progress';
 import { HlmTableImports } from '@shared/ui/table';
 
-/** Human labels for the job kinds, matching `IMPORT_JOB_KIND_OPTIONS`. */
-const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
+/**
+ * Constant KIND_LABEL
+ *
+ * @description
+ * Labels for FireGuard's import kinds; unfamiliar kinds retain their backend identifier.
+ */
+const KIND_LABEL: Readonly<Partial<Record<ImportJobKind, string>>> = {
   equipment: $localize`:@@imports.kind.equipment:Equipment`,
   facility: $localize`:@@imports.kind.facility:Facilities`,
   member: $localize`:@@imports.kind.member:Members`,
@@ -49,17 +54,14 @@ const KIND_LABEL: Readonly<Record<ImportJobKind, string>> = {
  * Every row carries a "View report" action, always enabled — a
  * `pending`/`processing` row opens the same report view showing progress so
  * far.
- *
  * Presentational (`ARCHITECTURE.md` §10.3) — it injects no store and calls
  * no service; the page owns loading and polling, this component only
  * renders the rows it is handed and emits {@link selected}.
- *
  * Built on the shared `CollectionSurface`, which owns the bordered scroll
  * shell, the first-load skeleton and the table/card switch. Below the
  * surface's container breakpoint a job reads as a card: the filename (dry-run
  * badge kept), then its status and result counts, then "View report" as an
  * explicitly labelled footer action rather than the row's bare icon.
- *
  * The result counts pair each number with a glyph (`DESIGN.md`'s Glyph Rule):
  * a green `45` and a red `5` carried status by colour alone, which neither a
  * colour-blind operator nor a screen reader could read — hence the
@@ -96,9 +98,13 @@ export class ImportJobTable {
   /**
    * Property items
    * @readonly
-   * @description The rows to render.
+   *
+   * @description
+   * The rows to render.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<readonly ImportJobOutput[]>}
    */
   public readonly items: InputSignal<readonly ImportJobOutput[]> =
@@ -107,9 +113,13 @@ export class ImportJobTable {
   /**
    * Property loading
    * @readonly
-   * @description Whether to draw placeholder rows instead of the data.
+   *
+   * @description
+   * Whether to draw placeholder rows instead of the data.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<boolean>}
    */
   public readonly loading: InputSignal<boolean> = input<boolean>(false);
@@ -117,9 +127,14 @@ export class ImportJobTable {
   /**
    * Property regionalFormatting
    * @readonly
-   * @description The active organization's date pattern and timezone, bound by the page. The default keeps the component renderable with no context wired.
+   *
+   * @description
+   * The active organization's date pattern and timezone, bound by the page. The default keeps the
+   * component renderable with no context wired.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {InputSignal<RegionalFormatSettings>}
    */
   public readonly regionalFormatting: InputSignal<RegionalFormatSettings> =
@@ -130,9 +145,13 @@ export class ImportJobTable {
   /**
    * Property selected
    * @readonly
-   * @description A row's "View report" action was activated; carries that row's job.
+   *
+   * @description
+   * A row's "View report" action was activated; carries that row's job.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @type {OutputEmitterRef<ImportJobOutput>}
    */
   public readonly selected: OutputEmitterRef<ImportJobOutput> = output<ImportJobOutput>();
@@ -163,9 +182,13 @@ export class ImportJobTable {
   //#region Methods
   /**
    * Method columnCount
-   * @description How many cells a row has, so a full-width message can span them.
+   *
+   * @description
+   * How many cells a row has, so a full-width message can span them.
+   *
    * @access protected
    * @since 2.0.0
+   *
    * @returns {number} The rendered column count.
    */
   protected columnCount(): number {
@@ -174,22 +197,32 @@ export class ImportJobTable {
 
   /**
    * Method kindLabelOf
-   * @description Names a job's kind for the kind column.
+   *
+   * @description
+   * Names a job's kind for the kind column.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ImportJobOutput} item - The rendered job.
+   *
    * @returns {string} The localized kind label.
    */
   protected kindLabelOf(item: ImportJobOutput): string {
-    return KIND_LABEL[item.kind];
+    return Object.hasOwn(KIND_LABEL, item.kind) ? (KIND_LABEL[item.kind] ?? item.kind) : item.kind;
   }
 
   /**
    * Method progressLabelOf
-   * @description The live row-progress text while a job is running, or `null` once it is not.
+   *
+   * @description
+   * The live row-progress text while a job is running, or `null` once it is not.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ImportJobOutput} item - The rendered job.
+   *
    * @returns {string | null} `"processed / total"`, or `null` outside `processing`.
    */
   protected progressLabelOf(item: ImportJobOutput): string | null {
@@ -202,11 +235,18 @@ export class ImportJobTable {
 
   /**
    * Method progressRatioOf
-   * @description The processing job's completion ratio for `hlm-progress`, or `null` while the total row count is not yet known.
+   *
+   * @description
+   * The processing job's completion ratio for `hlm-progress`, or `null` while the total row count
+   * is not yet known.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {ImportJobOutput} item - The rendered job.
-   * @returns {number | null} A `0`–`100` percentage, or `null` outside `processing` or with an unknown total.
+   *
+   * @returns {number | null} A `0`–`100` percentage, or `null` outside `processing` or with an
+   *   unknown total.
    */
   protected progressRatioOf(item: ImportJobOutput): number | null {
     if (item.status !== 'processing' || item.totalRows === undefined || item.totalRows <= 0) {
@@ -218,10 +258,15 @@ export class ImportJobTable {
 
   /**
    * Method progressCaptionOf
-   * @description The localized "x of y rows" caption paired with {@link progressRatioOf}'s bar.
+   *
+   * @description
+   * The localized "x of y rows" caption paired with {@link progressRatioOf}'s bar.
+   *
    * @access protected
    * @since 2.1.0
+   *
    * @param {ImportJobOutput} item - The rendered job, with a known `totalRows`.
+   *
    * @returns {string} The caption text.
    */
   protected progressCaptionOf(item: ImportJobOutput): string {
@@ -233,10 +278,16 @@ export class ImportJobTable {
 
   /**
    * Method viewReportAriaLabelOf
-   * @description The row's "View report" button's accessible name, folding in the filename so two rows never announce identically.
+   *
+   * @description
+   * The row's "View report" button's accessible name, folding in the filename so two rows never
+   * announce identically.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @param {ImportJobOutput} item - The rendered job.
+   *
    * @returns {string} The accessible name.
    */
   protected viewReportAriaLabelOf(item: ImportJobOutput): string {

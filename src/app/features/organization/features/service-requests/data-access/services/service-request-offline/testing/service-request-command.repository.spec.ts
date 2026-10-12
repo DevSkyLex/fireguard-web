@@ -1,5 +1,6 @@
 import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { mockIndexedDbTransactions } from '@core/indexed-db/testing';
 import type { ServiceRequestConversionCommand } from '@features/organization/features/service-requests/models';
 import { serviceRequestFixture } from '@features/organization/features/service-requests/models/service-request/testing/service-request.fixture';
 import { serviceRequestContext } from '@features/organization/features/service-requests/state/service-request/testing/service-request-context.fixture';
@@ -7,6 +8,7 @@ import { ORGANIZATION_PERMISSION } from '@features/organization/models';
 import { ServiceRequestCommandRepository } from '../service-request-command.repository';
 
 const command: ServiceRequestConversionCommand = {
+  idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f14',
   kind: 'convert',
   userId: 'user',
   organizationId: 'org',
@@ -60,7 +62,8 @@ function setup(
     entries.clear();
   });
   TestBed.tick();
-  return { repository, context, grants, entries, get, getAll, put, remove, clearAll };
+  const transaction = mockIndexedDbTransactions(repository, entries);
+  return { repository, context, grants, entries, get, getAll, put, remove, clearAll, transaction };
 }
 
 describe('ServiceRequestCommandRepository', () => {
@@ -82,6 +85,41 @@ describe('ServiceRequestCommandRepository', () => {
       repository.retain({ ...command, request: { ...command.request, revision: 99 } }),
     ).rejects.toThrow('different intention');
     expect(entries.get('commands:stable-uuid')).toEqual(command);
+  });
+
+  it('atomically backfills one legacy HTTP key across two journal instances before replay', async () => {
+    const { repository, entries, get, put } = setup();
+    const legacy = { ...command, idempotencyKey: undefined };
+    entries.set('commands:stable-uuid', legacy);
+    const peer = TestBed.runInInjectionContext(() => new ServiceRequestCommandRepository());
+    const read = get.getMockImplementation();
+    const write = put.getMockImplementation();
+    if (!read || !write) throw new Error('Missing storage fixture');
+    vi.spyOn(peer, 'get').mockImplementation(read);
+    vi.spyOn(peer, 'put').mockImplementation(write);
+    mockIndexedDbTransactions(peer, entries);
+    const [first, second] = await Promise.all([repository.retain(legacy), peer.retain(legacy)]);
+    expect(first.idempotencyKey).toMatch(/^[\da-f-]{36}$/);
+    expect(second).toEqual(first);
+    expect(entries.get('commands:stable-uuid')).toEqual({ ...legacy, ...first });
+    expect(await repository.retain({ ...legacy, idempotencyKey: 'another-browser-key' })).toEqual(
+      first,
+    );
+    expect(await repository.readPending('user', 'org')).toEqual([{ ...legacy, ...first }]);
+    expect(put.mock.calls.filter(([store]) => store === 'commands')).toHaveLength(1);
+  });
+
+  it('keeps a generated HTTP key after repository reload together with the original revision and work', async () => {
+    const first = setup();
+    const legacy = { ...command, idempotencyKey: undefined };
+    const operation = await first.repository.retain(legacy);
+    TestBed.resetTestingModule();
+    const reloaded = setup(first.entries);
+    expect(await reloaded.repository.retain(legacy)).toEqual(operation);
+    expect(await reloaded.repository.readPending('user', 'org')).toEqual([
+      { ...legacy, ...operation },
+    ]);
+    expect(reloaded.put.mock.calls.filter(([store]) => store === 'commands')).toEqual([]);
   });
   it('reuses an already durable exact conversion without rewriting its journal entry', async () => {
     const { repository, put } = setup();

@@ -4238,6 +4238,10 @@
         <source>The subscription status could not be loaded. Close the dialog and try again.</source>
         <target>No se pudo cargar el estado de la suscripción. Cierra la ventana e inténtalo de nuevo.</target>
       </trans-unit>
+      <trans-unit id="calendar.feedSubscribe.replayExpired" datatype="html">
+        <source>The link was generated, but its secure display period has ended. Close and reopen this dialog to check the subscription before explicitly regenerating it.</source>
+        <target>El enlace se generó, pero su período de visualización segura ha finalizado. Cierra y vuelve a abrir esta ventana para comprobar la suscripción antes de confirmar explícitamente su regeneración.</target>
+      </trans-unit>
       <trans-unit id="calendar.feedSubscribe.generateError" datatype="html">
         <source>The link could not be generated. Try again.</source>
         <target>No se pudo generar el enlace. Inténtalo de nuevo.</target>
@@ -11283,6 +11287,10 @@
 <trans-unit id="auth.login.passwordRequired" datatype="html">
 <source>Enter your password</source>
 <target>Introduce tu contraseña</target>
+</trans-unit>
+<trans-unit id="auth.login.passwordTooLong" datatype="html">
+<source>Use at most 4096 characters</source>
+<target>Usa como máximo 4096 caracteres</target>
 </trans-unit>
 <trans-unit id="auth.password.placeholder" datatype="html">
 <source>At least 8 characters</source>
@@ -21992,6 +22000,122 @@
       <trans-unit id="maintenanceCost.recovery.failedHint" datatype="html"><source>New declarations stay unavailable until recovery succeeds.</source><target>Las nuevas declaraciones seguirán sin estar disponibles hasta que se complete la recuperación.</target></trans-unit>
       <trans-unit id="maintenanceCost.recovery.retry" datatype="html"><source>Retry recovery</source><target>Reintentar la recuperación</target></trans-unit>
       <trans-unit id="maintenanceCost.page.waitBeforeLeaving" datatype="html"><source>Wait for the current declaration to finish before leaving this page.</source><target>Espere a que termine la declaración en curso antes de salir de esta página.</target></trans-unit>
+      <trans-unit id="auth.password.policyLoading" datatype="html">
+        <source>Loading password requirements…</source>
+        <target>Cargando los requisitos de la contraseña…</target>
+      </trans-unit>
+      <trans-unit id="auth.password.policyUnavailable" datatype="html">
+        <source>Password requirements are unavailable</source>
+        <target>Los requisitos de la contraseña no están disponibles</target>
+      </trans-unit>
+      <trans-unit id="auth.password.policyRetryDescription" datatype="html">
+        <source>Retry before choosing a new password.</source>
+        <target>Vuelve a intentarlo antes de elegir una nueva contraseña.</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.required" datatype="html">
+        <source>Enter a recovery code</source>
+        <target>Introduce un código de recuperación</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.format" datatype="html">
+        <source>Enter all eight groups of four characters</source>
+        <target>Introduce los ocho grupos de cuatro caracteres</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.rejected" datatype="html">
+        <source>That recovery code could not be used. Check the code and try again.</source>
+        <target>No se ha podido usar ese código de recuperación. Compruébalo y vuelve a intentarlo.</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.label" datatype="html">
+        <source>Recovery code</source>
+        <target>Código de recuperación</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.description" datatype="html">
+        <source>Each code works once. Use one of the codes saved when you set up two-factor authentication.</source>
+        <target>Cada código funciona una sola vez. Usa uno de los códigos guardados al configurar la autenticación de dos factores.</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.submit" datatype="html">
+        <source>Use recovery code</source>
+        <target>Usar el código de recuperación</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.useAuthenticator" datatype="html">
+        <source>Use my authenticator</source>
+        <target>Usar mi aplicación de autenticación</target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.useCode" datatype="html">
+        <source>Use a recovery code</source>
+        <target>Usar un código de recuperación</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.generate" datatype="html">
+        <source>Generate recovery codes</source>
+        <target>Generar códigos de recuperación</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.title" datatype="html">
+        <source>Recovery codes</source>
+        <target>Códigos de recuperación</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.description" datatype="html">
+        <source>Save these codes securely. Each lets you sign in once if you lose your authenticator.</source>
+        <target>Guarda estos códigos en un lugar seguro. Cada uno permite iniciar sesión si pierdes tu aplicación de autenticación.</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.once" datatype="html">
+        <source>These codes are shown once. Generating another set invalidates all previous codes.</source>
+        <target>Estos códigos se muestran una sola vez. Generar otro lote invalida todos los códigos anteriores.</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.close" datatype="html">
+        <source>I saved my codes</source>
+        <target>He guardado mis códigos</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.loadFailed" datatype="html">
+        <source>Recovery status could not be loaded.</source>
+        <target>No se ha podido cargar el estado de los códigos de recuperación.</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.proof" datatype="html">
+        <source>Enter a current authenticator code. A new set replaces every previous recovery code.</source>
+        <target>Introduce un código actual de tu aplicación. Un nuevo lote reemplaza todos los códigos de recuperación anteriores.</target>
+      </trans-unit>
+      <trans-unit id="account.recovery.failed" datatype="html">
+        <source>Codes could not be generated. Check your authenticator code and retry.</source>
+        <target>No se han podido generar los códigos. Comprueba el código de tu aplicación y vuelve a intentarlo.</target>
+      </trans-unit>
+      <trans-unit id="auth.password.requirements.symbols" datatype="html">
+        <source>Include one of these symbols: <x id="SYMBOLS" equiv-text="${policy.specialCharacters}"/></source>
+        <target>Incluye uno de estos símbolos: <x id="SYMBOLS" equiv-text="${policy.specialCharacters}"/></target>
+      </trans-unit>
+      <trans-unit id="auth.password.initialCharacter" datatype="html">
+        <source>Start with one of these characters: <x id="CHARACTERS" equiv-text="${current.allowedInitialCharacters}"/></source>
+        <target>Empieza con uno de estos caracteres: <x id="CHARACTERS" equiv-text="${current.allowedInitialCharacters}"/></target>
+      </trans-unit>
+      <trans-unit id="account.recovery.remaining" datatype="html">
+        <source>Remaining codes: <x id="INTERPOLATION" equiv-text="{{ current.remainingCount }}"/></source>
+        <target>Códigos restantes: <x id="INTERPOLATION" equiv-text="{{ current.remainingCount }}"/></target>
+      </trans-unit>
+      <trans-unit id="auth.recovery.instructions" datatype="html">
+        <source>Enter one of your saved recovery codes.</source>
+        <target>Introduce uno de tus códigos de recuperación guardados.</target>
+      </trans-unit>
+      <trans-unit id="auth.register.accepted" datatype="html">
+        <source>Your account has been created. You can now sign in.</source>
+        <target>Tu cuenta se ha creado. Ya puedes iniciar sesión.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.additional.sublabel" datatype="html">
+        <source>Additional step</source>
+        <target>Paso adicional</target>
+      </trans-unit>
+      <trans-unit id="onboarding.step.additional.description" datatype="html">
+        <source>This step needs a workflow that is not available in this application.</source>
+        <target>Este paso requiere un proceso que no está disponible en esta aplicación.</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.unsupportedTitle" datatype="html">
+        <source>Additional setup step</source>
+        <target>Paso de configuración adicional</target>
+      </trans-unit>
+      <trans-unit id="onboarding.wizard.unsupportedDescription" datatype="html">
+        <source> This step is not supported by this application. Contact your administrator to continue. </source>
+        <target>Esta aplicación no admite este paso. Contacta con tu administrador para continuar.</target>
+      </trans-unit>
+      <trans-unit id="org.settings.usage.additionalDescription" datatype="html">
+        <source>Usage for this resource is counted by your organization&apos;s subscription plan.</source>
+        <target>El uso de este recurso se contabiliza en el plan de suscripción de tu organización.</target>
+      </trans-unit>
     </body>
   </file>
 </xliff>

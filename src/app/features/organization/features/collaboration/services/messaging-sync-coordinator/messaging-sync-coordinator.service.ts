@@ -4,6 +4,7 @@ import {
   inject,
   Service,
   signal,
+  untracked,
   type Signal,
   type WritableSignal,
 } from '@angular/core';
@@ -242,7 +243,8 @@ export class MessagingSyncCoordinatorService {
    * @method start
    *
    * @description
-   * Begins watching connectivity. Idempotent.
+   * Restores queue counters when an authenticated owner is established, then watches connectivity.
+   * Idempotent.
    *
    * @access public
    * @since 1.0.0
@@ -253,7 +255,15 @@ export class MessagingSyncCoordinatorService {
     if (this.started) return;
     this.started = true;
 
-    void this.outbox.refresh().catch((): undefined => undefined);
+    effect((): void => {
+      const owner = this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null;
+      if (!this.session.isAuthenticated() || owner === null) return;
+      this.session.sessionRevision();
+
+      untracked((): void => {
+        void this.outbox.refresh().catch((): undefined => undefined);
+      });
+    });
 
     effect((): void => {
       if (!this.session.isAuthenticated() || !this.identity.profile()) return;

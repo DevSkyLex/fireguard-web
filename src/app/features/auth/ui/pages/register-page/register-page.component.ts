@@ -14,12 +14,13 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert } from '@ng-icons/lucide';
-import { FEDERATED_PROVIDER_ICONS } from '@features/auth/constants';
+import { lucideCircleAlert, lucideGlobe } from '@ng-icons/lucide';
+import { FEDERATED_PROVIDER_ICONS, federatedProviderIcon } from '@features/auth/constants';
 import type { FederatedProvider, RegisterInput } from '@features/auth/models';
 import { FEDERATED_PROVIDER_LABELS } from '@features/auth/options';
 import { FederatedReturnContextService } from '@features/auth/services';
-import { FederatedAuthStore, RegisterStore } from '@features/auth/state';
+import { FederatedAuthStore, PasswordPolicyStore, RegisterStore } from '@features/auth/state';
+import { PasswordPolicyStatus } from '@features/auth/ui/components/password-policy-status';
 import { RegisterForm, type RegisterFormValues } from '@features/auth/ui/forms';
 import { resolveFederatedAuthErrorMessage, resolveReturnUrl } from '@features/auth/utils';
 import { PageHeading } from '@shared/page-heading';
@@ -38,7 +39,6 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * `pending_verification` account and a challenge; the verification screen is
  * what activates it, so this page's only outcome is to hand over to that step
  * (`FEATURE.md`, auth).
- *
  * Federated providers use the same login flow as the sign-in page: the backend
  * creates a new active account when no identity exists, then the callback owns
  * session application and onward navigation.
@@ -50,6 +50,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
 @Component({
   selector: 'app-register-page',
   imports: [
+    PasswordPolicyStatus,
     RouterLink,
     RegisterForm,
     PageHeading,
@@ -60,11 +61,40 @@ import { HlmSpinner } from '@shared/ui/spinner';
     HlmSpinner,
     NgIcon,
   ],
-  providers: [provideIcons({ ...FEDERATED_PROVIDER_ICONS, lucideCircleAlert })],
+  providers: [
+    PasswordPolicyStore,
+    provideIcons({ ...FEDERATED_PROVIDER_ICONS, lucideCircleAlert, lucideGlobe }),
+  ],
   templateUrl: './register-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class RegisterPage implements OnInit {
+  /**
+   * Property providerIcon
+   * @readonly
+   *
+   * @description
+   * Provides provider icon for the current authentication flow.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {(provider: FederatedProvider) => string}
+   */
+  protected readonly providerIcon: (provider: FederatedProvider) => string = federatedProviderIcon;
+  /**
+   * Property passwordPolicyStore
+   * @readonly
+   *
+   * @description
+   * Route-critical public requirements with an isolated SSR handoff.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {PasswordPolicyStore}
+   */
+  protected readonly passwordPolicyStore: PasswordPolicyStore = inject(PasswordPolicyStore);
   //#region Properties
   /**
    * Property registerStore
@@ -84,9 +114,12 @@ export class RegisterPage implements OnInit {
    * Property federatedStore
    * @readonly
    *
-   * @description Owns provider availability and redirect creation state.
+   * @description
+   * Owns provider availability and redirect creation state.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {FederatedAuthStore}
    */
   protected readonly federatedStore: FederatedAuthStore = inject(FederatedAuthStore);
@@ -95,12 +128,16 @@ export class RegisterPage implements OnInit {
    * Property federatedErrorMessage
    * @readonly
    *
-   * @description Maps stable Auth errors to localized, non-sensitive copy.
+   * @description
+   * Maps stable Auth errors to localized, non-sensitive copy.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {typeof resolveFederatedAuthErrorMessage}
    */
-  protected readonly federatedErrorMessage = resolveFederatedAuthErrorMessage;
+  protected readonly federatedErrorMessage: (value: string | null | undefined) => string =
+    resolveFederatedAuthErrorMessage;
 
   /**
    * Property router
@@ -116,21 +153,58 @@ export class RegisterPage implements OnInit {
    */
   private readonly router: Router = inject<Router>(Router);
 
-  /** @description Reads the validated destination shared by the authentication steps. */
+  /**
+   * Property route
+   * @readonly
+   *
+   * @description
+   * Reads the validated destination shared by the authentication steps.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {ActivatedRoute}
+   */
   private readonly route: ActivatedRoute = inject<ActivatedRoute>(ActivatedRoute);
 
-  /** @description Browser document used for the full-page provider redirect. */
+  /**
+   * Property document
+   * @readonly
+   *
+   * @description
+   * Browser document used for the full-page provider redirect.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {Document}
+   */
   private readonly document: Document = inject(DOCUMENT);
 
-  /** @description Runtime platform discriminator guarding browser navigation. */
+  /**
+   * Property platformId
+   * @readonly
+   *
+   * @description
+   * Runtime platform discriminator guarding browser navigation.
+   *
+   * @access private
+   * @since 1.0.0
+   *
+   * @type {object}
+   */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
 
   /**
    * Property returnContext
    * @readonly
-   * @description Preserves the local destination across a full-page provider redirect.
+   *
+   * @description
+   * Preserves the local destination across a full-page provider redirect.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {FederatedReturnContextService}
    */
   private readonly returnContext: FederatedReturnContextService = inject(
@@ -141,9 +215,12 @@ export class RegisterPage implements OnInit {
    * Property providerHydration
    * @readonly
    *
-   * @description Consumes the provider availability handoff after browser hydration.
+   * @description
+   * Consumes the provider availability handoff after browser hydration.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {AfterRenderRef}
    */
   private readonly providerHydration: AfterRenderRef = afterNextRender((): void => {
@@ -151,7 +228,18 @@ export class RegisterPage implements OnInit {
   });
   //#endregion
 
-  /** @description The safe destination carried by links and subsequent auth steps. */
+  /**
+   * Property returnUrl
+   * @readonly
+   *
+   * @description
+   * The safe destination carried by links and subsequent auth steps.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {string}
+   */
   protected readonly returnUrl: string = resolveReturnUrl(
     this.route.snapshot.queryParamMap.get('returnUrl'),
     '',
@@ -163,7 +251,8 @@ export class RegisterPage implements OnInit {
    * @readonly
    *
    * @description
-   * Moves to verification as soon as a challenge exists. `hasChallenge` is the
+   * Moves to verification when a challenge exists and to sign-in when the server
+   * accepts registration without requiring verification. `hasChallenge` is the
    * same signal `registerVerifyGuard` reads, so the page cannot navigate
    * somewhere the guard would bounce it back from. The challenge token rides
    * along as the `token` query param, which is what lets the verify step
@@ -171,11 +260,21 @@ export class RegisterPage implements OnInit {
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
-  private readonly outcome = effect((): void => {
-    if (!this.registerStore.hasChallenge()) return;
+  private readonly outcome: EffectRef = effect((): void => {
+    const hasChallenge = this.registerStore.hasChallenge();
+    const request = this.registerStore.requestCallState();
+    if (!hasChallenge && (request.status !== 'success' || !request.data?.success)) return;
 
     untracked((): void => {
+      if (!hasChallenge) {
+        void this.router.navigate(['/auth/login'], {
+          queryParams: { registered: '1', returnUrl: this.returnUrl || undefined },
+        });
+        return;
+      }
       void this.router.navigate(['/auth/register/verify'], {
         queryParams: {
           token: this.registerStore.challengeToken(),
@@ -189,9 +288,12 @@ export class RegisterPage implements OnInit {
    * Property federatedRedirect
    * @readonly
    *
-   * @description Redirects after the backend has persisted the OAuth state and PKCE verifier.
+   * @description
+   * Redirects after the backend has persisted the OAuth state and PKCE verifier.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {EffectRef}
    */
   private readonly federatedRedirect: EffectRef = effect((): void => {
@@ -211,9 +313,12 @@ export class RegisterPage implements OnInit {
    * Method ngOnInit
    * @method ngOnInit
    *
-   * @description Loads enabled providers for browser rendering and the SSR availability handoff.
+   * @description
+   * Loads enabled providers for browser rendering and the SSR availability handoff.
+   *
    * @access public
    * @since 1.1.0
+   *
    * @returns {void}
    */
   public ngOnInit(): void {
@@ -257,10 +362,14 @@ export class RegisterPage implements OnInit {
    * Method signInWith
    * @method signInWith
    *
-   * @description Starts a provider flow that signs in an existing identity or creates a new account.
+   * @description
+   * Starts a provider flow that signs in an existing identity or creates a new account.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @param {FederatedProvider} provider - Provider selected by the user.
+   *
    * @returns {void}
    */
   protected signInWith(provider: FederatedProvider): void {
@@ -273,9 +382,12 @@ export class RegisterPage implements OnInit {
    * Method retryProviderDiscovery
    * @method retryProviderDiscovery
    *
-   * @description Clears a stale start failure and reloads provider availability.
+   * @description
+   * Clears a stale start failure and reloads provider availability.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected retryProviderDiscovery(): void {
@@ -287,14 +399,25 @@ export class RegisterPage implements OnInit {
    * Method providerLabel
    * @method providerLabel
    *
-   * @description Resolves a provider's localized display name from the shared registry.
+   * @description
+   * Resolves a provider's localized display name from the shared registry.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {FederatedProvider} provider - Provider to label.
+   *
    * @returns {string} Localized provider name.
    */
   protected providerLabel(provider: FederatedProvider): string {
-    return FEDERATED_PROVIDER_LABELS[provider];
+    return (
+      this.federatedStore.providers().find((descriptor) => descriptor.provider === provider)
+        ?.label ??
+      (Object.hasOwn(FEDERATED_PROVIDER_LABELS, provider)
+        ? FEDERATED_PROVIDER_LABELS[provider]
+        : undefined) ??
+      provider
+    );
   }
   //#endregion
 }

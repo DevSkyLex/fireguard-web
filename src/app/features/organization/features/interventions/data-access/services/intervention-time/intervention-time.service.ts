@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
 import type { Observable } from 'rxjs';
-import { HydraApiService } from '@core/api';
+import { type ApiRequestOptions, HydraApiService } from '@core/api';
 import type {
   InterventionTimeJournalOutput,
   InterventionTimeEntryOutput,
@@ -110,16 +110,19 @@ export class InterventionTimeService extends HydraApiService {
    *
    * @param {string} taskId - Task identifier.
    * @param {WriteInterventionTimeEntryInput} input - Actual work.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionTimeEntryOutput>} Current entry.
    */
   public createEntry(
     taskId: string,
     input: WriteInterventionTimeEntryInput,
+    options?: ApiRequestOptions,
   ): Observable<InterventionTimeEntryOutput> {
     return this.post<WriteInterventionTimeEntryInput, InterventionTimeEntryOutput>(
       `/api/intervention-work-items/${taskId}/time-entries`,
       input,
+      options,
     );
   }
 
@@ -136,6 +139,7 @@ export class InterventionTimeService extends HydraApiService {
    * @param {string} taskId - Task identifier.
    * @param {WriteInterventionTimeEntryInput} input - Corrected complete entry.
    * @param {number} revision - Previously read journal revision.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<InterventionTimeEntryOutput>} Corrected entry.
    */
@@ -143,11 +147,12 @@ export class InterventionTimeService extends HydraApiService {
     taskId: string,
     input: WriteInterventionTimeEntryInput,
     revision: number,
+    options?: ApiRequestOptions,
   ): Observable<InterventionTimeEntryOutput> {
     return this.patch<WriteInterventionTimeEntryInput, InterventionTimeEntryOutput>(
       `/api/intervention-work-items/${taskId}/time-entries/${input.id}`,
       input,
-      { headers: { 'If-Match': `"revision-${revision}"` } },
+      { ...options, headers: { ...options?.headers, 'If-Match': `"revision-${revision}"` } },
     );
   }
 
@@ -164,12 +169,19 @@ export class InterventionTimeService extends HydraApiService {
    * @param {string} taskId - Task identifier.
    * @param {string} entryId - Entry identifier.
    * @param {number} revision - Previously read journal revision.
+   * @param {ApiRequestOptions} [options] - Stable identity for an unchanged write retry.
    *
    * @returns {Observable<void>} Completion.
    */
-  public cancelEntry(taskId: string, entryId: string, revision: number): Observable<void> {
+  public cancelEntry(
+    taskId: string,
+    entryId: string,
+    revision: number,
+    options?: ApiRequestOptions,
+  ): Observable<void> {
     return this.delete(`/api/intervention-work-items/${taskId}/time-entries/${entryId}`, {
-      headers: { 'If-Match': `"revision-${revision}"` },
+      ...options,
+      headers: { ...options?.headers, 'If-Match': `"revision-${revision}"` },
     });
   }
 }

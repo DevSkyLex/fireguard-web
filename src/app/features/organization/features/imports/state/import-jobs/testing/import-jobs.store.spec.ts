@@ -1,7 +1,10 @@
+import { HttpErrorResponse } from '@angular/common/http';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import type { HydraCollection } from '@core/api/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { ImportJobService } from '@features/organization/features/imports/data-access';
 import type { ImportJobOutput } from '@features/organization/features/imports/models';
 import { ImportJobsStore } from '../import-jobs.store';
@@ -11,6 +14,8 @@ const flushEffects = async (): Promise<void> => {
 };
 
 describe('ImportJobsStore', () => {
+  const sessionRevision = signal(1);
+  const authenticated = signal(true);
   let store: InstanceType<typeof ImportJobsStore>;
   let dispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let mockService: {
@@ -50,6 +55,8 @@ describe('ImportJobsStore', () => {
   };
 
   beforeEach(() => {
+    sessionRevision.set(1);
+    authenticated.set(true);
     dispatcher = { dispatch: vi.fn() };
     mockService = {
       list: vi.fn().mockReturnValue(of(collection)),
@@ -64,6 +71,10 @@ describe('ImportJobsStore', () => {
     TestBed.configureTestingModule({
       providers: [
         ImportJobsStore,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision, isAuthenticated: authenticated },
+        },
         { provide: ImportJobService, useValue: mockService },
         { provide: Dispatcher, useValue: dispatcher },
       ],
@@ -105,6 +116,63 @@ describe('ImportJobsStore', () => {
     });
   });
 
+  it('keeps an unchanged file upload key through response loss and refresh while separating binary or kind edits', () => {
+    const file = new File(['abc'], 'same.csv', { type: 'text/csv', lastModified: 1 });
+    const replacement = new File(['def'], 'same.csv', { type: 'text/csv', lastModified: 1 });
+    mockService.create.mockReturnValue(throwError(() => ({ status: 0, detail: 'Lost reply' })));
+    store.load({ organizationId });
+    store.create({ organizationId, kind: 'equipment', file, dryRun: true });
+    const first = mockService.create.mock.calls[0]?.[4];
+    store.load({ organizationId });
+    store.resetCreateOperation();
+    store.create({ organizationId, kind: 'equipment', file, dryRun: true });
+    expect(mockService.create.mock.calls[1]?.[4]).toEqual(first);
+    store.create({ organizationId, kind: 'facility', file, dryRun: true });
+    expect(mockService.create.mock.calls[2]?.[4]).not.toEqual(first);
+    store.create({ organizationId, kind: 'facility', file: replacement, dryRun: true });
+    expect(replacement.size).toBe(file.size);
+    expect(mockService.create.mock.calls[3]?.[4]).not.toEqual(
+      mockService.create.mock.calls[2]?.[4],
+    );
+    store.create({ organizationId, kind: 'facility', file: replacement, dryRun: false });
+    expect(mockService.create.mock.calls[4]?.[4]).not.toEqual(
+      mockService.create.mock.calls[3]?.[4],
+    );
+  });
+
+  it('clears file intentions after a certain response or replacement session and ignores old accepted results', () => {
+    const file = new File(['a'], 'same.csv');
+    store.load({ organizationId });
+    store.create({ organizationId, kind: 'equipment', file });
+    const first = mockService.create.mock.calls[0]?.[4];
+    mockService.create.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 422, error: { detail: 'Rejected file' } })),
+    );
+    store.create({ organizationId, kind: 'equipment', file });
+    expect(mockService.create.mock.calls[1]?.[4]).not.toEqual(first);
+    store.create({ organizationId, kind: 'equipment', file });
+    expect(mockService.create.mock.calls[2]?.[4]).not.toEqual(
+      mockService.create.mock.calls[1]?.[4],
+    );
+    const accepted = new Subject<ImportJobOutput>();
+    mockService.create.mockReturnValue(accepted);
+    store.create({ organizationId, kind: 'equipment', file });
+    sessionRevision.set(2);
+    TestBed.tick();
+    accepted.next({ ...job, id: 'old-session-job' });
+    accepted.complete();
+    expect(store.jobEntities()).toEqual([]);
+    store.load({ organizationId });
+    store.create({ organizationId, kind: 'equipment', file });
+    expect(mockService.create.mock.calls[4]?.[4]).not.toEqual(
+      mockService.create.mock.calls[3]?.[4],
+    );
+    authenticated.set(false);
+    TestBed.tick();
+    store.create({ organizationId, kind: 'equipment', file });
+    expect(mockService.create).toHaveBeenCalledTimes(5);
+  });
+
   it('retries confirmation of the same simulation after a lost reply', () => {
     const source = { ...job, status: 'completed' as const, dryRun: true, canConfirm: true };
     mockService.list.mockReturnValue(of({ ...collection, member: [source] }));
@@ -123,10 +191,35 @@ describe('ImportJobsStore', () => {
       of({ ...collection, member: [{ ...source, canConfirm: false, confirmedJobId: real.id }] }),
     );
     store.confirm(job.id);
-    expect(mockService.confirm).toHaveBeenNthCalledWith(2, job.id);
+    expect(mockService.confirm).toHaveBeenNthCalledWith(
+      2,
+      job.id,
+      mockService.confirm.mock.calls[0]?.[1],
+    );
     expect(store.jobEntityMap()[job.id].confirmedJobId).toBe(real.id);
     expect(store.jobEntityMap()[real.id]).toEqual(real);
     expect(store.confirmCallStates()[job.id].status).toBe('success');
+  });
+
+  it('never accepts or serializes a multipart intention during SSR', () => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        ImportJobsStore,
+        { provide: ImportJobService, useValue: mockService },
+        { provide: Dispatcher, useValue: dispatcher },
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision, isAuthenticated: authenticated },
+        },
+        { provide: PLATFORM_ID, useValue: 'server' },
+      ],
+    });
+    const server = TestBed.inject(ImportJobsStore);
+    server.create({ organizationId, kind: 'equipment', file: new File(['private'], 'secret.csv') });
+    expect(mockService.create).not.toHaveBeenCalled();
+    expect(server.createCallState().data).toBeNull();
+    expect(server.createCallState().status).toBe('idle');
   });
 
   it('cancels template and confirmation responses after organization change', () => {
@@ -185,7 +278,9 @@ describe('ImportJobsStore', () => {
     store.load({ organizationId });
     store.resume(job.id);
     store.resume(job.id);
-    expect(mockService.resume).toHaveBeenCalledExactlyOnceWith(job.id);
+    expect(mockService.resume).toHaveBeenCalledExactlyOnceWith(job.id, {
+      idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/),
+    });
     expect(store.resumeCallStates()[job.id]?.status).toBe('pending');
     reply.error({ status: 409, message: 'Another worker owns the import.' });
     await flushEffects();
@@ -307,7 +402,9 @@ describe('ImportJobsStore', () => {
       store.create({ organizationId, kind: 'equipment', file, dryRun: false });
       await flushEffects();
 
-      expect(mockService.create).toHaveBeenCalledWith(organizationId, 'equipment', file, false);
+      expect(mockService.create).toHaveBeenCalledWith(organizationId, 'equipment', file, false, {
+        idempotencyKey: expect.stringMatching(/^[\da-f-]{36}$/),
+      });
       expect(store.jobEntities()).toEqual([job]);
       expect(store.isCreating()).toBe(false);
       expect(mockService.pollJob).toHaveBeenCalledWith(job);

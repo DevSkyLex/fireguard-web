@@ -1,5 +1,14 @@
 import { isPlatformBrowser, isPlatformServer } from '@angular/common';
-import { computed, inject, makeStateKey, PLATFORM_ID, TransferState } from '@angular/core';
+import {
+  computed,
+  inject,
+  makeStateKey,
+  PLATFORM_ID,
+  TransferState,
+  DestroyRef,
+  effect,
+  untracked,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { tapResponse } from '@ngrx/operators';
 import {
@@ -13,6 +22,7 @@ import {
 import { Events } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { defer, exhaustMap, of, pipe, Subject, switchMap, takeUntil, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -117,88 +127,139 @@ export const FederatedAuthStore = signalStore(
       () => store.passwordSetupRequestCallState().data?.challengeToken ?? null,
     ),
   })),
-  withMethods(
-    (
-      store,
-      service = inject(FederatedAuthService),
-      transferState = inject(TransferState),
-      platformId = inject(PLATFORM_ID),
-      events = inject<Events>(Events),
-      session = inject(AUTH_SESSION_PORT),
-      returnContext = inject(FederatedReturnContextService),
-    ) => {
-      const startCancellation = new Subject<void>();
-      const completionCancellation = new Subject<void>();
+  withMethods((store) => {
+    const service = inject(FederatedAuthService);
+    const transferState = inject(TransferState);
+    const platformId = inject(PLATFORM_ID);
+    const events = inject<Events>(Events);
+    const session = inject(AUTH_SESSION_PORT);
+    const returnContext = inject(FederatedReturnContextService);
+    const writeTracker = inject(WriteOperationService).createTracker();
+    const intentSession = inject(AUTH_SESSION_PORT);
+    const reference = inject(DestroyRef);
+    reference.onDestroy(() => writeTracker.clear());
+    let observedRevision = intentSession.sessionRevision();
+    effect(() => {
+      const revision = intentSession.sessionRevision();
+      if (revision !== observedRevision) {
+        observedRevision = revision;
+        untracked(() => writeTracker.clear());
+      }
+    });
+    const startCancellation = new Subject<void>();
+    const completionCancellation = new Subject<void>();
 
-      return {
-        loadProviders: rxMethod<void>(
-          pipe(
-            tap(() =>
-              patchState(store, { providersCallState: pendingCallState(store.providers()) }),
-            ),
-            switchMap(() =>
-              defer(() => {
-                if (isPlatformBrowser(platformId) && transferState.hasKey(PROVIDERS_TRANSFER_KEY)) {
-                  const providers = transferState.get(PROVIDERS_TRANSFER_KEY, []);
-                  transferState.remove(PROVIDERS_TRANSFER_KEY);
-                  return of(providers);
-                }
+    return {
+      loadProviders: rxMethod<void>(
+        pipe(
+          tap(() => patchState(store, { providersCallState: pendingCallState(store.providers()) })),
+          switchMap(() =>
+            defer(() => {
+              if (isPlatformBrowser(platformId) && transferState.hasKey(PROVIDERS_TRANSFER_KEY)) {
+                const providers = transferState.get(PROVIDERS_TRANSFER_KEY, []);
+                transferState.remove(PROVIDERS_TRANSFER_KEY);
+                return of(providers);
+              }
 
-                return service.providers().pipe(switchMap((collection) => of(collection.member)));
-              }).pipe(
-                tapResponse({
-                  next: (providers: readonly FederatedProviderOutput[]) => {
-                    if (isPlatformServer(platformId)) {
-                      transferState.set(PROVIDERS_TRANSFER_KEY, providers);
-                    }
-                    patchState(store, {
-                      providers,
-                      providersCallState: successCallState(providers),
-                    });
-                  },
-                  error: (error: unknown) =>
-                    patchState(store, {
-                      providersCallState: errorCallState(toStoreError(error), store.providers()),
-                    }),
-                }),
-              ),
-            ),
-          ),
-        ),
-
-        startLogin: rxMethod<{ provider: FederatedProvider; returnUrl: string }>(
-          pipe(
-            tap(({ provider }) =>
-              patchState(store, {
-                pendingProvider: provider,
-                startCallState: pendingCallState(),
+              return service.providers().pipe(switchMap((collection) => of(collection.member)));
+            }).pipe(
+              tapResponse({
+                next: (providers: readonly FederatedProviderOutput[]) => {
+                  if (isPlatformServer(platformId)) {
+                    transferState.set(PROVIDERS_TRANSFER_KEY, providers);
+                  }
+                  patchState(store, {
+                    providers,
+                    providersCallState: successCallState(providers),
+                  });
+                },
+                error: (error: unknown) =>
+                  patchState(store, {
+                    providersCallState: errorCallState(toStoreError(error), store.providers()),
+                  }),
               }),
             ),
-            exhaustMap(({ provider, returnUrl }) =>
-              service
-                .startLogin(provider, { return_url: returnContext.resolve(returnUrl) || '/' })
-                .pipe(
-                  takeUntil(startCancellation),
-                  tapResponse({
-                    next: (result: FederatedStartOutput) =>
-                      patchState(store, { startCallState: successCallState(result) }),
-                    error: (error: unknown) =>
-                      patchState(store, { startCallState: errorCallState(toStoreError(error)) }),
-                  }),
-                ),
-            ),
           ),
         ),
+      ),
 
-        completeLogin: rxMethod<{ provider: FederatedProvider; input: FederatedCompleteInput }>(
-          pipe(
-            exhaustMap(({ provider, input }) => {
-              const revision = session.sessionRevision();
-              patchState(store, {
-                pendingProvider: provider,
-                completeLoginCallState: pendingCallState(),
-              });
-              return service.completeLogin(provider, input).pipe(
+      startLogin: rxMethod<{ provider: FederatedProvider; returnUrl: string }>(
+        pipe(
+          tap(({ provider }) =>
+            patchState(store, {
+              pendingProvider: provider,
+              startCallState: pendingCallState(),
+            }),
+          ),
+          exhaustMap(({ provider, returnUrl }) =>
+            service
+              .startLogin(
+                provider,
+                { return_url: returnContext.resolve(returnUrl) || '/' },
+                writeTracker.options(
+                  'service.startLogin',
+                  [provider, { return_url: returnContext.resolve(returnUrl) || '/' }],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('service.startLogin');
+                  },
+                }),
+                takeUntil(startCancellation),
+                tapResponse({
+                  next: (result: FederatedStartOutput) =>
+                    patchState(store, { startCallState: successCallState(result) }),
+                  error: (error: unknown) =>
+                    patchState(store, { startCallState: errorCallState(toStoreError(error)) }),
+                }),
+              ),
+          ),
+        ),
+      ),
+
+      completeLogin: rxMethod<{ provider: FederatedProvider; input: FederatedCompleteInput }>(
+        pipe(
+          exhaustMap(({ provider, input }) => {
+            const revision = session.sessionRevision();
+            patchState(store, {
+              pendingProvider: provider,
+              completeLoginCallState: pendingCallState(),
+            });
+            return service
+              .completeLogin(
+                provider,
+                input,
+                writeTracker.options(
+                  'service.completeLogin',
+                  [provider, input],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('service.completeLogin');
+                  },
+                }),
                 takeUntil(completionCancellation),
                 tapResponse({
                   next: (result: LoginOutput) => {
@@ -213,46 +274,65 @@ export const FederatedAuthStore = signalStore(
                   },
                 }),
               );
+          }),
+        ),
+      ),
+
+      loadConnections: rxMethod<void>(
+        pipe(
+          tap(() =>
+            patchState(store, {
+              connectionsCallState: pendingCallState(store.connections()),
             }),
           ),
-        ),
-
-        loadConnections: rxMethod<void>(
-          pipe(
-            tap(() =>
-              patchState(store, {
-                connectionsCallState: pendingCallState(store.connections()),
+          switchMap(() =>
+            service.connections().pipe(
+              takeUntil(events.on(authStoreEvents.sessionEnded)),
+              tapResponse({
+                next: (connections: FederatedConnectionsOutput) =>
+                  patchState(store, {
+                    connections,
+                    connectionsCallState: successCallState(connections),
+                  }),
+                error: (error: unknown) =>
+                  patchState(store, {
+                    connectionsCallState: errorCallState(toStoreError(error), store.connections()),
+                  }),
               }),
-            ),
-            switchMap(() =>
-              service.connections().pipe(
-                takeUntil(events.on(authStoreEvents.sessionEnded)),
-                tapResponse({
-                  next: (connections: FederatedConnectionsOutput) =>
-                    patchState(store, {
-                      connections,
-                      connectionsCallState: successCallState(connections),
-                    }),
-                  error: (error: unknown) =>
-                    patchState(store, {
-                      connectionsCallState: errorCallState(
-                        toStoreError(error),
-                        store.connections(),
-                      ),
-                    }),
-                }),
-              ),
             ),
           ),
         ),
+      ),
 
-        startLink: rxMethod<FederatedProvider>(
-          pipe(
-            tap((provider) =>
-              patchState(store, { pendingProvider: provider, startCallState: pendingCallState() }),
-            ),
-            exhaustMap((provider) =>
-              service.startLink(provider).pipe(
+      startLink: rxMethod<FederatedProvider>(
+        pipe(
+          tap((provider) =>
+            patchState(store, { pendingProvider: provider, startCallState: pendingCallState() }),
+          ),
+          exhaustMap((provider) =>
+            service
+              .startLink(
+                provider,
+                writeTracker.options(
+                  'service.startLink',
+                  [provider],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('service.startLink');
+                  },
+                }),
                 takeUntil(startCancellation),
                 takeUntil(events.on(authStoreEvents.sessionEnded)),
                 tapResponse({
@@ -262,20 +342,43 @@ export const FederatedAuthStore = signalStore(
                     patchState(store, { startCallState: errorCallState(toStoreError(error)) }),
                 }),
               ),
-            ),
           ),
         ),
+      ),
 
-        completeLink: rxMethod<{ provider: FederatedProvider; input: FederatedCompleteInput }>(
-          pipe(
-            tap(({ provider }) =>
-              patchState(store, {
-                pendingProvider: provider,
-                completeLinkCallState: pendingCallState(store.connections()),
-              }),
-            ),
-            exhaustMap(({ provider, input }) =>
-              service.completeLink(provider, input).pipe(
+      completeLink: rxMethod<{ provider: FederatedProvider; input: FederatedCompleteInput }>(
+        pipe(
+          tap(({ provider }) =>
+            patchState(store, {
+              pendingProvider: provider,
+              completeLinkCallState: pendingCallState(store.connections()),
+            }),
+          ),
+          exhaustMap(({ provider, input }) =>
+            service
+              .completeLink(
+                provider,
+                input,
+                writeTracker.options(
+                  'service.completeLink',
+                  [provider, input],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('service.completeLink');
+                  },
+                }),
                 takeUntil(events.on(authStoreEvents.sessionEnded)),
                 tapResponse({
                   next: (connections: FederatedConnectionsOutput) =>
@@ -292,20 +395,42 @@ export const FederatedAuthStore = signalStore(
                     }),
                 }),
               ),
-            ),
           ),
         ),
+      ),
 
-        disconnect: rxMethod<FederatedProvider>(
-          pipe(
-            tap((provider) =>
-              patchState(store, {
-                pendingProvider: provider,
-                disconnectCallState: pendingCallState(),
-              }),
-            ),
-            exhaustMap((provider) =>
-              service.disconnect(provider).pipe(
+      disconnect: rxMethod<FederatedProvider>(
+        pipe(
+          tap((provider) =>
+            patchState(store, {
+              pendingProvider: provider,
+              disconnectCallState: pendingCallState(),
+            }),
+          ),
+          exhaustMap((provider) =>
+            service
+              .disconnect(
+                provider,
+                writeTracker.options(
+                  'service.disconnect',
+                  [provider],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('service.disconnect');
+                  },
+                }),
                 takeUntil(events.on(authStoreEvents.sessionEnded)),
                 tapResponse({
                   next: (connections: FederatedConnectionsOutput) =>
@@ -315,18 +440,41 @@ export const FederatedAuthStore = signalStore(
                       disconnectCallState: successCallState(connections),
                     }),
                   error: (error: unknown) =>
-                    patchState(store, { disconnectCallState: errorCallState(toStoreError(error)) }),
+                    patchState(store, {
+                      disconnectCallState: errorCallState(toStoreError(error)),
+                    }),
                 }),
               ),
-            ),
           ),
         ),
+      ),
 
-        requestPasswordSetup: rxMethod<void>(
-          pipe(
-            tap(() => patchState(store, { passwordSetupRequestCallState: pendingCallState() })),
-            exhaustMap(() =>
-              service.requestPasswordSetup().pipe(
+      requestPasswordSetup: rxMethod<void>(
+        pipe(
+          tap(() => patchState(store, { passwordSetupRequestCallState: pendingCallState() })),
+          exhaustMap(() =>
+            service
+              .requestPasswordSetup(
+                writeTracker.options(
+                  'service.requestPasswordSetup',
+                  [],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('service.requestPasswordSetup');
+                  },
+                }),
                 takeUntil(events.on(authStoreEvents.sessionEnded)),
                 tapResponse({
                   next: (result: PasswordSetupChallengeOutput) =>
@@ -339,15 +487,37 @@ export const FederatedAuthStore = signalStore(
                     }),
                 }),
               ),
-            ),
           ),
         ),
+      ),
 
-        confirmPasswordSetup: rxMethod<PasswordSetupConfirmInput>(
-          pipe(
-            tap(() => patchState(store, { passwordSetupConfirmCallState: pendingCallState() })),
-            exhaustMap((input) =>
-              service.confirmPasswordSetup(input).pipe(
+      confirmPasswordSetup: rxMethod<PasswordSetupConfirmInput>(
+        pipe(
+          tap(() => patchState(store, { passwordSetupConfirmCallState: pendingCallState() })),
+          exhaustMap((input) =>
+            service
+              .confirmPasswordSetup(
+                input,
+                writeTracker.options(
+                  'service.confirmPasswordSetup',
+                  [input],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('service.confirmPasswordSetup');
+                  },
+                }),
                 takeUntil(events.on(authStoreEvents.sessionEnded)),
                 tapResponse({
                   next: (result: PasswordSetupConfirmOutput) => {
@@ -369,66 +539,65 @@ export const FederatedAuthStore = signalStore(
                     }),
                 }),
               ),
-            ),
           ),
         ),
+      ),
 
-        resetStart(): void {
-          startCancellation.next();
-          patchState(store, { startCallState: idleCallState(), pendingProvider: null });
-        },
+      resetStart(): void {
+        startCancellation.next();
+        patchState(store, { startCallState: idleCallState(), pendingProvider: null });
+      },
 
-        resetDisconnect(): void {
-          patchState(store, { disconnectCallState: idleCallState(), pendingProvider: null });
-        },
+      resetDisconnect(): void {
+        patchState(store, { disconnectCallState: idleCallState(), pendingProvider: null });
+      },
 
-        resetCompleteLogin(): void {
-          completionCancellation.next();
-          patchState(store, { completeLoginCallState: idleCallState(), pendingProvider: null });
-        },
+      resetCompleteLogin(): void {
+        completionCancellation.next();
+        patchState(store, { completeLoginCallState: idleCallState(), pendingProvider: null });
+      },
 
-        resetCompleteLink(): void {
-          patchState(store, { completeLinkCallState: idleCallState(), pendingProvider: null });
-        },
+      resetCompleteLink(): void {
+        patchState(store, { completeLinkCallState: idleCallState(), pendingProvider: null });
+      },
 
-        resetPasswordSetup(): void {
-          patchState(store, {
-            passwordSetupRequestCallState: idleCallState(),
-            passwordSetupConfirmCallState: idleCallState(),
-          });
-        },
+      resetPasswordSetup(): void {
+        patchState(store, {
+          passwordSetupRequestCallState: idleCallState(),
+          passwordSetupConfirmCallState: idleCallState(),
+        });
+      },
 
-        /**
-         * Method clearSessionState
-         * @method clearSessionState
-         *
-         * @description
-         * Cancels pending redirects and purges account state and unconsumed return intent.
-         *
-         * @access public
-         * @since 1.0.0
-         *
-         * @returns {void}
-         */
-        clearSessionState(): void {
-          completionCancellation.next();
-          startCancellation.next();
-          returnContext.clear();
-          patchState(store, {
-            connections: null,
-            pendingProvider: null,
-            startCallState: idleCallState(),
-            completeLoginCallState: idleCallState(),
-            connectionsCallState: idleCallState(),
-            completeLinkCallState: idleCallState(),
-            disconnectCallState: idleCallState(),
-            passwordSetupRequestCallState: idleCallState(),
-            passwordSetupConfirmCallState: idleCallState(),
-          });
-        },
-      };
-    },
-  ),
+      /**
+       * Method clearSessionState
+       * @method clearSessionState
+       *
+       * @description
+       * Cancels pending redirects and purges account state and unconsumed return intent.
+       *
+       * @access public
+       * @since 1.0.0
+       *
+       * @returns {void}
+       */
+      clearSessionState(): void {
+        completionCancellation.next();
+        startCancellation.next();
+        returnContext.clear();
+        patchState(store, {
+          connections: null,
+          pendingProvider: null,
+          startCallState: idleCallState(),
+          completeLoginCallState: idleCallState(),
+          connectionsCallState: idleCallState(),
+          completeLinkCallState: idleCallState(),
+          disconnectCallState: idleCallState(),
+          passwordSetupRequestCallState: idleCallState(),
+          passwordSetupConfirmCallState: idleCallState(),
+        });
+      },
+    };
+  }),
   withHooks({
     onInit(store, events = inject<Events>(Events)): void {
       events

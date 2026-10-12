@@ -12,8 +12,8 @@ import {
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
-import { lucideCircleAlert } from '@ng-icons/lucide';
-import { FEDERATED_PROVIDER_ICONS } from '@features/auth/constants';
+import { lucideCircleAlert, lucideGlobe } from '@ng-icons/lucide';
+import { FEDERATED_PROVIDER_ICONS, federatedProviderIcon } from '@features/auth/constants';
 import type { FederatedProvider, LoginInput } from '@features/auth/models';
 import { FEDERATED_PROVIDER_LABELS } from '@features/auth/options';
 import { FederatedReturnContextService } from '@features/auth/services';
@@ -35,7 +35,6 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * Route entry for signing in. It owns orchestration only: the form owns its
  * own values and rules, this page maps them to the transport DTO, calls the
  * store, and routes on the outcome (`ARCHITECTURE.md` §10.1).
- *
  * Two outcomes lead away from here — a completed session goes to the return
  * URL, and a pending MFA challenge goes to the verification screen. Both are
  * watched rather than awaited, because the store owns the request and this page
@@ -58,11 +57,24 @@ import { HlmSpinner } from '@shared/ui/spinner';
     HlmSpinner,
     NgIcon,
   ],
-  providers: [provideIcons({ ...FEDERATED_PROVIDER_ICONS, lucideCircleAlert })],
+  providers: [provideIcons({ ...FEDERATED_PROVIDER_ICONS, lucideCircleAlert, lucideGlobe })],
   templateUrl: './login-page.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LoginPage implements OnInit {
+  /**
+   * Property providerIcon
+   * @readonly
+   *
+   * @description
+   * Provides provider icon for the current authentication flow.
+   *
+   * @access protected
+   * @since 1.0.0
+   *
+   * @type {(provider: FederatedProvider) => string}
+   */
+  protected readonly providerIcon: (provider: FederatedProvider) => string = federatedProviderIcon;
   //#region Properties
   /**
    * Property authStore
@@ -86,20 +98,25 @@ export class LoginPage implements OnInit {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @type {FederatedAuthStore}
    */
-  protected readonly federatedStore = inject(FederatedAuthStore);
+  protected readonly federatedStore: FederatedAuthStore = inject(FederatedAuthStore);
 
   /**
    * Property federatedErrorMessage
    * @readonly
    *
-   * @description Maps stable Auth errors to localized, non-sensitive copy.
+   * @description
+   * Maps stable Auth errors to localized, non-sensitive copy.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {typeof resolveFederatedAuthErrorMessage}
    */
-  protected readonly federatedErrorMessage = resolveFederatedAuthErrorMessage;
+  protected readonly federatedErrorMessage: (value: string | null | undefined) => string =
+    resolveFederatedAuthErrorMessage;
 
   /**
    * Property router
@@ -137,9 +154,10 @@ export class LoginPage implements OnInit {
    *
    * @access private
    * @since 1.1.0
+   *
    * @type {Document}
    */
-  private readonly document = inject(DOCUMENT);
+  private readonly document: Document = inject(DOCUMENT);
 
   /**
    * Property platformId
@@ -150,6 +168,7 @@ export class LoginPage implements OnInit {
    *
    * @access private
    * @since 1.1.0
+   *
    * @type {object}
    */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
@@ -157,9 +176,13 @@ export class LoginPage implements OnInit {
   /**
    * Property returnContext
    * @readonly
-   * @description Preserves the local destination across a full-page provider redirect.
+   *
+   * @description
+   * Preserves the local destination across a full-page provider redirect.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {FederatedReturnContextService}
    */
   private readonly returnContext: FederatedReturnContextService = inject(
@@ -171,15 +194,33 @@ export class LoginPage implements OnInit {
    * Property returnUrl
    * @readonly
    *
-   * @description Safe destination carried by links and subsequent authentication steps.
+   * @description
+   * Safe destination carried by links and subsequent authentication steps.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {string}
    */
   protected readonly returnUrl: string = resolveReturnUrl(
     this.route.snapshot.queryParamMap.get('returnUrl'),
     '',
   );
+
+  /**
+   * Property registrationAccepted
+   * @readonly
+   *
+   * @description
+   * Shows the completed registration notice after the server accepts a flow without verification.
+   *
+   * @access protected
+   * @since unreleased
+   *
+   * @type {boolean}
+   */
+  protected readonly registrationAccepted: boolean =
+    this.route.snapshot.queryParamMap.get('registered') === '1';
 
   //#region Lifecycle
   /**
@@ -190,12 +231,13 @@ export class LoginPage implements OnInit {
    * Leaves the page as soon as the store reaches a terminal state: an MFA
    * challenge takes priority over an established session, because a challenge
    * means the session is not established yet.
-   *
    * The navigation is untracked so reading the route snapshot cannot make this
    * effect depend on it.
    *
    * @access private
    * @since 1.0.0
+   *
+   * @type {EffectRef}
    */
   private readonly outcome: EffectRef = effect((): void => {
     const hasChallenge: boolean = this.authStore.mfaRequired();
@@ -229,6 +271,7 @@ export class LoginPage implements OnInit {
    *
    * @access private
    * @since 1.1.0
+   *
    * @type {EffectRef}
    */
   private readonly federatedRedirect: EffectRef = effect((): void => {
@@ -253,6 +296,7 @@ export class LoginPage implements OnInit {
    *
    * @access public
    * @since 1.1.0
+   *
    * @returns {void}
    */
   public ngOnInit(): void {
@@ -297,7 +341,9 @@ export class LoginPage implements OnInit {
    *
    * @access protected
    * @since 1.1.0
+   *
    * @param {FederatedProvider} provider - Provider selected by the user.
+   *
    * @returns {void}
    */
   protected signInWith(provider: FederatedProvider): void {
@@ -310,9 +356,12 @@ export class LoginPage implements OnInit {
    * Method retryProviderDiscovery
    * @method retryProviderDiscovery
    *
-   * @description Clears any stale start failure and asks the store to discover providers again.
+   * @description
+   * Clears any stale start failure and asks the store to discover providers again.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @returns {void}
    */
   protected retryProviderDiscovery(): void {
@@ -324,14 +373,25 @@ export class LoginPage implements OnInit {
    * Method providerLabel
    * @method providerLabel
    *
-   * @description Resolves a provider's localized display name from the shared registry.
+   * @description
+   * Resolves a provider's localized display name from the shared registry.
+   *
    * @access protected
    * @since 1.2.0
+   *
    * @param {FederatedProvider} provider - Provider to label.
+   *
    * @returns {string} Localized provider name.
    */
   protected providerLabel(provider: FederatedProvider): string {
-    return FEDERATED_PROVIDER_LABELS[provider];
+    return (
+      this.federatedStore.providers().find((descriptor) => descriptor.provider === provider)
+        ?.label ??
+      (Object.hasOwn(FEDERATED_PROVIDER_LABELS, provider)
+        ? FEDERATED_PROVIDER_LABELS[provider]
+        : undefined) ??
+      provider
+    );
   }
   //#endregion
 }

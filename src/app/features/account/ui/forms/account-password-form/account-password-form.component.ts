@@ -17,6 +17,7 @@ import {
   type FieldTree,
 } from '@angular/forms/signals';
 import type { AccountPasswordChangeStep } from '@features/account/state';
+import type { PasswordPolicyOutput } from '@features/auth';
 import { applyPasswordConfirmation, applyPasswordRules } from '@features/auth';
 import { PasswordInput } from '@shared/password-input';
 import { RequiredMarker } from '@shared/required-marker';
@@ -93,6 +94,20 @@ const CODE_LENGTH = 6;
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class AccountPasswordForm {
+  /**
+   * Property passwordPolicy
+   * @readonly
+   *
+   * @description
+   * Authoritative server policy; an absent value keeps creation invalid.
+   *
+   * @access public
+   * @since 1.0.0
+   *
+   * @type {InputSignal<PasswordPolicyOutput | null>}
+   */
+  public readonly passwordPolicy: InputSignal<PasswordPolicyOutput | null> =
+    input<PasswordPolicyOutput | null>(null);
   //#region Inputs
   /**
    * Property step
@@ -270,7 +285,7 @@ export class AccountPasswordForm {
         message: $localize`:@@account.password.codePattern:The code is ${CODE_LENGTH}:length: digits`,
       });
 
-      applyPasswordRules(path.newPassword);
+      applyPasswordRules(path.newPassword, () => this.passwordPolicy());
       applyPasswordConfirmation(path.confirmPassword, path.newPassword);
     },
   );

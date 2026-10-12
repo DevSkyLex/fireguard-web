@@ -1,9 +1,11 @@
-import { PLATFORM_ID } from '@angular/core';
+import { HttpErrorResponse } from '@angular/common/http';
+import { PLATFORM_ID, signal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { Dispatcher } from '@ngrx/signals/events';
 import { of, Subject, throwError } from 'rxjs';
 import { Group } from 'three';
 import type { HydraCollection } from '@core/api/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import {
   FacilityModelService,
   FacilityService,
@@ -46,7 +48,28 @@ const building: FacilityOutput = {
   updatedAt: '',
 };
 
+const autonomousFile = (label = 'Room A'): File => {
+  const text = new TextEncoder().encode(
+    JSON.stringify({ asset: { version: '2.0' }, nodes: [{ name: label }] }),
+  );
+  const jsonLength = Math.ceil(text.length / 4) * 4;
+  const bytes = new ArrayBuffer(20 + jsonLength);
+  const view = new DataView(bytes);
+  view.setUint32(0, 0x46546c67, true);
+  view.setUint32(4, 2, true);
+  view.setUint32(8, bytes.byteLength, true);
+  view.setUint32(12, jsonLength, true);
+  view.setUint32(16, 0x4e4f534a, true);
+  new Uint8Array(bytes, 20).fill(32);
+  new Uint8Array(bytes, 20, text.length).set(text);
+  const file = new File([bytes], 'same.glb', { type: 'model/gltf-binary', lastModified: 1 });
+  Object.defineProperty(file, 'arrayBuffer', { value: async () => bytes });
+  return file;
+};
+
 describe('FacilityModelsStore', () => {
+  const sessionRevision = signal(1);
+  const authenticated = signal(true);
   let store: FacilityModelsStoreType;
   let service: {
     list: ReturnType<typeof vi.fn>;
@@ -90,6 +113,8 @@ describe('FacilityModelsStore', () => {
   const context = { organizationId: 'org-1', buildingId: 'building-1' };
 
   beforeEach(() => {
+    sessionRevision.set(1);
+    authenticated.set(true);
     service = {
       list: vi.fn().mockReturnValue(of(collection([model]))),
       get: vi.fn().mockReturnValue(of(model)),
@@ -120,6 +145,10 @@ describe('FacilityModelsStore', () => {
     TestBed.configureTestingModule({
       providers: [
         FacilityModelsStore,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision, isAuthenticated: authenticated },
+        },
         { provide: FacilityModelService, useValue: service },
         { provide: FacilityModelAssetService, useValue: assets },
         { provide: FacilityService, useValue: facilities },
@@ -430,6 +459,88 @@ describe('FacilityModelsStore', () => {
     expect(store.uploadCallState().status).toBe('error');
   });
 
+  it('retains GLB upload identity through loss and refresh and distinguishes filename or identical-metadata binary replacements', async () => {
+    store.load(context);
+    const file = autonomousFile();
+    service.upload.mockReturnValue(throwError(() => ({ status: 0, detail: 'Lost reply' })));
+    store.upload({ file, fileName: file.name });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(1));
+    const first = service.upload.mock.calls[0]?.[4];
+    store.refresh();
+    store.upload({ file, fileName: file.name });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(2));
+    expect(service.upload.mock.calls[1]?.[4]).toEqual(first);
+    store.upload({ file, fileName: 'renamed.glb' });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(3));
+    expect(service.upload.mock.calls[2]?.[4]).not.toEqual(first);
+    const replacement = autonomousFile('Room B');
+    expect(replacement.size).toBe(file.size);
+    expect(replacement.name).toBe(file.name);
+    expect(replacement.lastModified).toBe(file.lastModified);
+    store.upload({ file: replacement, fileName: replacement.name });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(4));
+    expect(service.upload.mock.calls[3]?.[4]).not.toEqual(first);
+  });
+
+  it('clears a completed or definitively rejected GLB intention before a new upload of the same file', async () => {
+    store.load(context);
+    const file = autonomousFile();
+    service.upload.mockReturnValueOnce(of({ ...model, id: 'uploaded' }));
+    store.upload({ file, fileName: file.name });
+    await vi.waitFor(() => expect(store.uploadCallState().status).toBe('success'));
+    service.upload.mockReturnValue(
+      throwError(() => new HttpErrorResponse({ status: 422, error: { detail: 'Rejected GLB' } })),
+    );
+    store.upload({ file, fileName: file.name });
+    await vi.waitFor(() => expect(store.uploadCallState().status).toBe('error'));
+    store.upload({ file, fileName: file.name });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(3));
+    expect(new Set(service.upload.mock.calls.map((call) => call[4]?.idempotencyKey)).size).toBe(3);
+  });
+
+  it('does not let an earlier upload completion erase a renamed queued intention awaiting exact retry', async () => {
+    store.load(context);
+    const file = autonomousFile();
+    const first = new Subject<FacilityModelOutput>();
+    service.upload.mockReturnValueOnce(first);
+    store.upload({ file, fileName: 'original.glb' });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(1));
+    service.upload.mockReturnValue(throwError(() => new HttpErrorResponse({ status: 0 })));
+    store.upload({ file, fileName: 'renamed.glb' });
+    first.next({ ...model, id: 'uploaded-original' });
+    first.complete();
+    await vi.waitFor(() => expect(store.uploadCallState().status).toBe('error'));
+    const renamed = service.upload.mock.calls[1]?.[4];
+    store.upload({ file, fileName: 'renamed.glb' });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(3));
+    expect(service.upload.mock.calls[2]?.[4]).toEqual(renamed);
+    expect(service.upload.mock.calls[0]?.[4]).not.toEqual(renamed);
+  });
+
+  it('fences a late GLB response and replaces file identity after session replacement', async () => {
+    store.load(context);
+    const file = autonomousFile();
+    const response = new Subject<FacilityModelOutput>();
+    service.upload.mockReturnValueOnce(response);
+    store.upload({ file, fileName: file.name });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(1));
+    const first = service.upload.mock.calls[0]?.[4];
+    sessionRevision.set(2);
+    response.next({ ...model, id: 'old-session-model' });
+    response.complete();
+    TestBed.tick();
+    expect(store.modelEntityMap()['old-session-model']).toBeUndefined();
+    service.upload.mockReturnValue(throwError(() => ({ status: 0, detail: 'Lost reply' })));
+    store.load(context);
+    store.upload({ file, fileName: file.name });
+    await vi.waitFor(() => expect(service.upload).toHaveBeenCalledTimes(2));
+    expect(service.upload.mock.calls[1]?.[4]).not.toEqual(first);
+    authenticated.set(false);
+    TestBed.tick();
+    store.upload({ file, fileName: file.name });
+    expect(service.upload).toHaveBeenCalledTimes(2);
+  });
+
   it('completes already accepted queued writes in their original scope after building navigation', () => {
     store.load(context);
     const first = new Subject<FacilityModelOutput>();
@@ -462,6 +573,10 @@ describe('FacilityModelsStore', () => {
     TestBed.configureTestingModule({
       providers: [
         FacilityModelsStore,
+        {
+          provide: AUTH_SESSION_PORT,
+          useValue: { sessionRevision, isAuthenticated: authenticated },
+        },
         { provide: FacilityModelService, useValue: service },
         { provide: FacilityModelAssetService, useValue: assets },
         { provide: FacilityService, useValue: facilities },

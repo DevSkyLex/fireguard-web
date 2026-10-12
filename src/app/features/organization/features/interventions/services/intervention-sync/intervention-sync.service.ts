@@ -1,6 +1,7 @@
 import { inject, Service } from '@angular/core';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { firstValueFrom, takeUntil, type Observable } from 'rxjs';
+import { getIdempotencyErrorCode, isIdempotencyOperationCompleted } from '@core/api';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import { authStoreEvents } from '@features/auth/state';
@@ -321,7 +322,7 @@ export class InterventionSyncService {
    */
   public async replayOutbox(organizationId: string, interventionId: string): Promise<number> {
     const activeReplay = this.activeReplays.get(interventionId);
-    if (activeReplay) return activeReplay;
+    if (activeReplay !== undefined) return activeReplay;
 
     const replay = this.replayInterventionOutbox(organizationId, interventionId).finally(() => {
       if (this.activeReplays.get(interventionId) === replay)
@@ -490,7 +491,13 @@ export class InterventionSyncService {
     } catch (error: unknown) {
       if (!isCurrent()) return replayed;
       if (inventoryAcceptedByServer) throw new AcceptedInventoryPersistenceError(error);
-      const outcome = await this.handleReplayFailure(operation, error, blocked, isCurrent);
+      const outcome = await this.handleReplayFailure(
+        organizationId,
+        operation,
+        error,
+        blocked,
+        isCurrent,
+      );
       if (!isCurrent()) return replayed;
       if (outcome === 'applied') {
         applied(operation);
@@ -545,6 +552,7 @@ export class InterventionSyncService {
    * @access private
    * @since 1.0.0
    *
+   * @param {string} organizationId - Organization owning the completed projection.
    * @param {InterventionOutboxOperation} operation - Rejected operation.
    * @param {unknown} error - Transport failure.
    * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
@@ -554,6 +562,7 @@ export class InterventionSyncService {
    * @returns {Promise<'applied' | 'blocked'>} Replay disposition.
    */
   private async handleReplayFailure(
+    organizationId: string,
     operation: InterventionOutboxOperation,
     error: unknown,
     blocked: BlockedResources,
@@ -565,6 +574,19 @@ export class InterventionSyncService {
       response.detail ??
       response.error?.detail ??
       (error instanceof Error ? error.message : 'The server rejected this operation.');
+    if (isIdempotencyOperationCompleted(error)) {
+      return this.acknowledgeCompletedOperation(organizationId, operation, blocked, isCurrent);
+    }
+    const receiptFailure = getIdempotencyErrorCode(error);
+    if (receiptFailure === 'idempotency_in_progress') {
+      this.block(operation, blocked.transient);
+      return 'blocked';
+    }
+    if (receiptFailure) {
+      await this.offline.markOutboxFailed(operation.id, detail);
+      this.block(operation, blocked.permanent);
+      return 'blocked';
+    }
     if (
       this.isCreate(operation) &&
       (response.status === HTTP_PRECONDITION_FAILED || response.status === HTTP_CONFLICT) &&
@@ -594,6 +616,331 @@ export class InterventionSyncService {
       return 'blocked';
     }
     throw error;
+  }
+
+  /**
+   * Method acknowledgeCompletedOperation
+   * @method acknowledgeCompletedOperation
+   *
+   * @description
+   * Removes a completed intent only after current-owner reconciliation succeeds. Failed reads or
+   * device acknowledgements retain the original operation for a later replay.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the completed projection.
+   * @param {InterventionOutboxOperation} operation - Completed intent with its original identity.
+   * @param {BlockedResources} blocked - Resource blockers for this replay cycle.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<'applied' | 'blocked'>} Guarded acknowledgement disposition.
+   */
+  private async acknowledgeCompletedOperation(
+    organizationId: string,
+    operation: InterventionOutboxOperation,
+    blocked: BlockedResources,
+    isCurrent: () => boolean,
+  ): Promise<'applied' | 'blocked'> {
+    try {
+      await this.reconcileCompletedOperation(organizationId, operation, isCurrent);
+      if (!isCurrent()) return 'blocked';
+      await this.offline.removeOutbox(operation.id);
+      return isCurrent() ? 'applied' : 'blocked';
+    } catch {
+      this.block(operation, blocked.transient);
+      return 'blocked';
+    }
+  }
+
+  /**
+   * Method reconcileCompletedOperation
+   * @method reconcileCompletedOperation
+   *
+   * @description
+   * Acquires current owner projections before dropping a completed intent whose response expired.
+   * Physical receipts are saved durably; other projections use the existing invalidation lifecycle
+   * after acknowledgement without overwriting pending workspace edits.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the replay.
+   * @param {InterventionOutboxOperation} operation - Completed operation with stable native
+   *   identity.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Completes only after authorized reconciliation succeeds.
+   */
+  private async reconcileCompletedOperation(
+    organizationId: string,
+    operation: InterventionOutboxOperation,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    if (operation.type === 'inventory-consumption.declare') {
+      await this.reconcileCompletedConsumption(organizationId, operation, isCurrent);
+      return;
+    }
+    const intervention = await this.readCurrentReplay(
+      this.service.get(operation.interventionId),
+      isCurrent,
+    );
+    if (
+      intervention.id !== operation.interventionId ||
+      intervention.organization !== `/api/organizations/${organizationId}`
+    )
+      throw new Error('The completed operation belongs to another workspace.');
+    switch (operation.type) {
+      case 'intervention.update':
+        return;
+      case 'time-entry.create':
+      case 'time-entry.correct':
+      case 'time-entry.cancel':
+        return this.reconcileCompletedTimeEntry(operation, isCurrent);
+      case 'work-item.create':
+      case 'work-item.update':
+        return this.reconcileCompletedWorkItem(operation, isCurrent);
+      case 'change.create':
+      case 'change.update':
+        return this.reconcileCompletedChange(operation, isCurrent);
+      case 'facility.create':
+        if (!operation.payload.clientId)
+          throw new Error('The completed facility identity is unavailable.');
+        await this.readCurrentReplay(
+          this.facilities.get(organizationId, operation.payload.clientId),
+          isCurrent,
+        );
+        return;
+      case 'equipment.create':
+        if (!operation.payload.clientId)
+          throw new Error('The completed equipment identity is unavailable.');
+        await this.readCurrentReplay(
+          this.equipment.get(organizationId, operation.payload.clientId),
+          isCurrent,
+        );
+        return;
+      case 'inspection.create':
+        if (!operation.payload.clientId)
+          throw new Error('The completed inspection identity is unavailable.');
+        await this.readCurrentReplay(
+          this.inspections.get(organizationId, operation.payload.clientId),
+          isCurrent,
+        );
+        return;
+      case 'media.create':
+        await this.readCurrentReplay(
+          this.equipment.listAttachments(organizationId, operation.payload.equipmentId),
+          isCurrent,
+        );
+        return;
+      case 'attachment.upload':
+        await this.readCurrentReplay(
+          this.service.listAttachments(operation.interventionId, operation.payload.workItemId),
+          isCurrent,
+        );
+        return;
+      case 'comment.create':
+        await this.readCurrentReplay(
+          this.service.listActivities(operation.interventionId),
+          isCurrent,
+        );
+        return;
+    }
+  }
+
+  /**
+   * Method reconcileCompletedTimeEntry
+   * @method reconcileCompletedTimeEntry
+   *
+   * @description
+   * Acquires the exact journal entry and its intervention work-item projection before acknowledging
+   * a completed journal write.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperationFor<
+   *   'time-entry.create' | 'time-entry.correct' | 'time-entry.cancel'
+   * >} operation
+   *   - Completed journal intent with its original entry identity.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Completes after both current-owner reads succeed.
+   */
+  private async reconcileCompletedTimeEntry(
+    operation: InterventionOutboxOperationFor<
+      'time-entry.create' | 'time-entry.correct' | 'time-entry.cancel'
+    >,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const current = await this.readCurrentReplay(
+      this.time.getEntry(operation.payload.workItemId, operation.payload.id),
+      isCurrent,
+    );
+    if (current.entry?.id !== operation.payload.id)
+      throw new Error('The completed time entry is unavailable.');
+    await this.readCurrentReplay(
+      this.service.listAllWorkItems(operation.interventionId),
+      isCurrent,
+    );
+  }
+
+  /**
+   * Method reconcileCompletedWorkItem
+   * @method reconcileCompletedWorkItem
+   *
+   * @description
+   * Verifies the original create or update target exists in the authorized current work items
+   * without rebasing the queued intent.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperationFor<'work-item.create'>
+   *   | InterventionOutboxOperationFor<'work-item.update'>} operation
+   *   - Completed work-item intent.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Completes only when the exact native target is available.
+   */
+  private async reconcileCompletedWorkItem(
+    operation:
+      | InterventionOutboxOperationFor<'work-item.create'>
+      | InterventionOutboxOperationFor<'work-item.update'>,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const rows = await this.readCurrentReplay(
+      this.service.listAllWorkItems(operation.interventionId),
+      isCurrent,
+    );
+    const target =
+      operation.type === 'work-item.create'
+        ? operation.payload.clientId
+        : operation.payload.workItemId;
+    if (!rows.some((row) => row.id === target))
+      throw new Error('The completed work item is unavailable.');
+  }
+
+  /**
+   * Method reconcileCompletedChange
+   * @method reconcileCompletedChange
+   *
+   * @description
+   * Verifies the original create or update target exists in the authorized current changes
+   * without rebasing the queued intent.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {InterventionOutboxOperationFor<'change.create'>
+   *   | InterventionOutboxOperationFor<'change.update'>} operation
+   *   - Completed change intent.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Completes only when the exact native target is available.
+   */
+  private async reconcileCompletedChange(
+    operation:
+      | InterventionOutboxOperationFor<'change.create'>
+      | InterventionOutboxOperationFor<'change.update'>,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const rows = await this.readCurrentReplay(
+      this.service.listAllChanges(operation.interventionId),
+      isCurrent,
+    );
+    const target =
+      operation.type === 'change.create' ? operation.payload.clientId : operation.payload.changeId;
+    if (!rows.some((row) => row.id === target))
+      throw new Error('The completed change is unavailable.');
+  }
+
+  /**
+   * Method reconcileCompletedConsumption
+   * @method reconcileCompletedConsumption
+   *
+   * @description
+   * Reads the exact original client operation through the server receipt correlation and restores
+   * its physical receipt durably before acknowledgement. Field similarity never identifies it.
+   * Timestamp checks use the API's second precision without changing the original physical fact.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {string} organizationId - Organization owning the declaration.
+   * @param {InterventionOutboxOperationFor<'inventory-consumption.declare'>} operation - Original
+   *   physical fact.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<void>} Durable authoritative physical receipt completion.
+   */
+  private async reconcileCompletedConsumption(
+    organizationId: string,
+    operation: InterventionOutboxOperationFor<'inventory-consumption.declare'>,
+    isCurrent: () => boolean,
+  ): Promise<void> {
+    const input = operation.payload;
+    const accountId = this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null;
+    if (!accountId || accountId !== input.actorId)
+      throw new Error('Physical declaration ownership changed.');
+    const projection = await this.readCurrentReplay(
+      this.inventory.listConsumptions(organizationId, {
+        clientOperationId: input.clientOperationId,
+        itemsPerPage: 1,
+      }),
+      isCurrent,
+    );
+    const receipt = projection.member[0];
+    const occurredAt = receipt ? Date.parse(receipt.occurredAt) : Number.NaN;
+    const inputOccurredAt = Date.parse(input.occurredAt);
+    if (
+      projection.totalItems !== 1 ||
+      projection.member.length !== 1 ||
+      !receipt ||
+      typeof receipt.id !== 'string' ||
+      receipt.id.length === 0 ||
+      (receipt.status !== 'confirmed' && receipt.status !== 'received_pending') ||
+      receipt.quantity !== input.quantity ||
+      !Number.isFinite(occurredAt) ||
+      !Number.isFinite(inputOccurredAt) ||
+      Math.floor(occurredAt / 1000) !== Math.floor(inputOccurredAt / 1000) ||
+      receipt.interventionId !== operation.interventionId ||
+      receipt.actorId !== accountId ||
+      receipt.partId !== input.partId ||
+      receipt.warehouseId !== input.warehouseId ||
+      (receipt.workItemId ?? null) !== (input.workItemId ?? null) ||
+      (receipt.equipmentId ?? null) !== (input.equipmentId ?? null)
+    )
+      throw new Error('The exact completed physical receipt is unavailable.');
+    await this.inventorySnapshots.saveReceipt(organizationId, accountId, receipt, isCurrent);
+    if (!isCurrent()) throw new DOMException('Offline operation ownership changed.', 'AbortError');
+  }
+
+  /**
+   * Method readCurrentReplay
+   * @method readCurrentReplay
+   *
+   * @description
+   * Acquires a current-owner projection while suppressing obsolete responses at every await.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @template Response
+   *
+   * @param {Observable<Response>} request - Authorized owner projection request.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<Response>} Projection still owned by the initiating replay context.
+   */
+  private async readCurrentReplay<Response>(
+    request: Observable<Response>,
+    isCurrent: () => boolean,
+  ): Promise<Response> {
+    if (!isCurrent()) throw new DOMException('Offline operation ownership changed.', 'AbortError');
+    const response = await this.awaitReplay(request);
+    if (!isCurrent()) throw new DOMException('Offline operation ownership changed.', 'AbortError');
+    return response;
   }
 
   /**
@@ -687,9 +1034,14 @@ export class InterventionSyncService {
     organizationId: string,
     operation: InterventionOutboxOperation,
   ): Promise<void> {
+    const isCurrent = this.captureReplayContext();
+    const idempotencyKey =
+      operation.idempotencyKey ?? (await this.offline.ensureOutboxIdempotencyKey(operation.id));
+    if (!isCurrent() || !idempotencyKey)
+      throw new DOMException('Offline operation ownership changed.', 'AbortError');
+    operation = { ...operation, idempotencyKey };
     switch (operation.type) {
       case 'inventory-consumption.declare': {
-        const isCurrent = this.captureReplayContext();
         const accountId = this.identity.profile()?.id ?? this.identity.profile()?.sub ?? null;
         if (!accountId || accountId !== operation.payload.actorId)
           throw new DOMException(
@@ -698,16 +1050,20 @@ export class InterventionSyncService {
           );
         const input = operation.payload;
         const receipt = await this.awaitReplay(
-          this.inventory.declareConsumption(organizationId, {
-            clientOperationId: input.clientOperationId,
-            partId: input.partId,
-            warehouseId: input.warehouseId,
-            quantity: input.quantity,
-            interventionId: input.interventionId,
-            workItemId: input.workItemId,
-            equipmentId: input.equipmentId,
-            occurredAt: input.occurredAt,
-          }),
+          this.inventory.declareConsumption(
+            organizationId,
+            {
+              clientOperationId: input.clientOperationId,
+              partId: input.partId,
+              warehouseId: input.warehouseId,
+              quantity: input.quantity,
+              interventionId: input.interventionId,
+              workItemId: input.workItemId,
+              equipmentId: input.equipmentId,
+              occurredAt: input.occurredAt,
+            },
+            { idempotencyKey: operation.idempotencyKey },
+          ),
         );
         if (!isCurrent()) return;
         if (receipt.interventionId !== operation.interventionId)
@@ -721,13 +1077,17 @@ export class InterventionSyncService {
       }
       case 'time-entry.create':
         await this.awaitReplay(
-          this.time.createEntry(operation.payload.workItemId, {
-            id: operation.payload.id,
-            memberId: operation.payload.memberId,
-            workedOn: operation.payload.workedOn,
-            minutes: operation.payload.minutes,
-            note: operation.payload.note,
-          }),
+          this.time.createEntry(
+            operation.payload.workItemId,
+            {
+              id: operation.payload.id,
+              memberId: operation.payload.memberId,
+              workedOn: operation.payload.workedOn,
+              minutes: operation.payload.minutes,
+              note: operation.payload.note,
+            },
+            { idempotencyKey: operation.idempotencyKey },
+          ),
         );
         break;
       case 'time-entry.correct':
@@ -742,6 +1102,7 @@ export class InterventionSyncService {
               note: operation.payload.note,
             },
             operation.payload.revision,
+            { idempotencyKey: operation.idempotencyKey },
           ),
         );
         break;
@@ -751,6 +1112,7 @@ export class InterventionSyncService {
             operation.payload.workItemId,
             operation.payload.id,
             operation.payload.revision,
+            { idempotencyKey: operation.idempotencyKey },
           ),
         );
         break;
@@ -760,6 +1122,7 @@ export class InterventionSyncService {
             organizationId,
             operation.interventionId,
             operation.payload,
+            { idempotencyKey: operation.idempotencyKey },
           ),
         );
         break;
@@ -769,6 +1132,7 @@ export class InterventionSyncService {
             organizationId,
             operation.interventionId,
             operation.payload,
+            { idempotencyKey: operation.idempotencyKey },
           ),
         );
         break;
@@ -778,6 +1142,7 @@ export class InterventionSyncService {
             organizationId,
             operation.interventionId,
             operation.payload,
+            { idempotencyKey: operation.idempotencyKey },
           ),
         );
         break;
@@ -798,14 +1163,22 @@ export class InterventionSyncService {
         break;
       }
       case 'work-item.create':
-        await this.awaitReplay(this.service.createWorkItem(operation.payload));
+        await this.awaitReplay(
+          this.service.createWorkItem(operation.payload, {
+            idempotencyKey: operation.idempotencyKey,
+          }),
+        );
         break;
       case 'work-item.update': {
         await this.replayWorkItemUpdate(operation);
         break;
       }
       case 'change.create':
-        await this.awaitReplay(this.service.createChange(operation.payload));
+        await this.awaitReplay(
+          this.service.createChange(operation.payload, {
+            idempotencyKey: operation.idempotencyKey,
+          }),
+        );
         break;
       case 'change.update': {
         await this.replayChangeUpdate(operation);
@@ -848,6 +1221,7 @@ export class InterventionSyncService {
         fileName,
         operation.interventionId,
         operation.payload.clientId,
+        { idempotencyKey: operation.idempotencyKey },
       ),
     );
   }
@@ -879,10 +1253,13 @@ export class InterventionSyncService {
         operation.interventionId,
         file,
         fileName,
-        operation.payload.label,
-        operation.payload.workItemId,
-        operation.payload.kind,
-        operation.payload.clientId,
+        {
+          label: operation.payload.label,
+          workItemId: operation.payload.workItemId,
+          kind: operation.payload.kind,
+          clientId: operation.payload.clientId,
+        },
+        { idempotencyKey: operation.idempotencyKey },
       ),
     );
   }
@@ -912,6 +1289,7 @@ export class InterventionSyncService {
         operation.interventionId,
         body,
         typeof clientId === 'string' ? clientId : undefined,
+        { idempotencyKey: operation.idempotencyKey },
       ),
     );
   }
@@ -953,6 +1331,7 @@ export class InterventionSyncService {
           ...(dueAt !== undefined ? { dueAt: dueAt ? new Date(dueAt) : null } : {}),
         },
         typeof revision === 'number' ? revision : undefined,
+        { idempotencyKey: operation.idempotencyKey },
       ),
     );
   }
@@ -988,6 +1367,7 @@ export class InterventionSyncService {
         workItemId,
         input,
         typeof revision === 'number' ? revision : undefined,
+        { idempotencyKey: operation.idempotencyKey },
       ),
     );
   }
@@ -1023,6 +1403,7 @@ export class InterventionSyncService {
         changeId,
         input,
         typeof revision === 'number' ? revision : undefined,
+        { idempotencyKey: operation.idempotencyKey },
       ),
     );
   }

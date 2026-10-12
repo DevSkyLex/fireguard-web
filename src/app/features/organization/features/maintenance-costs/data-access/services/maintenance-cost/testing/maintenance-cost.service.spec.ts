@@ -11,6 +11,7 @@ describe('MaintenanceCostService financial contract', () => {
   const base = 'https://api.test/api/organizations/org';
   const cost = maintenanceCostFixture();
   const costUrl = base + '/interventions/' + cost.interventionId + '/costs';
+  const operation = { idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f12' };
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
@@ -37,10 +38,17 @@ describe('MaintenanceCostService financial contract', () => {
       estimatedMinutes: null,
       resources: [],
     };
-    service.writePlanning('org', cost.interventionId, input, 0).subscribe();
+    service
+      .writePlanning('org', cost.interventionId, input, 0, {
+        ...operation,
+        headers: { 'If-Match': 'tampered', 'X-Intent': 'retained' },
+      })
+      .subscribe();
     const request = http.expectOne(costUrl + '/planning');
     expect(request.request.method).toBe('PATCH');
     expect(request.request.headers.get('If-Match')).toBe('"revision-0"');
+    expect(request.request.headers.get('Idempotency-Key')).toBe(operation.idempotencyKey);
+    expect(request.request.headers.get('X-Intent')).toBe('retained');
     expect(request.request.headers.get('Content-Type')).toBe('application/merge-patch+json');
     expect(request.request.body).toEqual(input);
     request.flush(cost);
@@ -54,10 +62,11 @@ describe('MaintenanceCostService financial contract', () => {
       adjustmentOf: 'original',
       workItemId: 'task',
     };
-    service.createExpense('org', cost.interventionId, input).subscribe();
+    service.createExpense('org', cost.interventionId, input, operation).subscribe();
     const request = http.expectOne(costUrl + '/expenses');
     expect(request.request.method).toBe('POST');
     expect(request.request.body).toEqual(input);
+    expect(request.request.headers.get('Idempotency-Key')).toBe(operation.idempotencyKey);
     request.flush(cost);
   });
   it('reads currency and rate history in organization scope with server pagination', () => {
@@ -76,6 +85,15 @@ describe('MaintenanceCostService financial contract', () => {
     expect(request.request.params.get('memberId')).toBe('member');
     request.flush({ member: [], totalItems: 0 });
   });
+
+  it('keeps the original HTTP key when submitting an organization currency intention', () => {
+    service.writeCurrency('org', 'EUR', operation).subscribe();
+    const request = http.expectOne(base + '/maintenance-cost/currency');
+    expect(request.request.method).toBe('PATCH');
+    expect(request.request.body).toEqual({ currency: 'EUR' });
+    expect(request.request.headers.get('Idempotency-Key')).toBe(operation.idempotencyKey);
+    request.flush({ organizationId: 'org', currency: 'EUR', locked: false });
+  });
   it('sends a dated exact rate and propagates an immutable receipt', () => {
     const input = {
       clientId: '12345678-1234-4234-8234-123456789abe',
@@ -83,8 +101,9 @@ describe('MaintenanceCostService financial contract', () => {
       hourlyAmount: '9007199254740993.123456',
       effectiveFrom: '2026-10-06',
     };
-    service.createRate('org', input).subscribe();
+    service.createRate('org', input, operation).subscribe();
     const request = http.expectOne(base + '/maintenance-cost/rates');
+    expect(request.request.headers.get('Idempotency-Key')).toBe(operation.idempotencyKey);
     expect(request.request.body).toEqual(input);
     request.flush({ id: input.clientId, ...input, currency: 'EUR', replayed: true });
   });

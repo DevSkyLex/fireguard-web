@@ -1,0 +1,78 @@
+import { WriteOperationService } from '../write-operation.service';
+
+describe('WriteOperationService', () => {
+  it('creates independent immutable identities without retaining caller state', () => {
+    const service = new WriteOperationService();
+    const first = service.create();
+    expect(Object.isFrozen(first)).toBe(true);
+    expect(service.create().idempotencyKey).not.toBe(first.idempotencyKey);
+    expect(new WriteOperationService().create().idempotencyKey).not.toBe(first.idempotencyKey);
+  });
+
+  it('retains unchanged wire inputs but replaces edited, completed and changed-owner intentions', () => {
+    const tracker = new WriteOperationService().createTracker();
+    const first = tracker.options(
+      'login',
+      { email: 'user@example.test', password: 'example-value' },
+      1,
+    );
+    expect(
+      tracker.options('login', { password: 'example-value', email: 'user@example.test' }, 1),
+    ).toBe(first);
+    const edited = tracker.options(
+      'login',
+      { email: 'user@example.test', password: 'edited-value' },
+      1,
+    );
+    expect(edited.idempotencyKey).not.toBe(first.idempotencyKey);
+    const ownerChanged = tracker.options(
+      'login',
+      { email: 'user@example.test', password: 'edited-value' },
+      2,
+    );
+    expect(ownerChanged.idempotencyKey).not.toBe(edited.idempotencyKey);
+    tracker.complete('login');
+    expect(
+      tracker.options('login', { email: 'user@example.test', password: 'edited-value' }, 2)
+        .idempotencyKey,
+    ).not.toBe(ownerChanged.idempotencyKey);
+    tracker.clear();
+    expect(
+      tracker.options('login', { email: 'user@example.test', password: 'example-value' }, 1)
+        .idempotencyKey,
+    ).not.toBe(first.idempotencyKey);
+  });
+
+  it('isolates caller trackers and requires explicit identities for uploads', () => {
+    const service = new WriteOperationService();
+    const first = service.createTracker();
+    const second = service.createTracker();
+    expect(first.options('save', { value: 1 }, 1).idempotencyKey).not.toBe(
+      second.options('save', { value: 1 }, 1).idempotencyKey,
+    );
+    expect(() => first.options('upload', new Blob(['contents']), 1)).toThrow(TypeError);
+    expect(() => first.options('upload', new FormData(), 1)).toThrow(TypeError);
+  });
+
+  it('retains distinct Unicode wire keys across property reorderings and preserves array order', () => {
+    const tracker = new WriteOperationService().createTracker();
+    const entries = [
+      ['é', 'composed'],
+      ['e\u0301', 'decomposed'],
+      ['\u{10000}', 'supplementary'],
+      ['\uE000', 'private-use'],
+    ] as const;
+    const first = tracker.options(
+      'save',
+      { details: Object.fromEntries(entries), values: ['é', 'e\u0301'] },
+      1,
+    );
+    const reordered = Object.fromEntries(entries.toReversed());
+    expect(tracker.options('save', { values: ['é', 'e\u0301'], details: reordered }, 1)).toBe(
+      first,
+    );
+    expect(
+      tracker.options('save', { details: reordered, values: ['e\u0301', 'é'] }, 1).idempotencyKey,
+    ).not.toBe(first.idempotencyKey);
+  });
+});

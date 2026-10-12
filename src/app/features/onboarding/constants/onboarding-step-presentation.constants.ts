@@ -2,14 +2,13 @@ import type { OnboardingStepKey, OnboardingStepPresentation } from '@features/on
 
 /**
  * Constant ONBOARDING_STEP_PRESENTATION
- * @const ONBOARDING_STEP_PRESENTATION
  *
  * @description
- * Exhaustive, localized presentation metadata for every {@link OnboardingStepKey}:
+ * Localized presentation metadata for FireGuard's known {@link OnboardingStepKey} values:
  * an icon name, a short title, a compact rail subtitle, and the longer
  * content-heading description. Shared by the wizard rail, the wizard content
- * heading and its "Next:" hint, so every surface renders identical step copy. A typed `Record` fails the build if a step key is added to the domain
- * model without a presentation entry.
+ * heading and its "Next:" hint, so every surface renders identical step copy.
+ * Other contributed or historical steps use their backend label through the presentation resolver.
  *
  * `icon` is a registered `@ng-icons/lucide` name — the values below replace a
  * leftover PrimeIcons (`pi-*`) vocabulary from before the spartan/ui migration,
@@ -17,9 +16,13 @@ import type { OnboardingStepKey, OnboardingStepPresentation } from '@features/on
  *
  * @since 2.1.0
  *
- * @type {Record<OnboardingStepKey, OnboardingStepPresentation>}
+ * @type {Readonly<Partial<Record<OnboardingStepKey, OnboardingStepPresentation>>>}
+ *
+ * @const ONBOARDING_STEP_PRESENTATION
  */
-export const ONBOARDING_STEP_PRESENTATION: Record<OnboardingStepKey, OnboardingStepPresentation> = {
+export const ONBOARDING_STEP_PRESENTATION: Readonly<
+  Partial<Record<OnboardingStepKey, OnboardingStepPresentation>>
+> = {
   create_organization: {
     icon: 'lucideBuilding2',
     label: $localize`:@@onboarding.step.org.label:Create organization`,

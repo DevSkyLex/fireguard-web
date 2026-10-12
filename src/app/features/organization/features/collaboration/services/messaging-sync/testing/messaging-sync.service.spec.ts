@@ -27,6 +27,7 @@ function operation(
 ): MessagingOutboxOperation {
   return {
     id,
+    idempotencyKey: crypto.randomUUID(),
     conversationId,
     type: 'message.send',
     payload: { conversationId, clientId: `client-${id}`, input: { body } },
@@ -38,6 +39,7 @@ function operation(
 
 describe('MessagingSyncService', () => {
   let outbox: {
+    ensureIdempotencyKey: ReturnType<typeof vi.fn>;
     list: ReturnType<typeof vi.fn>;
     remove: ReturnType<typeof vi.fn>;
     markFailed: ReturnType<typeof vi.fn>;
@@ -45,7 +47,10 @@ describe('MessagingSyncService', () => {
     failedCount: WritableSignal<number>;
     refresh: ReturnType<typeof vi.fn>;
   };
-  let messages: { postMessageWithClientId: ReturnType<typeof vi.fn> };
+  let messages: {
+    postMessageWithClientId: ReturnType<typeof vi.fn>;
+    list: ReturnType<typeof vi.fn>;
+  };
   let dispatcher: { dispatch: ReturnType<typeof vi.fn> };
   let revision: WritableSignal<number>;
   let authenticated: WritableSignal<boolean>;
@@ -85,6 +90,7 @@ describe('MessagingSyncService', () => {
     profile = signal<ShellUserProfile | null>({ id: 'account-a' });
     organizationId = signal<string | null>('org-1');
     outbox = {
+      ensureIdempotencyKey: vi.fn().mockResolvedValue(crypto.randomUUID()),
       list: vi.fn().mockResolvedValue([]),
       remove: vi.fn().mockResolvedValue(undefined),
       markFailed: vi.fn().mockResolvedValue(undefined),
@@ -92,7 +98,10 @@ describe('MessagingSyncService', () => {
       failedCount: signal(0),
       refresh: vi.fn().mockResolvedValue(undefined),
     };
-    messages = { postMessageWithClientId: vi.fn().mockReturnValue(of({ id: 'm1' })) };
+    messages = {
+      postMessageWithClientId: vi.fn().mockReturnValue(of({ id: 'm1' })),
+      list: vi.fn(),
+    };
     dispatcher = { dispatch: vi.fn() };
   });
 
@@ -103,16 +112,105 @@ describe('MessagingSyncService', () => {
 
     const result = await build().replay();
 
-    expect(messages.postMessageWithClientId).toHaveBeenCalledWith('c1', 'client-1', {
-      body: 'Bien reçu.',
-    });
+    expect(messages.postMessageWithClientId).toHaveBeenCalledWith(
+      'c1',
+      'client-1',
+      {
+        body: 'Bien reçu.',
+      },
+      { idempotencyKey: expect.any(String) },
+    );
     expect(outbox.remove).toHaveBeenCalledWith('1');
     expect(result).toEqual({ replayed: 1, deferred: 0, failed: 0 });
   });
 
+  it.each([
+    'idempotency_conflict',
+    'idempotency_replay_expired',
+    'idempotency_outcome_unknown',
+    'idempotency_result_unavailable',
+    'idempotency_owner_lost',
+  ])('keeps the original row and key for review after %s', async (code) => {
+    const queued = operation('1', 'c1', 'Saved intention');
+    outbox.list.mockResolvedValue([queued]);
+    messages.postMessageWithClientId.mockReturnValue(
+      throwError(() => ({ ...apiError(409), code })),
+    );
+    const result = await build().replay();
+    expect(outbox.remove).not.toHaveBeenCalled();
+    expect(outbox.markFailed).toHaveBeenCalledWith(queued.id, expect.any(String));
+    expect(messages.postMessageWithClientId).toHaveBeenCalledWith(
+      'c1',
+      queued.payload.clientId,
+      queued.payload.input,
+      { idempotencyKey: queued.idempotencyKey },
+    );
+    expect(result.failed).toBe(1);
+  });
+
+  it('defers an in-progress receipt with its original key', async () => {
+    const queued = operation('1', 'c1', 'Saved intention');
+    outbox.list.mockResolvedValue([queued]);
+    messages.postMessageWithClientId.mockReturnValue(
+      throwError(() => ({ ...apiError(409), code: 'idempotency_in_progress' })),
+    );
+    const result = await build().replay();
+    expect(outbox.remove).not.toHaveBeenCalled();
+    expect(outbox.markFailed).not.toHaveBeenCalled();
+    expect(result.deferred).toBe(1);
+  });
+
+  it.each([
+    { code: 'idempotency_conflict', expected: { replayed: 0, deferred: 0, failed: 1 } },
+    { code: 'idempotency_in_progress', expected: { replayed: 0, deferred: 1, failed: 0 } },
+  ])(
+    'retains the original send when receipt $code accompanies a native duplicate',
+    async ({ code, expected }) => {
+      const queued = operation('1', 'c1', 'Saved intention');
+      outbox.list.mockResolvedValue([queued]);
+      messages.postMessageWithClientId.mockReturnValue(
+        throwError(() => ({
+          ...apiError(409),
+          type: '/problems/client-resource-already-exists',
+          code,
+        })),
+      );
+
+      expect(await build().replay()).toEqual(expected);
+      expect(outbox.remove).not.toHaveBeenCalled();
+      expect(messages.list).not.toHaveBeenCalled();
+      expect(outbox.markFailed).toHaveBeenCalledTimes(expected.failed);
+      expect(messages.postMessageWithClientId).toHaveBeenCalledExactlyOnceWith(
+        'c1',
+        queued.payload.clientId,
+        queued.payload.input,
+        { idempotencyKey: queued.idempotencyKey },
+      );
+    },
+  );
+
+  it('retains a successfully sent intention when durable acknowledgement fails', async () => {
+    const queued = operation('1', 'c1', 'Accepted by the server');
+    outbox.list.mockResolvedValue([queued]);
+    outbox.remove.mockRejectedValue(new Error('IndexedDB transaction failed'));
+
+    expect(await build().replay()).toEqual({ replayed: 0, deferred: 1, failed: 0 });
+    expect(outbox.remove).toHaveBeenCalledExactlyOnceWith(queued.id);
+    expect(outbox.markFailed).not.toHaveBeenCalled();
+    expect(messages.postMessageWithClientId).toHaveBeenCalledExactlyOnceWith(
+      'c1',
+      queued.payload.clientId,
+      queued.payload.input,
+      { idempotencyKey: queued.idempotencyKey },
+    );
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
   it('should treat a replayed client id as done, not as an error', async () => {
     outbox.list.mockResolvedValue([operation('1', 'c1', 'Bien reçu.')]);
-    messages.postMessageWithClientId.mockReturnValue(throwError(() => apiError(409)));
+    messages.postMessageWithClientId.mockReturnValue(
+      throwError(() => ({ ...apiError(409), type: '/problems/client-resource-already-exists' })),
+    );
 
     const result = await build().replay();
 
@@ -315,5 +413,153 @@ describe('MessagingSyncService', () => {
     expect(outbox.remove).not.toHaveBeenCalled();
     expect(outbox.markFailed).not.toHaveBeenCalled();
     expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+  const completedExpiry = {
+    ...apiError(409),
+    code: 'idempotency_replay_expired',
+    operationCompleted: true,
+  };
+
+  it('reads the original native message across owner pages before acknowledging an expired completed send', async () => {
+    const queued = operation('1', 'c1', 'Committed once');
+    outbox.list.mockResolvedValue([queued]);
+    messages.postMessageWithClientId.mockReturnValue(throwError(() => completedExpiry));
+    messages.list
+      .mockReturnValueOnce(
+        of({ member: [{ id: 'other', conversation: '/api/conversations/c1' }], totalItems: 2 }),
+      )
+      .mockReturnValueOnce(
+        of({
+          member: [{ id: queued.payload.clientId, conversation: '/api/conversations/c1' }],
+          totalItems: 2,
+        }),
+      );
+    expect(await build().replay()).toEqual({ replayed: 1, deferred: 0, failed: 0 });
+    expect(messages.list.mock.calls).toEqual([
+      ['c1', { page: 1, itemsPerPage: 100 }],
+      ['c1', { page: 2, itemsPerPage: 100 }],
+    ]);
+    expect(messages.postMessageWithClientId).toHaveBeenCalledExactlyOnceWith(
+      'c1',
+      queued.payload.clientId,
+      queued.payload.input,
+      { idempotencyKey: queued.idempotencyKey },
+    );
+    expect(outbox.remove).toHaveBeenCalledExactlyOnceWith(queued.id);
+    expect(outbox.markFailed).not.toHaveBeenCalled();
+    const projectionOrder = messages.list.mock.invocationCallOrder[1] ?? 0;
+    const acknowledgementOrder = outbox.remove.mock.invocationCallOrder[0] ?? 0;
+    expect(projectionOrder).toBeGreaterThan(0);
+    expect(acknowledgementOrder).toBeGreaterThan(projectionOrder);
+    expect(dispatcher.dispatch).toHaveBeenCalledOnce();
+  });
+
+  it('holds the pending send until its current-owner read settles', async () => {
+    const queued = operation('1', 'c1', 'Committed once');
+    const held = new Subject<{
+      member: { id: string; conversation: string }[];
+      totalItems: number;
+    }>();
+    outbox.list.mockResolvedValue([queued]);
+    messages.postMessageWithClientId.mockReturnValue(throwError(() => completedExpiry));
+    messages.list.mockReturnValue(held);
+    const pass = build().replay();
+    await vi.waitFor(() => expect(messages.list).toHaveBeenCalledOnce());
+    expect(outbox.remove).not.toHaveBeenCalled();
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    held.next({
+      member: [{ id: queued.payload.clientId, conversation: '/api/conversations/c1' }],
+      totalItems: 1,
+    });
+    expect((await pass).replayed).toBe(1);
+    expect(outbox.remove).toHaveBeenCalledExactlyOnceWith(queued.id);
+  });
+
+  it.each([403, 404, 503])(
+    'retains the completed send as pending when owner reconciliation returns %s',
+    async (status) => {
+      outbox.list.mockResolvedValue([operation('1', 'c1', 'Committed once')]);
+      messages.postMessageWithClientId.mockReturnValue(throwError(() => completedExpiry));
+      messages.list.mockReturnValue(throwError(() => apiError(status)));
+      expect(await build().replay()).toEqual({ replayed: 0, deferred: 1, failed: 0 });
+      expect(outbox.remove).not.toHaveBeenCalled();
+      expect(outbox.markFailed).not.toHaveBeenCalled();
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { member: [], totalItems: 0 },
+    { member: [{ id: 'other', conversation: '/api/conversations/c1' }], totalItems: 1 },
+    { member: [{ id: 'client-1', conversation: '/api/conversations/other' }], totalItems: 1 },
+    { member: [], totalItems: undefined },
+  ])(
+    'retains a completed send when its native owner projection is missing or invalid: %j',
+    async (projection) => {
+      outbox.list.mockResolvedValue([operation('1', 'c1', 'Committed once')]);
+      messages.postMessageWithClientId.mockReturnValue(throwError(() => completedExpiry));
+      messages.list.mockReturnValue(of(projection));
+      expect((await build().replay()).deferred).toBe(1);
+      expect(outbox.remove).not.toHaveBeenCalled();
+      expect(outbox.markFailed).not.toHaveBeenCalled();
+    },
+  );
+
+  it('retains a completed send when durable acknowledgement fails', async () => {
+    outbox.list.mockResolvedValue([operation('1', 'c1', 'Committed once')]);
+    messages.postMessageWithClientId.mockReturnValue(throwError(() => completedExpiry));
+    messages.list.mockReturnValue(
+      of({ member: [{ id: 'client-1', conversation: '/api/conversations/c1' }], totalItems: 1 }),
+    );
+    outbox.remove.mockRejectedValue(new Error('IndexedDB transaction failed'));
+    expect(await build().replay()).toEqual({ replayed: 0, deferred: 1, failed: 0 });
+    expect(outbox.markFailed).not.toHaveBeenCalled();
+    expect(dispatcher.dispatch).not.toHaveBeenCalled();
+  });
+
+  it.each(['session', 'account', 'workspace'])(
+    'does not acknowledge an expired completed send after the %s changes during acquisition',
+    async (change) => {
+      outbox.list.mockResolvedValue([operation('1', 'c1', 'Committed once')]);
+      messages.postMessageWithClientId.mockReturnValue(throwError(() => completedExpiry));
+      const held = new Subject<{
+        member: { id: string; conversation: string }[];
+        totalItems: number;
+      }>();
+      messages.list.mockReturnValue(held);
+      const pass = build().replay();
+      await vi.waitFor(() => expect(messages.list).toHaveBeenCalledOnce());
+      if (change === 'session') revision.set(2);
+      else if (change === 'account') profile.set({ id: 'account-b' });
+      else organizationId.set('org-2');
+      held.next({
+        member: [{ id: 'client-1', conversation: '/api/conversations/c1' }],
+        totalItems: 1,
+      });
+      expect(await pass).toEqual({ replayed: 0, deferred: 0, failed: 0 });
+      expect(outbox.remove).not.toHaveBeenCalled();
+      expect(outbox.markFailed).not.toHaveBeenCalled();
+      expect(dispatcher.dispatch).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([
+    { status: 409, code: 'idempotency_replay_expired' },
+    { status: 409, code: 'idempotency_replay_expired', operationCompleted: false },
+    { status: 409, code: 'idempotency_replay_expired', operationCompleted: 'true' },
+    { status: 403, code: 'idempotency_replay_expired', operationCompleted: true },
+    { status: 409, code: 'idempotency_outcome_unknown', operationCompleted: true },
+    { status: 409, code: 'idempotency_result_unavailable', operationCompleted: true },
+    { status: 409, code: 'idempotency_owner_lost', operationCompleted: true },
+    { status: 409, code: 'idempotency_conflict', operationCompleted: true },
+  ])('never acknowledges a non-authoritative expiry or uncertain failure: %j', async (problem) => {
+    outbox.list.mockResolvedValue([operation('1', 'c1', 'Keep original intent')]);
+    messages.postMessageWithClientId.mockReturnValue(
+      throwError(() => ({ ...apiError(problem.status), ...problem })),
+    );
+    expect((await build().replay()).failed).toBe(1);
+    expect(messages.list).not.toHaveBeenCalled();
+    expect(outbox.remove).not.toHaveBeenCalled();
+    expect(outbox.markFailed).toHaveBeenCalledOnce();
   });
 });

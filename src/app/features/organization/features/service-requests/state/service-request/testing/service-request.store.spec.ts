@@ -104,7 +104,9 @@ describe('ServiceRequestStore', () => {
       input: { clientOperationId: 'replacement' },
     });
     await vi.waitFor(() => expect(store.writeCallState().status).toBe('success'));
-    expect(service.convert).toHaveBeenLastCalledWith('org', qualified, original);
+    expect(service.convert).toHaveBeenLastCalledWith('org', qualified, original, {
+      idempotencyKey: '7c3d02a0-65f0-43ac-a12b-76f4e2c25f14',
+    });
     expect(store.conversionCommand()).toBeNull();
     expect(store.readCallState().data?.interventionId).toBe('work');
   });

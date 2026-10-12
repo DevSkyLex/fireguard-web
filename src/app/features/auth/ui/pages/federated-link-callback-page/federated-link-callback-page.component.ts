@@ -9,6 +9,7 @@ import {
   signal,
   untracked,
   type EffectRef,
+  type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -29,6 +30,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * then returns to account security.
  *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -43,9 +45,12 @@ export class FederatedLinkCallbackPage implements OnInit {
    * Property federatedStore
    * @readonly
    *
-   * @description Federated connection callback state.
+   * @description
+   * Federated connection callback state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FederatedAuthStore}
    */
   protected readonly federatedStore: FederatedAuthStore = inject(FederatedAuthStore);
@@ -54,31 +59,41 @@ export class FederatedLinkCallbackPage implements OnInit {
    * Property callbackInvalid
    * @readonly
    *
-   * @description Whether callback values are incomplete or cancelled.
+   * @description
+   * Whether callback values are incomplete or cancelled.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly callbackInvalid = signal<boolean>(false);
+  protected readonly callbackInvalid: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property federatedErrorMessage
    * @readonly
    *
-   * @description Maps callback error codes to localized, non-sensitive copy.
+   * @description
+   * Maps callback error codes to localized, non-sensitive copy.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {typeof resolveFederatedAuthErrorMessage}
    */
-  protected readonly federatedErrorMessage = resolveFederatedAuthErrorMessage;
+  protected readonly federatedErrorMessage: (value: string | null | undefined) => string =
+    resolveFederatedAuthErrorMessage;
 
   /**
    * Property route
    * @readonly
    *
-   * @description Active callback route and query values.
+   * @description
+   * Active callback route and query values.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
@@ -87,9 +102,12 @@ export class FederatedLinkCallbackPage implements OnInit {
    * Property router
    * @readonly
    *
-   * @description Router used for return navigation.
+   * @description
+   * Router used for return navigation.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Router}
    */
   private readonly router: Router = inject(Router);
@@ -98,9 +116,12 @@ export class FederatedLinkCallbackPage implements OnInit {
    * Property location
    * @readonly
    *
-   * @description Angular location service used to remove callback secrets from browser history.
+   * @description
+   * Angular location service used to remove callback secrets from browser history.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {Location}
    */
   private readonly location: Location = inject(Location);
@@ -109,9 +130,12 @@ export class FederatedLinkCallbackPage implements OnInit {
    * Property platformId
    * @readonly
    *
-   * @description Runtime platform discriminator for browser-only callback work.
+   * @description
+   * Runtime platform discriminator for browser-only callback work.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {object}
    */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
@@ -119,9 +143,12 @@ export class FederatedLinkCallbackPage implements OnInit {
   /**
    * Property handled
    *
-   * @description Prevents duplicate navigation from repeated effect evaluation.
+   * @description
+   * Prevents duplicate navigation from repeated effect evaluation.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private handled: boolean = false;
@@ -130,9 +157,12 @@ export class FederatedLinkCallbackPage implements OnInit {
    * Property outcome
    * @readonly
    *
-   * @description Returns to Security after the provider-link callback succeeds.
+   * @description
+   * Returns to Security after the provider-link callback succeeds.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {EffectRef}
    */
   private readonly outcome: EffectRef = effect((): void => {
@@ -147,12 +177,15 @@ export class FederatedLinkCallbackPage implements OnInit {
   /**
    * Method ngOnInit
    * @method ngOnInit
+   *
    * @description
    * Removes provider credentials from history and exchanges the code in the
    * browser. SSR leaves the one-time values untouched so the authenticated
    * browser runtime remains the sole owner of the connection result.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {void}
    */
   public ngOnInit(): void {
@@ -177,13 +210,18 @@ export class FederatedLinkCallbackPage implements OnInit {
   /**
    * Method toProvider
    * @method toProvider
-   * @description Narrows an untrusted route segment to a supported provider.
+   *
+   * @description
+   * Narrows an untrusted route segment to a supported provider.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string | null} value - Provider route segment.
+   *
    * @returns {FederatedProvider | null} Supported provider or null.
    */
   private toProvider(value: string | null): FederatedProvider | null {
-    return value === 'google' || value === 'microsoft' ? value : null;
+    return value !== null && /^[a-z][a-z0-9_-]{0,19}$/.test(value) ? value : null;
   }
 }

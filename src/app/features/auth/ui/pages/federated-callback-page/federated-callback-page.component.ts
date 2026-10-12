@@ -9,6 +9,7 @@ import {
   signal,
   untracked,
   type EffectRef,
+  type WritableSignal,
 } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { NgIcon, provideIcons } from '@ng-icons/core';
@@ -30,6 +31,7 @@ import { HlmSpinner } from '@shared/ui/spinner';
  * session store, preserving MFA and onboarding navigation.
  *
  * @version 1.1.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
  */
 @Component({
@@ -44,9 +46,12 @@ export class FederatedCallbackPage implements OnInit {
    * Property federatedStore
    * @readonly
    *
-   * @description Federated callback request state.
+   * @description
+   * Federated callback request state.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {FederatedAuthStore}
    */
   protected readonly federatedStore: FederatedAuthStore = inject(FederatedAuthStore);
@@ -55,41 +60,55 @@ export class FederatedCallbackPage implements OnInit {
    * Property callbackInvalid
    * @readonly
    *
-   * @description Whether the callback lacks usable code, state or provider values.
+   * @description
+   * Whether the callback lacks usable code, state or provider values.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {WritableSignal<boolean>}
    */
-  protected readonly callbackInvalid = signal<boolean>(false);
+  protected readonly callbackInvalid: WritableSignal<boolean> = signal<boolean>(false);
 
   /**
    * Property returnUrl
    * @readonly
-   * @description Validated callback intent reused by both failure links and successful sign-in.
+   *
+   * @description
+   * Validated callback intent reused by both failure links and successful sign-in.
+   *
    * @access protected
    * @since 1.1.0
+   *
    * @type {WritableSignal<string>}
    */
-  protected readonly returnUrl = signal<string>('');
+  protected readonly returnUrl: WritableSignal<string> = signal<string>('');
 
   /**
    * Property federatedErrorMessage
    * @readonly
    *
-   * @description Maps callback error codes to localized, non-sensitive copy.
+   * @description
+   * Maps callback error codes to localized, non-sensitive copy.
+   *
    * @access protected
    * @since 1.0.0
+   *
    * @type {typeof resolveFederatedAuthErrorMessage}
    */
-  protected readonly federatedErrorMessage = resolveFederatedAuthErrorMessage;
+  protected readonly federatedErrorMessage: (value: string | null | undefined) => string =
+    resolveFederatedAuthErrorMessage;
 
   /**
    * Property authStore
    * @readonly
    *
-   * @description Existing owner of the authenticated session outcome.
+   * @description
+   * Existing owner of the authenticated session outcome.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {AuthStore}
    */
   private readonly authStore: AuthStore = inject(AuthStore);
@@ -98,9 +117,12 @@ export class FederatedCallbackPage implements OnInit {
    * Property route
    * @readonly
    *
-   * @description Active callback route and query values.
+   * @description
+   * Active callback route and query values.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {ActivatedRoute}
    */
   private readonly route: ActivatedRoute = inject(ActivatedRoute);
@@ -109,9 +131,12 @@ export class FederatedCallbackPage implements OnInit {
    * Property router
    * @readonly
    *
-   * @description Router used for outcome navigation.
+   * @description
+   * Router used for outcome navigation.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {Router}
    */
   private readonly router: Router = inject(Router);
@@ -120,9 +145,12 @@ export class FederatedCallbackPage implements OnInit {
    * Property location
    * @readonly
    *
-   * @description Angular location service used to remove callback secrets from browser history.
+   * @description
+   * Angular location service used to remove callback secrets from browser history.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {Location}
    */
   private readonly location: Location = inject(Location);
@@ -131,9 +159,12 @@ export class FederatedCallbackPage implements OnInit {
    * Property platformId
    * @readonly
    *
-   * @description Runtime platform discriminator for browser-only callback work.
+   * @description
+   * Runtime platform discriminator for browser-only callback work.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {object}
    */
   private readonly platformId: object = inject<object>(PLATFORM_ID);
@@ -141,9 +172,13 @@ export class FederatedCallbackPage implements OnInit {
   /**
    * Property returnContext
    * @readonly
-   * @description Consumes tab-local OAuth recovery without retaining provider credentials.
+   *
+   * @description
+   * Consumes tab-local OAuth recovery without retaining provider credentials.
+   *
    * @access private
    * @since 1.1.0
+   *
    * @type {FederatedReturnContextService}
    */
   private readonly returnContext: FederatedReturnContextService = inject(
@@ -153,18 +188,25 @@ export class FederatedCallbackPage implements OnInit {
   /**
    * Property handled
    *
-   * @description Prevents duplicate navigation from repeated effect evaluation.
+   * @description
+   * Prevents duplicate navigation from repeated effect evaluation.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {boolean}
    */
   private handled: boolean = false;
 
   /**
    * Property callbackSessionRevision
-   * @description Session generation that initiated this callback exchange.
+   *
+   * @description
+   * Session generation that initiated this callback exchange.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {number}
    */
   private callbackSessionRevision: number = this.authStore.sessionRevision();
@@ -173,9 +215,12 @@ export class FederatedCallbackPage implements OnInit {
    * Property outcome
    * @readonly
    *
-   * @description Applies and consumes the completed session before navigating once.
+   * @description
+   * Applies and consumes the completed session before navigating once.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @type {EffectRef}
    */
   private readonly outcome: EffectRef = effect((): void => {
@@ -212,12 +257,15 @@ export class FederatedCallbackPage implements OnInit {
   /**
    * Method ngOnInit
    * @method ngOnInit
+   *
    * @description
    * Removes callback secrets from history and starts the one-time exchange in
    * the browser. SSR must leave the authorization code untouched because its
    * session state cannot be transferred to the hydrating runtime.
+   *
    * @access public
    * @since 1.0.0
+   *
    * @returns {void}
    */
   public ngOnInit(): void {
@@ -250,13 +298,18 @@ export class FederatedCallbackPage implements OnInit {
   /**
    * Method toProvider
    * @method toProvider
-   * @description Narrows an untrusted route segment to a supported provider.
+   *
+   * @description
+   * Narrows an untrusted route segment to a supported provider.
+   *
    * @access private
    * @since 1.0.0
+   *
    * @param {string | null} value - Provider route segment.
+   *
    * @returns {FederatedProvider | null} Supported provider or null.
    */
   private toProvider(value: string | null): FederatedProvider | null {
-    return value === 'google' || value === 'microsoft' ? value : null;
+    return value !== null && /^[a-z][a-z0-9_-]{0,19}$/.test(value) ? value : null;
   }
 }

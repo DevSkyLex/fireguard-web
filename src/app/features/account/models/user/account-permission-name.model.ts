@@ -1,9 +1,10 @@
+import type { UserProfileOutput } from './user-profile-output.interface';
+
 /**
  * Constant ACCOUNT_PERMISSION
  *
  * @description
  * Canonical global permission names exposed by the account feature.
- *
  * A const object is preferred over a TypeScript enum so consumers keep strict
  * typing and autocomplete without adding enum runtime output.
  *
@@ -58,9 +59,13 @@ export const ACCOUNT_PERMISSION = {
  * Type AccountPermissionName
  *
  * @description
- * Union of all known global permission names.
+ * Backend-owned global permission name. Known constants keep autocomplete available while
+ * contributed permissions can be checked without changing this declaration. The profile's
+ * effective permissions define the identifier accepted by permission checks.
+ *
+ * @type {string}
  */
-export type AccountPermissionName = (typeof ACCOUNT_PERMISSION)[keyof typeof ACCOUNT_PERMISSION];
+export type AccountPermissionName = UserProfileOutput['permissions'][number];
 
 /**
  * Constant ACCOUNT_PERMISSION_NAMES

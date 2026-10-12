@@ -31,6 +31,16 @@ generation for local journal ownership; it never reads or persists bearer tokens
 Returns and stock corrections are retained in an account-bound IndexedDB journal before transmission.
 An uncertain command stays available for explicit replay with its original UUID and body, including
 after navigation. Old session continuations cannot transmit or acknowledge a new session's journal.
+The journal commits an `Idempotency-Key` alongside the immutable business UUID before the first
+network request. An atomic transaction backfills legacy entries and keeps one key across concurrent
+tabs, navigation and reload. Conflicts, missing receipts, uncertain outcomes and revoked access retain
+the original intent. Only an authenticated `409 idempotency_replay_expired` with
+`operationCompleted: true` acknowledges an expired completed write; the saved event refreshes the
+quantity projections without fabricating a movement response.
+
+`InventoryConsumptionListOptions.clientOperationId` selects the exact organization-owned declaration
+correlated by its original command receipt. Interventions uses this read filter to recover a physical
+consumption after expiration before acknowledging its local command.
 
 Inventory never calculates quantities or money with floating-point numbers. Ordinary balance and
 movement contracts contain quantities only; dedicated financial projections and permissions protect

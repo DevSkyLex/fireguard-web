@@ -180,7 +180,11 @@ describe('FederatedAuthStore', () => {
     );
 
     store.startLogin({ provider: 'google', returnUrl });
-    expect(service.startLogin).toHaveBeenCalledWith('google', { return_url: expected });
+    expect(service.startLogin).toHaveBeenCalledWith(
+      'google',
+      { return_url: expected },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
   });
 
   it('purges abandoned federated return intent when the session ends', () => {
@@ -216,12 +220,18 @@ describe('FederatedAuthStore', () => {
       '@type': 'FederatedProvider',
       provider: 'google',
       enabled: true,
+      id: 'google',
+      value: 'google',
+      label: 'Google',
     },
     {
       '@id': '/api/auth/federated/providers/microsoft',
       '@type': 'FederatedProvider',
       provider: 'microsoft',
       enabled: false,
+      id: 'microsoft',
+      value: 'microsoft',
+      label: 'Microsoft',
     },
   ];
   const connections: FederatedConnectionsOutput = {
@@ -323,10 +333,14 @@ describe('FederatedAuthStore', () => {
 
     store.completeLogin({ provider: 'google', input: { error: 'access_denied', state: 'state' } });
 
-    expect(service.completeLogin).toHaveBeenCalledWith('google', {
-      error: 'access_denied',
-      state: 'state',
-    });
+    expect(service.completeLogin).toHaveBeenCalledWith(
+      'google',
+      {
+        error: 'access_denied',
+        state: 'state',
+      },
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.completeLoginError()).toMatchObject({ code: 503 });
     expect(store.completeLoginResult()).toBeNull();
   });
@@ -358,7 +372,10 @@ describe('FederatedAuthStore', () => {
     service.startLink.mockReturnValue(of(redirect));
 
     store.startLink('microsoft');
-    expect(service.startLink).toHaveBeenCalledWith('microsoft');
+    expect(service.startLink).toHaveBeenCalledWith(
+      'microsoft',
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.startUrl()).toBe(redirect.authorization_url);
     expect(store.pendingProvider()).toBe('microsoft');
     store.resetStart();
@@ -416,7 +433,10 @@ describe('FederatedAuthStore', () => {
 
     const input = { token: 'challenge', code: '123456', newPassword: 'NewPassword123!' };
     store.confirmPasswordSetup(input);
-    expect(service.confirmPasswordSetup).toHaveBeenCalledWith(input);
+    expect(service.confirmPasswordSetup).toHaveBeenCalledWith(
+      input,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(store.passwordSetupConfirmCallState().status).toBe('pending');
     expect(store.passwordConfigured()).toBe(false);
     pending.next(confirmation);

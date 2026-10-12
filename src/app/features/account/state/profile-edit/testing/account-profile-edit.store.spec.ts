@@ -15,9 +15,7 @@ interface MockUserProfileService {
   readonly updateCurrentProfile: ReturnType<
     typeof vi.fn<(input: UpdateCurrentUserProfileInput) => Observable<UserProfileOutput>>
   >;
-  readonly uploadCurrentAvatar: ReturnType<
-    typeof vi.fn<(avatar: Blob, fileName?: string) => Observable<UserOutput>>
-  >;
+  readonly uploadCurrentAvatar: ReturnType<typeof vi.fn<UserProfileService['uploadCurrentAvatar']>>;
 }
 
 interface MockUserStore {
@@ -60,9 +58,7 @@ describe('AccountProfileEditStore', () => {
       updateCurrentProfile: vi.fn<
         (input: UpdateCurrentUserProfileInput) => Observable<UserProfileOutput>
       >(() => of(USER_PROFILE_OUTPUT)),
-      uploadCurrentAvatar: vi.fn<(avatar: Blob, fileName?: string) => Observable<UserOutput>>(() =>
-        of(USER_OUTPUT),
-      ),
+      uploadCurrentAvatar: vi.fn<UserProfileService['uploadCurrentAvatar']>(() => of(USER_OUTPUT)),
     };
     const mockUserStore: MockUserStore = {
       profile: vi.fn<() => UserProfileOutput | null>(() => USER_PROFILE_OUTPUT),
@@ -88,7 +84,10 @@ describe('AccountProfileEditStore', () => {
 
     store.save(INPUT);
 
-    expect(mockUserProfileService.updateCurrentProfile).toHaveBeenCalledWith(INPUT);
+    expect(mockUserProfileService.updateCurrentProfile).toHaveBeenCalledWith(
+      INPUT,
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(mockUserStore.setProfile).toHaveBeenCalledWith(USER_PROFILE_OUTPUT);
     expect(mockUserStore.reload).not.toHaveBeenCalled();
     expect(store.isSaving()).toBe(false);
@@ -114,7 +113,11 @@ describe('AccountProfileEditStore', () => {
 
     store.uploadAvatar(file);
 
-    expect(mockUserProfileService.uploadCurrentAvatar).toHaveBeenCalledWith(file, 'avatar.png');
+    expect(mockUserProfileService.uploadCurrentAvatar).toHaveBeenCalledWith(
+      file,
+      'avatar.png',
+      expect.objectContaining({ idempotencyKey: expect.any(String) }),
+    );
     expect(mockUserStore.setProfile).toHaveBeenCalledWith({
       ...USER_PROFILE_OUTPUT,
       avatarUrl: USER_OUTPUT.avatarUrl,
@@ -144,6 +147,44 @@ describe('AccountProfileEditStore', () => {
 
     expect(store.avatarError()).not.toBeNull();
   });
+
+  it('retains the avatar transport identity when retrying the same File after failure', () => {
+    const { store, mockUserProfileService } = setup();
+    const file = new File(['x'], 'avatar.png', { type: 'image/png' });
+    mockUserProfileService.uploadCurrentAvatar.mockReturnValue(
+      throwError(() => new Error('response lost')),
+    );
+
+    store.uploadAvatar(file);
+    store.uploadAvatar(file);
+
+    const calls = mockUserProfileService.uploadCurrentAvatar.mock.calls;
+    expect(calls).toHaveLength(2);
+    expect(calls[0]?.[2]).toEqual(expect.objectContaining({ idempotencyKey: expect.any(String) }));
+    expect(calls[1]?.[2]).toEqual(calls[0]?.[2]);
+  });
+
+  it('renews the avatar transport identity for a different File or a replaced session', () => {
+    const { store, mockUserProfileService, sessionRevision } = setup();
+    const first = new File(['x'], 'avatar.png', { type: 'image/png' });
+    const replacement = new File(['x'], 'avatar.png', { type: 'image/png' });
+    mockUserProfileService.uploadCurrentAvatar.mockReturnValue(
+      throwError(() => new Error('response lost')),
+    );
+
+    store.uploadAvatar(first);
+    store.uploadAvatar(replacement);
+    sessionRevision.set(1);
+    store.uploadAvatar(replacement);
+
+    const calls = mockUserProfileService.uploadCurrentAvatar.mock.calls;
+    expect(calls).toHaveLength(3);
+    for (const call of calls)
+      expect(call[2]).toEqual(expect.objectContaining({ idempotencyKey: expect.any(String) }));
+    expect(calls[1]?.[2]?.idempotencyKey).not.toBe(calls[0]?.[2]?.idempotencyKey);
+    expect(calls[2]?.[2]?.idempotencyKey).not.toBe(calls[1]?.[2]?.idempotencyKey);
+  });
+
   it('keeps a new session save independent of an older accepted save', () => {
     const { store, mockUserProfileService, mockUserStore, sessionRevision } = setup();
     const previous = new Subject<UserProfileOutput>();

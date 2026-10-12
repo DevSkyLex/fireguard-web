@@ -1,6 +1,6 @@
 import { Service } from '@angular/core';
-import { EMPTY, expand, reduce, type Observable, catchError } from 'rxjs';
-import { HydraApiService, type RequestOptions } from '@core/api';
+import { EMPTY, expand, reduce, type Observable } from 'rxjs';
+import { type ApiRequestOptions, HydraApiService, type RequestOptions } from '@core/api';
 import type { HydraCollection, OptionOutput } from '@core/api/models';
 import type {
   OrganizationDashboardOutput,
@@ -25,7 +25,6 @@ import type {
 /**
  * Service OrganizationService
  * @class OrganizationService
- * @extends {HydraApiService}
  *
  * @description
  * API service for organization management operations.
@@ -34,7 +33,10 @@ import type {
  * lives in {@link OrganizationInvitationService}.
  *
  * @version 1.0.0
+ *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @extends {HydraApiService}
  */
 @Service()
 export class OrganizationService extends HydraApiService {
@@ -65,11 +67,16 @@ export class OrganizationService extends HydraApiService {
    * @access private
    * @since 1.1.0
    *
-   * @param {(OrganizationDashboardQueryOptions | OrganizationDashboardTrendQueryOptions | OrganizationDashboardInspectionTrendQueryOptions | OrganizationDashboardNonConformityTrendQueryOptions)} [options]
-   * Optional dashboard filters.
-   * @param {boolean} [includeGranularity=false] - Whether to serialize the trend-only granularity parameter.
+   * @param {OrganizationDashboardQueryOptions
+   *   | OrganizationDashboardTrendQueryOptions
+   *   | OrganizationDashboardInspectionTrendQueryOptions
+   *   | OrganizationDashboardNonConformityTrendQueryOptions} [options]
+   *   Optional dashboard filters.
+   * @param {boolean} [includeGranularity=false] - Whether to serialize the trend-only granularity
+   *   parameter.
    *
-   * @return {RequestOptions | undefined} Normalized request options, or undefined when no filters are provided.
+   * @returns {RequestOptions | undefined} Normalized request options, or undefined when no filters
+   *   are provided.
    */
   private buildDashboardRequestOptions(
     options?:
@@ -123,7 +130,7 @@ export class OrganizationService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {string} [suffix] - Optional dashboard sub-resource suffix.
    *
-   * @return {string} The relative API path for the requested dashboard resource.
+   * @returns {string} The relative API path for the requested dashboard resource.
    */
   private dashboardPath(organizationId: string, suffix?: string): string {
     const basePath: string = `${OrganizationService.BASE_PATH}/${organizationId}/dashboard`;
@@ -146,7 +153,8 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {RequestOptions} [options] - Optional pagination and filter parameters.
    *
-   * @return {Observable<HydraCollection<OrganizationOutput>>} An observable emitting the organizations collection.
+   * @returns {Observable<HydraCollection<OrganizationOutput>>} An observable emitting the
+   *   organizations collection.
    */
   public list(options?: RequestOptions): Observable<HydraCollection<OrganizationOutput>> {
     return this.getCollection<OrganizationOutput>(OrganizationService.BASE_PATH, options);
@@ -164,7 +172,7 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {string} id - The unique identifier of the organization.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the organization details.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the organization details.
    */
   public get(id: string): Observable<OrganizationOutput> {
     return this.getOne<OrganizationOutput>(`${OrganizationService.BASE_PATH}/${id}`);
@@ -180,7 +188,6 @@ export class OrganizationService extends HydraApiService {
    * interventions are preserved, and {@link restore} brings it all back.
    * Named `remove` to avoid shadowing the protected `delete` method inherited
    * from HydraApiService.
-   *
    * `slug` is a mandatory danger-zone confirmation carried as a **query
    * parameter**, not a body: the caller retypes the organization's current
    * slug and a missing or mismatched value is refused with **422** without
@@ -192,7 +199,7 @@ export class OrganizationService extends HydraApiService {
    * @param {string} id - The unique identifier of the organization to archive.
    * @param {string} slug - The organization's current slug, retyped as confirmation.
    *
-   * @return {Observable<void>} Observable completing on success.
+   * @returns {Observable<void>} Observable completing on success.
    */
   public remove(id: string, slug: string): Observable<void> {
     return this.delete(`${OrganizationService.BASE_PATH}/${id}`, { params: { slug } });
@@ -210,7 +217,8 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {CreateOrganizationInput} input - The data required to create the organization.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the created organization details.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the created organization
+   *   details.
    */
   public create(input: CreateOrganizationInput): Observable<OrganizationOutput> {
     return this.post<CreateOrganizationInput, OrganizationOutput>(
@@ -233,7 +241,7 @@ export class OrganizationService extends HydraApiService {
    * @param {string} id - The unique identifier of the organization.
    * @param {UpdateOrganizationInput} input - The settings fields to update.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the updated organization.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the updated organization.
    */
   public update(id: string, input: UpdateOrganizationInput): Observable<OrganizationOutput> {
     return this.patch<UpdateOrganizationInput, OrganizationOutput>(
@@ -257,7 +265,7 @@ export class OrganizationService extends HydraApiService {
    * @param {string} organizationId - The unique identifier of the organization.
    * @param {ChangeOrganizationPlanInput} input - The target plan identifier.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the updated organization.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the updated organization.
    */
   public changePlan(
     organizationId: string,
@@ -282,7 +290,7 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {string} organizationId - The unique identifier of the organization.
    *
-   * @return {Observable<OrganizationQuotaOutput>} An observable emitting the quota usage.
+   * @returns {Observable<OrganizationQuotaOutput>} An observable emitting the quota usage.
    */
   public getQuota(organizationId: string): Observable<OrganizationQuotaOutput> {
     return this.getOne<OrganizationQuotaOutput>(
@@ -304,27 +312,24 @@ export class OrganizationService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {Blob} logo - The logo image binary to upload.
    * @param {string} [fileName='logo'] - The file name sent with the upload.
+   * @param {ApiRequestOptions} [options] - Optional headers and retained immutable upload identity.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the updated organization.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the updated organization.
    */
   public uploadLogo(
     organizationId: string,
     logo: Blob,
     fileName: string = 'logo',
+    options?: ApiRequestOptions,
   ): Observable<OrganizationOutput> {
     const body: FormData = new FormData();
     body.set('logo', logo, fileName);
 
-    return this.http
-      .post<OrganizationOutput>(
-        this.buildUrl(`${OrganizationService.BASE_PATH}/${organizationId}/logo`),
-        body,
-        {
-          headers: this.defaultHeaders.delete('Content-Type'),
-          withCredentials: true,
-        },
-      )
-      .pipe(catchError(this.handleError));
+    return this.postMultipart<OrganizationOutput>(
+      `${OrganizationService.BASE_PATH}/${organizationId}/logo`,
+      body,
+      options,
+    );
   }
 
   /**
@@ -342,7 +347,7 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    *
-   * @return {Observable<void>} Observable completing on success.
+   * @returns {Observable<void>} Observable completing on success.
    */
   public removeLogo(organizationId: string): Observable<void> {
     return this.delete(`${OrganizationService.BASE_PATH}/${organizationId}/logo`);
@@ -363,9 +368,10 @@ export class OrganizationService extends HydraApiService {
    * @since 1.5.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {TransferOrganizationOwnershipInput} input - The new owner's user id and the slug confirmation.
+   * @param {TransferOrganizationOwnershipInput} input - The new owner's user id and the slug
+   *   confirmation.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the refreshed organization.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the refreshed organization.
    */
   public transferOwnership(
     organizationId: string,
@@ -392,7 +398,7 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the suspended organization.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the suspended organization.
    */
   public suspend(organizationId: string): Observable<OrganizationOutput> {
     return this.postAction<OrganizationOutput>(
@@ -415,7 +421,7 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {string} organizationId - The ID of the organization.
    *
-   * @return {Observable<OrganizationOutput>} An observable emitting the restored organization.
+   * @returns {Observable<OrganizationOutput>} An observable emitting the restored organization.
    */
   public restore(organizationId: string): Observable<OrganizationOutput> {
     return this.postAction<OrganizationOutput>(
@@ -436,9 +442,11 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {OrganizationDashboardQueryOptions} [options] - Optional aggregate dashboard query parameters.
+   * @param {OrganizationDashboardQueryOptions} [options] - Optional aggregate dashboard query
+   *   parameters.
    *
-   * @return {Observable<OrganizationDashboardOutput>} An observable emitting the dashboard resource.
+   * @returns {Observable<OrganizationDashboardOutput>} An observable emitting the dashboard
+   *   resource.
    */
   public getDashboard(
     organizationId: string,
@@ -462,9 +470,11 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {OrganizationDashboardInspectionTrendQueryOptions} [options] - Optional inspections trend query parameters.
+   * @param {OrganizationDashboardInspectionTrendQueryOptions} [options] - Optional inspections
+   *   trend query parameters.
    *
-   * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the inspections trend resource.
+   * @returns {Observable<OrganizationDashboardTrendOutput>} An observable emitting the inspections
+   *   trend resource.
    */
   public getDashboardInspectionsTrend(
     organizationId: string,
@@ -488,9 +498,11 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional opened non-conformities trend query parameters.
+   * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional opened
+   *   non-conformities trend query parameters.
    *
-   * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the opened non-conformities trend resource.
+   * @returns {Observable<OrganizationDashboardTrendOutput>} An observable emitting the opened
+   *   non-conformities trend resource.
    */
   public getDashboardNonConformitiesOpenedTrend(
     organizationId: string,
@@ -514,9 +526,11 @@ export class OrganizationService extends HydraApiService {
    * @since 1.1.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional resolved non-conformities trend query parameters.
+   * @param {OrganizationDashboardNonConformityTrendQueryOptions} [options] - Optional resolved
+   *   non-conformities trend query parameters.
    *
-   * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the resolved non-conformities trend resource.
+   * @returns {Observable<OrganizationDashboardTrendOutput>} An observable emitting the resolved
+   *   non-conformities trend resource.
    */
   public getDashboardNonConformitiesResolvedTrend(
     organizationId: string,
@@ -540,9 +554,11 @@ export class OrganizationService extends HydraApiService {
    * @since 1.2.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {OrganizationDashboardEquipmentTrendQueryOptions} [options] - Optional equipment trend query parameters.
+   * @param {OrganizationDashboardEquipmentTrendQueryOptions} [options] - Optional equipment trend
+   *   query parameters.
    *
-   * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the equipment-created trend resource.
+   * @returns {Observable<OrganizationDashboardTrendOutput>} An observable emitting the
+   *   equipment-created trend resource.
    */
   public getDashboardEquipmentCreatedTrend(
     organizationId: string,
@@ -566,9 +582,11 @@ export class OrganizationService extends HydraApiService {
    * @since 1.2.0
    *
    * @param {string} organizationId - The ID of the organization.
-   * @param {OrganizationDashboardFacilityTrendQueryOptions} [options] - Optional facility trend query parameters.
+   * @param {OrganizationDashboardFacilityTrendQueryOptions} [options] - Optional facility trend
+   *   query parameters.
    *
-   * @return {Observable<OrganizationDashboardTrendOutput>} An observable emitting the facilities-created trend resource.
+   * @returns {Observable<OrganizationDashboardTrendOutput>} An observable emitting the
+   *   facilities-created trend resource.
    */
   public getDashboardFacilitiesCreatedTrend(
     organizationId: string,
@@ -594,7 +612,8 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {string} organizationId - The unique identifier of the organization.
    *
-   * @return {Observable<OrganizationNavigationCountersOutput>} An observable emitting the navigation counters.
+   * @returns {Observable<OrganizationNavigationCountersOutput>} An observable emitting the
+   *   navigation counters.
    */
   public navigationCounters(
     organizationId: string,
@@ -622,7 +641,8 @@ export class OrganizationService extends HydraApiService {
    * @param {string} organizationId - The unique identifier of the organization.
    * @param {string} query - The free-text search term (2..100 characters after trimming).
    *
-   * @return {Observable<OrganizationSearchOutput>} An observable emitting the grouped-ready flat hit list.
+   * @returns {Observable<OrganizationSearchOutput>} An observable emitting the grouped-ready flat
+   *   hit list.
    */
   public search(organizationId: string, query: string): Observable<OrganizationSearchOutput> {
     return this.getOne<OrganizationSearchOutput>(
@@ -644,7 +664,8 @@ export class OrganizationService extends HydraApiService {
    *
    * @param {RequestOptions} [options] - Optional pagination parameters.
    *
-   * @return {Observable<HydraCollection<OptionOutput>>} An observable emitting the legal type options.
+   * @returns {Observable<HydraCollection<OptionOutput>>} An observable emitting the legal type
+   *   options.
    */
   public listLegalTypes(options?: RequestOptions): Observable<HydraCollection<OptionOutput>> {
     return this.getCollection<OptionOutput>(
@@ -667,7 +688,8 @@ export class OrganizationService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {RequestOptions} [options] - Optional pagination parameters.
    *
-   * @return {Observable<HydraCollection<OrganizationPermissionOutput>>} An observable emitting the permissions collection.
+   * @returns {Observable<HydraCollection<OrganizationPermissionOutput>>} An observable emitting the
+   *   permissions collection.
    */
   public listPermissions(
     organizationId: string,
@@ -695,7 +717,8 @@ export class OrganizationService extends HydraApiService {
    * @param {string} organizationId - The ID of the organization.
    * @param {RequestOptions} [options] - Optional extra request parameters.
    *
-   * @return {Observable<readonly OrganizationPermissionOutput[]>} An observable emitting the complete permission catalog.
+   * @returns {Observable<readonly OrganizationPermissionOutput[]>} An observable emitting the
+   *   complete permission catalog.
    */
   public listAllPermissions(
     organizationId: string,

@@ -1,6 +1,8 @@
 import { Injector, signal, type WritableSignal } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
 import { form, type FieldTree } from '@angular/forms/signals';
+import type { PasswordPolicyOutput } from '@features/auth/models';
+import { DEFAULT_PASSWORD_POLICY } from '@features/auth/state/password-policy/testing/password-policy.fixture';
 import { applyPasswordConfirmation, applyPasswordRules } from '../password.validator';
 
 /**
@@ -16,7 +18,10 @@ interface PasswordModel {
  * an injection context, so the injector is passed explicitly rather than left
  * to an ambient one — the requirement then stays visible at the call site.
  */
-function createForm(initial: Partial<PasswordModel> = {}): FieldTree<PasswordModel> {
+function createForm(
+  initial: Partial<PasswordModel> = {},
+  policy: () => PasswordPolicyOutput | null = () => DEFAULT_PASSWORD_POLICY,
+): FieldTree<PasswordModel> {
   const model: WritableSignal<PasswordModel> = signal<PasswordModel>({
     password: '',
     confirmPassword: '',
@@ -26,7 +31,7 @@ function createForm(initial: Partial<PasswordModel> = {}): FieldTree<PasswordMod
   return form(
     model,
     (path): void => {
-      applyPasswordRules(path.password);
+      applyPasswordRules(path.password, policy);
       applyPasswordConfirmation(path.confirmPassword, path.password);
     },
     { injector: TestBed.inject(Injector) },
@@ -34,6 +39,52 @@ function createForm(initial: Partial<PasswordModel> = {}): FieldTree<PasswordMod
 }
 
 describe('applyPasswordRules', () => {
+  it('reacts to a custom server policy and blocks unavailable requirements', () => {
+    const policy = signal<PasswordPolicyOutput | null>({
+      ...DEFAULT_PASSWORD_POLICY,
+      minimumLength: 3,
+      maximumLength: 5,
+      requireUppercase: false,
+      requireLowercase: false,
+      requireDigit: false,
+      specialCharacters: '',
+      allowedInitialCharacters: null,
+    });
+    const fields = createForm({ password: 'abc' }, policy);
+    expect(fields.password().valid()).toBe(true);
+    policy.update((value) => (value ? { ...value, minimumLength: 4 } : value));
+    expect(fields.password().errors()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: 'minLength' })]),
+    );
+    policy.set(null);
+    expect(fields.password().errors()).toEqual(
+      expect.arrayContaining([expect.objectContaining({ kind: 'policyUnavailable' })]),
+    );
+  });
+
+  it('counts code points and obeys the supplied initial-character alphabet', () => {
+    const policy = {
+      ...DEFAULT_PASSWORD_POLICY,
+      minimumLength: 3,
+      maximumLength: 3,
+      requireUppercase: false,
+      requireLowercase: false,
+      requireDigit: false,
+      specialCharacters: '',
+      allowedInitialCharacters: '😀',
+    };
+    expect(
+      createForm({ password: '😀ab' }, () => policy)
+        .password()
+        .valid(),
+    ).toBe(true);
+    expect(
+      createForm({ password: 'abc' }, () => policy)
+        .password()
+        .errors(),
+    ).toEqual(expect.arrayContaining([expect.objectContaining({ kind: 'initialCharacter' })]));
+  });
+
   it('should reject an empty password as required', () => {
     const passwordForm = createForm();
 
@@ -55,7 +106,7 @@ describe('applyPasswordRules', () => {
     const passwordForm = createForm({ password: 'alllowercase' });
 
     expect(passwordForm.password().errors()).toEqual(
-      expect.arrayContaining([expect.objectContaining({ kind: 'pattern' })]),
+      expect.arrayContaining([expect.objectContaining({ kind: 'uppercase' })]),
     );
   });
 
@@ -65,6 +116,19 @@ describe('applyPasswordRules', () => {
     expect(passwordForm.password().valid()).toBe(true);
     expect(passwordForm.password().errors()).toEqual([]);
   });
+
+  it.each(['١', '１', '𝟙'])(
+    'requires an ASCII digit instead of %s and preserves the error message',
+    (digit) => {
+      const passwordForm = createForm({ password: `Strong!Password${digit}` });
+      expect(passwordForm.password().errors()).toEqual([
+        expect.objectContaining({ kind: 'digit', message: 'A digit' }),
+      ]);
+      passwordForm.password().value.set('Strong!Password1');
+      expect(passwordForm.password().valid()).toBe(true);
+      expect(passwordForm.password().errors()).toEqual([]);
+    },
+  );
 });
 
 describe('applyPasswordConfirmation', () => {

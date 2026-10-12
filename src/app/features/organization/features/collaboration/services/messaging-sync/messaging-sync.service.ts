@@ -1,6 +1,7 @@
 import { inject, Service } from '@angular/core';
 import { Dispatcher, Events } from '@ngrx/signals/events';
 import { firstValueFrom, takeUntil } from 'rxjs';
+import { getIdempotencyErrorCode, isIdempotencyOperationCompleted } from '@core/api';
 import { isApiError } from '@core/api/utils';
 import { USER_IDENTITY_PORT, type UserIdentityPort } from '@features/account/ports';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
@@ -71,7 +72,7 @@ export interface MessagingReplayResult {
  * the first temporary failure in a conversation stops that conversation's
  * chain — sending the third message of a thread before the second would be
  * worse than sending both a minute later. Other conversations keep going.
- * **A conflict is a success.** A replayed client id answers `409`
+ * **Only an explicit acknowledgement is a success.** A replayed client id answers `409`
  * `/problems/client-resource-already-exists`, which means the message is
  * already stored: the operation is dequeued, not retried and not shown as an
  * error. This is the whole reason the send route takes a client-minted id.
@@ -316,12 +317,16 @@ export class MessagingSyncService {
   ): Promise<'done' | 'defer' | 'failed' | 'obsolete'> {
     if (!isCurrent()) return 'obsolete';
     try {
+      const idempotencyKey =
+        operation.idempotencyKey ?? (await this.outbox.ensureIdempotencyKey(operation.id));
+      if (!isCurrent() || !idempotencyKey) return 'obsolete';
       await firstValueFrom(
         this.messages
           .postMessageWithClientId(
             operation.payload.conversationId,
             operation.payload.clientId,
             operation.payload.input,
+            { idempotencyKey },
           )
           .pipe(takeUntil(this.events.on(authStoreEvents.sessionEnded))),
       );
@@ -331,21 +336,130 @@ export class MessagingSyncService {
 
       return 'done';
     } catch (error: unknown) {
-      if (!isCurrent()) return 'obsolete';
-      const status: number = isApiError(error) ? error.status : 0;
+      return this.classifyReplayFailure(operation, isCurrent, error);
+    }
+  }
 
-      if (status === 409) {
-        await this.outbox.remove(operation.id);
-
-        return 'done';
-      }
-
-      if (status === 0 || status >= 500 || status === 429) return 'defer';
-
+  /**
+   * Method classifyReplayFailure
+   * @method classifyReplayFailure
+   *
+   * @description
+   * Applies receipt proofs before native duplicate acknowledgements or transport retry policy.
+   * Queue consequences remain owned by the initiating session and workspace.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {MessagingOutboxOperation} operation - Original durable send and its identities.
+   * @param {() => boolean} isCurrent - Original replay ownership guard.
+   * @param {unknown} error - Rejected send or failed durable acknowledgement.
+   *
+   * @returns {Promise<'done' | 'defer' | 'failed' | 'obsolete'>} Replay disposition.
+   */
+  private async classifyReplayFailure(
+    operation: MessagingOutboxOperation,
+    isCurrent: () => boolean,
+    error: unknown,
+  ): Promise<'done' | 'defer' | 'failed' | 'obsolete'> {
+    if (!isCurrent()) return 'obsolete';
+    const status: number = isApiError(error) ? error.status : 0;
+    if (isIdempotencyOperationCompleted(error)) {
+      return this.acknowledgeCompletedSend(operation, isCurrent);
+    }
+    const receiptFailure = getIdempotencyErrorCode(error);
+    if (receiptFailure === 'idempotency_in_progress') return 'defer';
+    if (receiptFailure) {
       await this.outbox.markFailed(operation.id, describe(error, status));
-
       return 'failed';
     }
+
+    if (
+      status === 409 &&
+      isApiError(error) &&
+      error.type === '/problems/client-resource-already-exists'
+    ) {
+      await this.outbox.remove(operation.id);
+
+      return 'done';
+    }
+
+    if (status === 0 || status >= 500 || status === 429) return 'defer';
+
+    await this.outbox.markFailed(operation.id, describe(error, status));
+
+    return 'failed';
+  }
+
+  /**
+   * Method acknowledgeCompletedSend
+   * @method acknowledgeCompletedSend
+   *
+   * @description
+   * Reconciles an authoritative completion proof before removing the durable intention.
+   * Unavailable owner projections or failed removal retain the original pending send.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {MessagingOutboxOperation} operation - Completed send retaining its native message id.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   *
+   * @returns {Promise<'done' | 'defer' | 'obsolete'>} Acknowledgement or retained intent.
+   */
+  private async acknowledgeCompletedSend(
+    operation: MessagingOutboxOperation,
+    isCurrent: () => boolean,
+  ): Promise<'done' | 'defer' | 'obsolete'> {
+    try {
+      await this.reconcileCompletedSend(operation, isCurrent);
+      if (!isCurrent()) return 'obsolete';
+      await this.outbox.remove(operation.id);
+      return isCurrent() ? 'done' : 'obsolete';
+    } catch {
+      return isCurrent() ? 'defer' : 'obsolete';
+    }
+  }
+
+  /**
+   * Method reconcileCompletedSend
+   * @method reconcileCompletedSend
+   *
+   * @description
+   * Finds the original native message in its authorized owner projection before an expired
+   * completed receipt can remove the durable intent. No message body replaces local drafts.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @param {MessagingOutboxOperation} operation - Completed send retaining its native message id.
+   * @param {() => boolean} isCurrent - Original session, account and workspace guard.
+   * @param {number} [page] - Owner projection page being acquired.
+   * @param {number} [inspected] - Rows already inspected without finding the native identity.
+   *
+   * @returns {Promise<void>} Resolves only after the current owner can read the committed message.
+   */
+  private async reconcileCompletedSend(
+    operation: MessagingOutboxOperation,
+    isCurrent: () => boolean,
+    page: number = 1,
+    inspected: number = 0,
+  ): Promise<void> {
+    if (!isCurrent()) return;
+    const projection = await firstValueFrom(
+      this.messages
+        .list(operation.conversationId, { page, itemsPerPage: 100 })
+        .pipe(takeUntil(this.events.on(authStoreEvents.sessionEnded))),
+    );
+    if (!isCurrent()) return;
+    if (!Array.isArray(projection.member) || !Number.isSafeInteger(projection.totalItems))
+      throw new Error('The completed message projection is unavailable.');
+    const message = projection.member.find((item) => item.id === operation.payload.clientId);
+    if (message?.conversation === `/api/conversations/${operation.conversationId}`) return;
+    const nextInspected = inspected + projection.member.length;
+    if (projection.member.length === 0 || nextInspected >= projection.totalItems)
+      throw new Error('The completed message is unavailable in its conversation.');
+    return this.reconcileCompletedSend(operation, isCurrent, page + 1, nextInspected);
   }
 
   /**

@@ -14,11 +14,13 @@ export type InventoryPhysicalCommand =
       readonly kind: 'correction';
       readonly organizationId: string;
       readonly userId: string;
+      readonly idempotencyKey?: string;
       readonly input: CorrectInventoryStockInput;
     }
   | {
       readonly kind: 'return';
       readonly organizationId: string;
       readonly userId: string;
+      readonly idempotencyKey?: string;
       readonly input: ReturnInventoryConsumptionInput;
     };

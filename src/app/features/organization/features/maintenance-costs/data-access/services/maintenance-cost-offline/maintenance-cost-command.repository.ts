@@ -1,5 +1,6 @@
 import { effect, inject, Service } from '@angular/core';
 import { IndexedDbService, type IndexedDbSchema } from '@core/indexed-db';
+import { WriteOperationService, type WriteOperation } from '@core/request-state';
 import { AUTH_SESSION_PORT, type AuthSessionPort } from '@features/auth/ports';
 import type { MaintenanceCostCommand } from '@features/organization/features/maintenance-costs/models';
 import {
@@ -16,6 +17,20 @@ import {
  */
 @Service()
 export class MaintenanceCostCommandRepository extends IndexedDbService {
+  /**
+   * Property writeOperations
+   * @readonly
+   *
+   * @description
+   * Mints receipt identities inside the owning IndexedDB transaction.
+   *
+   * @access private
+   * @since unreleased
+   *
+   * @type {WriteOperationService}
+   */
+  private readonly writeOperations: WriteOperationService = inject(WriteOperationService);
+
   //#region Properties
   /**
    * Property schema
@@ -256,11 +271,17 @@ export class MaintenanceCostCommandRepository extends IndexedDbService {
    *
    * @param {MaintenanceCostCommand} command - Original exact intention.
    *
-   * @returns {Promise<void>} Durable acceptance, or an explicit ownership/storage failure.
+   * @returns {Promise<WriteOperation>} Committed receipt identity, or an explicit ownership/storage
+   *   failure.
    */
-  public retain(command: MaintenanceCostCommand): Promise<void> {
+  public retain(command: MaintenanceCostCommand): Promise<WriteOperation> {
     this.synchronizeSession();
-    if (command.kind !== 'expense' && command.kind !== 'rate') return Promise.resolve();
+    if (command.kind !== 'expense' && command.kind !== 'rate')
+      return Promise.resolve(
+        command.idempotencyKey
+          ? { idempotencyKey: command.idempotencyKey }
+          : this.writeOperations.create(),
+      );
     const frozen = structuredClone(command);
     const userId = this.member.profile()?.userId ?? null;
     const revision = this.session.sessionRevision();
@@ -276,14 +297,42 @@ export class MaintenanceCostCommandRepository extends IndexedDbService {
         await this.ensureOwnerBound(userId);
         if (!current()) throw new Error('Financial command ownership changed.');
         const key = `${frozen.kind}:${frozen.input.clientId}`;
-        const record = { userId, command: frozen };
-        const previous = await this.get('commands', key);
-        if (previous && JSON.stringify(previous) !== JSON.stringify(record))
-          throw new Error('Financial command identity belongs to a different intention.');
-        if (previous) return;
-        await this.put('commands', key, record, current);
+        let identity: WriteOperation | null = null;
+        await this.updateTransaction(
+          { commands: [key] },
+          (values) => {
+            const previous = values['commands']?.[key] as
+              | { readonly userId: string; readonly command: MaintenanceCostCommand }
+              | null
+              | undefined;
+            if (
+              previous &&
+              JSON.stringify({
+                userId: previous.userId,
+                command: { ...previous.command, idempotencyKey: undefined },
+              }) !== JSON.stringify({ userId, command: { ...frozen, idempotencyKey: undefined } })
+            )
+              throw new Error('Financial command identity belongs to a different intention.');
+            identity = {
+              idempotencyKey:
+                previous?.command.idempotencyKey ||
+                frozen.idempotencyKey ||
+                this.writeOperations.create().idempotencyKey,
+            };
+            return previous?.command.idempotencyKey
+              ? { commands: [] }
+              : { commands: [{ key, value: { userId, command: { ...frozen, ...identity } } }] };
+          },
+          current,
+        );
+        if (!current() || identity === null)
+          throw new Error('Financial command ownership changed.');
+        return identity;
       });
-    this.writes = retained;
+    this.writes = retained.then(
+      () => undefined,
+      () => undefined,
+    );
     return retained;
   }
 

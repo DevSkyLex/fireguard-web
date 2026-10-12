@@ -30,6 +30,7 @@ const INTERVENTION_STORE_NAMES = [
 /** One persisted outbox operation as read back from IndexedDB. */
 export interface OutboxRecord {
   readonly id: string;
+  readonly idempotencyKey?: string;
   readonly interventionId: string;
   readonly type: string;
   readonly payload: Record<string, unknown>;
@@ -123,10 +124,9 @@ export async function readStore(page: Page, storeName: string): Promise<Readonly
 
 /**
  * Seeds outbox operations directly into IndexedDB with their explicit out-of-line
- * keys. Owner binding is inert in e2e (the `/me` fixture carries no `sub`), and
- * this never rewrites `metadata.ownerUserId`, so the app never wipes the seed.
- * Call it AFTER the detail page has loaded (owner binding settled) so a later
- * `ensureOwnerBound()` cannot clear the stores.
+ * keys. This never rewrites `metadata.ownerUserId` and retains the real fixture
+ * account binding. Call it AFTER the detail page has loaded and owner binding
+ * has settled so a later `ensureOwnerBound()` cannot clear the seed.
  */
 export async function seedOutboxOperations(
   page: Page,
@@ -169,6 +169,7 @@ const MESSAGING_DATABASE_NAME = 'fireguard-messaging';
 /** One persisted messaging outbox operation. */
 export interface MessagingOutboxRecord {
   readonly id: string;
+  readonly idempotencyKey?: string;
   readonly conversationId: string;
   readonly type: string;
   readonly payload: { readonly clientId: string; readonly input: { readonly body: string } };

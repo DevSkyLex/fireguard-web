@@ -1,9 +1,10 @@
-import { computed, inject } from '@angular/core';
+import { computed, inject, DestroyRef, effect, untracked } from '@angular/core';
 import { tapResponse } from '@ngrx/operators';
 import { patchState, signalStore, withComputed, withMethods, withState } from '@ngrx/signals';
 import { Dispatcher } from '@ngrx/signals/events';
 import { rxMethod } from '@ngrx/signals/rxjs-interop';
 import { exhaustMap, pipe, switchMap, tap } from 'rxjs';
+import { WriteOperationService } from '@core/request-state';
 import {
   errorCallState,
   idleCallState,
@@ -21,12 +22,12 @@ import type {
   NotificationPreferencesOutput,
   UpdateNotificationPreferencesInput,
 } from '@features/account/models';
+import { AUTH_SESSION_PORT } from '@features/auth/ports';
 import { accountNotificationPreferencesStoreEvents } from './events';
 import type { AccountNotificationPreferencesState } from './models';
 
 /**
  * Constant INITIAL_STATE
- * @const INITIAL_STATE
  *
  * @description
  * Initial request states for the component-scoped notification preferences
@@ -35,6 +36,8 @@ import type { AccountNotificationPreferencesState } from './models';
  * @since 1.0.0
  *
  * @type {AccountNotificationPreferencesState}
+ *
+ * @const INITIAL_STATE
  */
 const INITIAL_STATE: AccountNotificationPreferencesState = {
   loadCallState: idleCallState(),
@@ -42,8 +45,7 @@ const INITIAL_STATE: AccountNotificationPreferencesState = {
 } as const;
 
 /**
- * Store AccountNotificationPreferencesStore
- * @const AccountNotificationPreferencesStore
+ * Constant AccountNotificationPreferencesStore
  *
  * @description
  * Component-scoped store for the notification preferences screen. Loads the
@@ -59,6 +61,8 @@ const INITIAL_STATE: AccountNotificationPreferencesState = {
  * @version 1.0.0
  *
  * @author Valentin FORTIN <contact@valentin-fortin.pro>
+ *
+ * @const AccountNotificationPreferencesStore
  */
 export const AccountNotificationPreferencesStore = signalStore(
   //#region State
@@ -68,9 +72,8 @@ export const AccountNotificationPreferencesStore = signalStore(
   //#region Computed
   withComputed((store) => ({
     /**
-     * Computed isLoading
-     *
      * @description
+     * Computed isLoading
      * Returns whether the customized preference set is being loaded.
      *
      * @since 1.0.0
@@ -80,9 +83,8 @@ export const AccountNotificationPreferencesStore = signalStore(
     isLoading: computed<boolean>(() => isCallPending(store.loadCallState())),
 
     /**
-     * Computed isSaving
-     *
      * @description
+     * Computed isSaving
      * Returns whether an upsert is in flight, which locks every switch so a
      * second toggle cannot race the first.
      *
@@ -93,9 +95,8 @@ export const AccountNotificationPreferencesStore = signalStore(
     isSaving: computed<boolean>(() => isCallPending(store.saveCallState())),
 
     /**
-     * Computed loadError
-     *
      * @description
+     * Computed loadError
      * Returns the error from the initial load, or `null`.
      *
      * @since 1.0.0
@@ -108,9 +109,8 @@ export const AccountNotificationPreferencesStore = signalStore(
     }),
 
     /**
-     * Computed preferences
-     *
      * @description
+     * Computed preferences
      * The customized preference rows, empty until loaded — and legitimately
      * empty afterwards for a user who never customized anything.
      *
@@ -130,6 +130,21 @@ export const AccountNotificationPreferencesStore = signalStore(
       store,
       notificationService = inject<NotificationService>(NotificationService),
       dispatcher = inject<Dispatcher>(Dispatcher),
+      writeTracker = inject(WriteOperationService).createTracker(),
+      intentSession = inject(AUTH_SESSION_PORT),
+      _intentTrackingLifecycle = (() => {
+        const reference = inject(DestroyRef);
+        reference.onDestroy(() => writeTracker.clear());
+        let observedRevision = intentSession.sessionRevision();
+        effect(() => {
+          const revision = intentSession.sessionRevision();
+          if (revision !== observedRevision) {
+            observedRevision = revision;
+            untracked(() => writeTracker.clear());
+          }
+        });
+        return undefined;
+      })(),
     ) => ({
       /**
        * Method load
@@ -187,7 +202,8 @@ export const AccountNotificationPreferencesStore = signalStore(
        *
        * @since 1.0.0
        *
-       * @param {UpdateNotificationPreferencesInput} input - The category rows to upsert (at least one).
+       * @param {UpdateNotificationPreferencesInput} input - The category rows to upsert (at least
+       *   one).
        */
       save: rxMethod<UpdateNotificationPreferencesInput>(
         pipe(
@@ -197,29 +213,51 @@ export const AccountNotificationPreferencesStore = signalStore(
             }),
           ),
           exhaustMap((input: UpdateNotificationPreferencesInput) =>
-            notificationService.updatePreferences(input).pipe(
-              tapResponse({
-                next: (response: NotificationPreferencesOutput) =>
-                  patchState(store, {
-                    saveCallState: successCallState(response.preferences),
-                    loadCallState: successCallState(response.preferences),
-                  }),
-                error: (error: unknown) => {
-                  const storeError: StoreError = toStoreError(error);
-                  patchState(store, {
-                    saveCallState: errorCallState(storeError, store.saveCallState().data ?? []),
-                  });
-                  dispatcher.dispatch(
-                    accountNotificationPreferencesStoreEvents.saveFailed(
-                      toStoreFailureEventPayload(
-                        storeError,
-                        $localize`:@@account.notificationPreferences.saveError:Your notification preferences could not be saved.`,
+            notificationService
+              .updatePreferences(
+                input,
+                writeTracker.options(
+                  'notificationService.updatePreferences',
+                  [input],
+                  intentSession.sessionRevision(),
+                ),
+              )
+              .pipe(
+                tap({
+                  next: (result): void => {
+                    const outcome: unknown = result;
+                    if (
+                      outcome &&
+                      typeof outcome === 'object' &&
+                      'success' in outcome &&
+                      outcome.success === false
+                    )
+                      return;
+                    writeTracker.complete('notificationService.updatePreferences');
+                  },
+                }),
+                tapResponse({
+                  next: (response: NotificationPreferencesOutput) =>
+                    patchState(store, {
+                      saveCallState: successCallState(response.preferences),
+                      loadCallState: successCallState(response.preferences),
+                    }),
+                  error: (error: unknown) => {
+                    const storeError: StoreError = toStoreError(error);
+                    patchState(store, {
+                      saveCallState: errorCallState(storeError, store.saveCallState().data ?? []),
+                    });
+                    dispatcher.dispatch(
+                      accountNotificationPreferencesStoreEvents.saveFailed(
+                        toStoreFailureEventPayload(
+                          storeError,
+                          $localize`:@@account.notificationPreferences.saveError:Your notification preferences could not be saved.`,
+                        ),
                       ),
-                    ),
-                  );
-                },
-              }),
-            ),
+                    );
+                  },
+                }),
+              ),
           ),
         ),
       ),
@@ -236,6 +274,10 @@ export const AccountNotificationPreferencesStore = signalStore(
  * the store constant so the name works in both value and type positions.
  *
  * @since 1.0.0
+ *
+ * @type {InstanceType<
+ *   typeof AccountNotificationPreferencesStore
+ * >}
  */
 export type AccountNotificationPreferencesStore = InstanceType<
   typeof AccountNotificationPreferencesStore

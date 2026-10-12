@@ -461,3 +461,114 @@ test('scopes facility intervention preview by exact organization, site and GET',
     'Verified the scoped preview cannot swallow wrong-site, wrong-org or write requests.',
   );
 });
+
+test('keeps presence leases one hour ahead after clock changes in the same document', async ({
+  page,
+}) => {
+  const start = new Date('2026-09-16T10:00:00Z');
+  await page.clock.install({ time: start });
+  await page.clock.pauseAt(start);
+  await new ApiMock(page).mockPresence();
+  const paths = [
+    '/api/me/presence-preference/subscription',
+    `/api/presence/subscription?organization=${E2E_ORGANIZATION_ID}`,
+  ];
+  const expectCurrentExpiry = async (): Promise<void> => {
+    const expected = await page.evaluate(() => new Date(Date.now() + 3_600_000).toISOString());
+    const responses = await page.evaluate(
+      async (requests) =>
+        Promise.all(
+          requests.map(async (path) => {
+            const response = await fetch(path);
+            const body = (await response.json()) as { expiresAt: string };
+            return { status: response.status, expiresAt: body.expiresAt };
+          }),
+        ),
+      paths,
+    );
+    expect(responses).toEqual([
+      { status: 200, expiresAt: expected },
+      { status: 200, expiresAt: expected },
+    ]);
+  };
+  await expectCurrentExpiry();
+  await page.clock.runFor(25 * 60 * 60 * 1_000);
+  await expectCurrentExpiry();
+  await page.clock.setSystemTime(new Date('2040-01-01T10:00:00Z'));
+  await expectCurrentExpiry();
+});
+
+test('serves presence clock metadata when outstanding requests cross full document navigations', async ({
+  page,
+}) => {
+  const start = new Date('2026-09-16T10:00:00Z');
+  await page.clock.setFixedTime(start);
+  const pendingRoutes = new Set<Promise<void>>();
+  const registerRoute = page.route.bind(page);
+  page.route = async (pattern, handler, options) =>
+    registerRoute(
+      pattern,
+      async (route, request) => {
+        const handled = Promise.resolve(handler(route, request));
+        if (!new URL(request.url()).pathname.endsWith('/subscription')) return handled;
+        pendingRoutes.add(handled);
+        try {
+          await handled;
+        } finally {
+          pendingRoutes.delete(handled);
+        }
+      },
+      options,
+    );
+  await new ApiMock(page).mockPresence();
+  await page.route('http://harness.test/presence-document-*', (route) =>
+    route.fulfill({ contentType: 'text/html', body: '<p>Next presence document</p>' }),
+  );
+  const paths = [
+    '/api/me/presence-preference/subscription',
+    `/api/presence/subscription?organization=${E2E_ORGANIZATION_ID}`,
+  ];
+  let crossDocumentSubscriptions = 0;
+  page.on('framenavigated', (frame) => {
+    if (frame === page.mainFrame()) crossDocumentSubscriptions += pendingRoutes.size;
+  });
+  let canceledSubscriptions = 0;
+  page.on('requestfailed', (request) => {
+    if (new URL(request.url()).pathname.endsWith('/subscription')) canceledSubscriptions += 1;
+  });
+  const navigateWithOutstandingRequests = async (document: number): Promise<void> => {
+    const requested = page.waitForRequest((request) =>
+      new URL(request.url()).pathname.endsWith('/subscription'),
+    );
+    await page.evaluate((requests) => {
+      for (let request = 0; request < 8; request += 1)
+        void fetch(requests[request % requests.length]).catch(() => undefined);
+    }, paths);
+    await requested;
+    await page.goto(`http://harness.test/presence-document-${document}`);
+  };
+  await navigateWithOutstandingRequests(0);
+  await navigateWithOutstandingRequests(1);
+  await navigateWithOutstandingRequests(2);
+  await navigateWithOutstandingRequests(3);
+  const expiresAt = new Date(start.getTime() + 3_600_000).toISOString();
+  const responses = await page.evaluate(
+    async (requests) =>
+      Promise.all(
+        requests.map(async (path) => {
+          const response = await fetch(path);
+          const body = (await response.json()) as { expiresAt: string };
+          return { status: response.status, expiresAt: body.expiresAt };
+        }),
+      ),
+    paths,
+  );
+  expect(responses).toEqual([
+    { status: 200, expiresAt },
+    { status: 200, expiresAt },
+  ]);
+  await Promise.all(pendingRoutes);
+  expect(pendingRoutes.size).toBe(0);
+  expect(crossDocumentSubscriptions + canceledSubscriptions).toBeGreaterThan(0);
+  await page.unrouteAll({ behavior: 'wait' });
+});

@@ -1,4 +1,4 @@
-import type { Page, Route } from '@playwright/test';
+import type { Page, Request, Route } from '@playwright/test';
 import { expect } from '@playwright/test';
 import type { SessionOutput } from '../../../../src/app/features/auth/models/session/session-output.interface';
 import type {
@@ -575,6 +575,33 @@ export class ApiMock {
     userId = 'e2e-user-1',
   ): Promise<void> {
     await this.installSafetyNet();
+    const subscriptionExpiry = async (route: Route): Promise<string | null> => {
+      const readClock = async (): Promise<string> => {
+        // Rerunnable sampling follows navigation; a primitive survives its original context.
+        const expiry = await this.page.waitForFunction(() =>
+          new Date(Date.now() + 3_600_000).toISOString(),
+        );
+        try {
+          return await expiry.jsonValue();
+        } finally {
+          await expiry.dispose();
+        }
+      };
+      let cancelRead: (() => void) | undefined;
+      const canceled = new Promise<null>((resolve) => {
+        cancelRead = () => resolve(null);
+      });
+      const onFailed = (request: Request): void => {
+        if (request === route.request()) cancelRead?.();
+      };
+      this.page.on('requestfailed', onFailed);
+      try {
+        if (route.request().failure()) return null;
+        return await Promise.race([readClock(), canceled]);
+      } finally {
+        this.page.off('requestfailed', onFailed);
+      }
+    };
     let preference = { doNotDisturb: false, invisible: false, revision: 0 };
     await this.page.route(/\/api\/me\/presence-preference$/, async (route) => {
       const method = route.request().method();
@@ -596,12 +623,14 @@ export class ApiMock {
     });
     await this.page.route(/\/api\/me\/presence-preference\/subscription$/, async (route) => {
       if (route.request().method() !== 'GET') return route.fallback();
+      const expiresAt = await subscriptionExpiry(route);
+      if (expiresAt === null) return route.abort('aborted');
       await fulfillJson(route, 200, {
         '@id': '/api/me/presence-preference/subscription',
         '@type': 'PresencePreference',
         topic: `/users/${userId}/presence-preference`,
         token: 'e2e-private-presence',
-        expiresAt: await this.page.evaluate(() => new Date(Date.now() + 3_600_000).toISOString()),
+        expiresAt,
       });
     });
     await this.page.route(/\/api\/presence\/ping$/, async (route) => {
@@ -619,12 +648,14 @@ export class ApiMock {
       const organization = new URL(route.request().url()).searchParams.get('organization') ?? '';
       if (route.request().method() !== 'GET' || !organizationIds.includes(organization))
         return route.fallback();
+      const expiresAt = await subscriptionExpiry(route);
+      if (expiresAt === null) return route.abort('aborted');
       await fulfillJson(route, 200, {
         '@id': '/api/presence/subscription',
         '@type': 'Presence',
         topic: `/organizations/${organization}/presence`,
         token: 'e2e-private-presence',
-        expiresAt: await this.page.evaluate(() => new Date(Date.now() + 3_600_000).toISOString()),
+        expiresAt,
       });
     });
     await this.page.route(/\/api\/presence(\?.*)?$/, async (route) => {

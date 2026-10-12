@@ -21,6 +21,8 @@ import {
 
 const WORKSPACE_URL = `/organizations/${E2E_ORGANIZATION_ID}/more`;
 const INTERVENTION_ID = 'e2e-logout-pending-intervention';
+const COMMENT_IDEMPOTENCY_KEY = '91772d50-cdf3-4f2b-8fbd-9ba77c3a71d4';
+const FAILED_COMMENT_IDEMPOTENCY_KEY = '91772d50-cdf3-4f2b-8fbd-9ba77c3a71d5';
 const TITLE = 'Local changes are waiting';
 const DESCRIPTION =
   /Signing out removes the changes saved on this device\. Synchronize them first, cancel, or explicitly discard them\./;
@@ -31,6 +33,7 @@ function queuedOperations(): readonly OutboxRecord[] {
   return [
     {
       id: 'logout-pending-comment',
+      idempotencyKey: COMMENT_IDEMPOTENCY_KEY,
       interventionId: INTERVENTION_ID,
       type: 'comment.create',
       payload: { body: 'Locally saved inspection note', clientId: 'logout-comment-client' },
@@ -39,6 +42,7 @@ function queuedOperations(): readonly OutboxRecord[] {
     },
     {
       id: 'logout-failed-comment',
+      idempotencyKey: FAILED_COMMENT_IDEMPOTENCY_KEY,
       interventionId: INTERVENTION_ID,
       type: 'comment.create',
       payload: { body: 'Retained rejected note', clientId: 'logout-failed-client' },
@@ -459,11 +463,13 @@ export function registerPendingLogoutScenarios(mobile: boolean): void {
   }, info) => {
     const state = await arrangePendingLogout(page, mobile);
     const commentRequests: unknown[] = [];
+    const commentIdempotencyKeys: (string | undefined)[] = [];
     await page.route(
       `${API_BASE_URL}/api/interventions/${INTERVENTION_ID}/comments`,
       async (route) => {
         expect(route.request().method()).toBe('POST');
         commentRequests.push(route.request().postDataJSON());
+        commentIdempotencyKeys.push(route.request().headers()['idempotency-key']);
         await route.fulfill({
           status: 500,
           contentType: 'application/ld+json',
@@ -501,6 +507,7 @@ export function registerPendingLogoutScenarios(mobile: boolean): void {
       { body: 'Locally saved inspection note', clientId: 'logout-comment-client' },
       { body: 'Locally saved inspection note', clientId: 'logout-comment-client' },
     ]);
+    expect(commentIdempotencyKeys).toEqual([COMMENT_IDEMPOTENCY_KEY, COMMENT_IDEMPOTENCY_KEY]);
     await expectRetainedWork(page, state.operations);
     expect(state.logoutRequests).toEqual([]);
     await captureDialog(page, dialog, info, 'http-synchronization-retained');
